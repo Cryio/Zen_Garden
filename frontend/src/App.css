@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(0.1 0.2 320); /* Deep black with purple undertone */
+  --foreground: oklch(0.9 0.05 320); /* Light purple-white */
+  --card: oklch(0.15 0.15 320); /* Slightly lighter black with purple hint */
+  --card-foreground: oklch(0.9 0.05 320); /* Light purple-white */
+  --popover: oklch(0.15 0.15 320); /* Same as card */
+  --popover-foreground: oklch(0.9 0.05 320); /* Light purple-white */
+  --primary: oklch(0.5 0.3 320); /* Vibrant purple */
+  --primary-foreground: oklch(1 0 0); /* Pure white */
+  --secondary: oklch(0.3 0.2 320); /* Muted purple */
+  --secondary-foreground: oklch(0.9 0.05 320); /* Light purple-white */
+  --muted: oklch(0.2 0.15 320); /* Dark purple-black */
+  --muted-foreground: oklch(0.6 0.1 320); /* Soft purple-gray */
+  --accent: oklch(0.4 0.25 320); /* Slightly brighter purple */
+  --accent-foreground: oklch(1 0 0); /* Pure white */
+  --destructive: oklch(0.6 0.3 10); /* Reddish tone */
+  --destructive-foreground: oklch(1 0 0); /* Pure white */
+  --border: oklch(0.25 0.2 320); /* Dark purple border */
+  --input: oklch(0.2 0.15 320); /* Dark input background */
+  --ring: oklch(0.5 0.3 320); /* Vibrant purple for focus rings */
+  --radius: 0.625rem;
+}
+
+.dark {
+  /* In this case, the dark theme is essentially the same as the light theme */
+  --background: oklch(0.1 0.2 320);
+  --foreground: oklch(0.9 0.05 320);
+  --card: oklch(0.15 0.15 320);
+  --card-foreground: oklch(0.9 0.05 320);
+  --popover: oklch(0.15 0.15 320);
+  --popover-foreground: oklch(0.9 0.05 320);
+  --primary: oklch(0.5 0.3 320);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.3 0.2 320);
+  --secondary-foreground: oklch(0.9 0.05 320);
+  --muted: oklch(0.2 0.15 320);
+  --muted-foreground: oklch(0.6 0.1 320);
+  --accent: oklch(0.4 0.25 320);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.6 0.3 10);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.25 0.2 320);
+  --input: oklch(0.2 0.15 320);
+  --ring: oklch(0.5 0.3 320);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Retained original styling for other elements */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
