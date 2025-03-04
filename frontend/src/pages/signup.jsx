@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,14 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 // Helper functions using local date values
@@ -21,12 +25,10 @@ function pad(n) {
   return n < 10 ? "0" + n : n;
 }
 
-// Format a Date object as DD/MM/YYYY using local date methods
 function isoFormatDMY(d) {
   return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
 }
 
-// Convert a Date object to an ISO string (YYYY-MM-DD) using local date values
 function formatLocalDateToISO(d) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -51,6 +53,10 @@ export default function Signup() {
 
   // Captcha state
   const [captcha, setCaptcha] = useState(generateCaptcha());
+
+  // Refs for the gradient overlay and container (for border glow)
+  const gradientOverlayRef = useRef(null);
+  const containerRef = useRef(null);
 
   // Generate a complex CAPTCHA
   function generateCaptcha() {
@@ -90,7 +96,6 @@ export default function Signup() {
     setPasswordStrength(computePasswordStrength(formData.password));
   }, [formData.password]);
 
-  // Function to compute password strength
   const computePasswordStrength = (password) => {
     let score = 0;
     if (password.length >= 8) score++;
@@ -103,28 +108,63 @@ export default function Signup() {
     return "Strong";
   };
 
-  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle captcha input change
   const handleCaptchaChange = (e) => {
     const userAnswer = e.target.value;
     setCaptcha((prev) => ({
       ...prev,
       userAnswer,
-      isVerified: parseInt(userAnswer) === prev.correctAnswer,
+      isVerified: parseInt(userAnswer) === prev.correctAnswer
     }));
   };
 
-  // Form submission handler
+  // Enhanced mouse move handler to create both border glow and card hover effect
+  const handleMouseMove = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    // Border glow effect
+    if (containerRef.current) {
+      const borderGradient = `radial-gradient(800px circle at ${x}px ${y}px, 
+      rgba(160,32,240,0.5), 
+      rgba(160,32,240,0.2) 40%, 
+      transparent 70%)`;
+      containerRef.current.style.borderImage = `${borderGradient} 1 stretch`;
+      containerRef.current.style.borderImageSlice = '1';
+    }
+
+    // Card hover gradient overlay effect
+    if (gradientOverlayRef.current) {
+      gradientOverlayRef.current.style.opacity = 1;
+      gradientOverlayRef.current.style.background = `radial-gradient(
+        400px circle at ${x}px ${y}px, 
+        rgba(160,32,240,0.1), 
+        rgba(160,32,240,0.05) 50%, 
+        transparent 80%
+      )`;
+    }
+  };
+
+  // Modified mouse leave to reset both effects
+  const handleMouseLeave = () => {
+    if (containerRef.current) {
+      containerRef.current.style.borderImage = 'border';
+      containerRef.current.style.transition = 'border-image 1s ease-in-out';
+    }
+    if (gradientOverlayRef.current) {
+      gradientOverlayRef.current.style.opacity = 0;
+      gradientOverlayRef.current.style.background = 'none';
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous error
+    setError("");
 
-    // Trim input values
     const trimmedData = {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
@@ -132,16 +172,13 @@ export default function Signup() {
       gender: formData.gender,
       dob: formData.dob,
       password: formData.password,
-      confirmPassword: formData.confirmPassword,
+      confirmPassword: formData.confirmPassword
     };
 
-    // Validation patterns
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // At least 8 characters, one uppercase, one lowercase, one number, one special character
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
-    // Validate required fields
     for (const [key, value] of Object.entries(trimmedData)) {
       if (!value) {
         setError(`Please fill in the ${key.replace(/([A-Z])/g, " $1")}`);
@@ -149,13 +186,11 @@ export default function Signup() {
       }
     }
 
-    // Validate email format
     if (!emailRegex.test(trimmedData.email)) {
       setError("Please enter a valid email address!");
       return;
     }
 
-    // Validate password format
     if (!passwordRegex.test(trimmedData.password)) {
       setError(
         "Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character!"
@@ -163,49 +198,63 @@ export default function Signup() {
       return;
     }
 
-    // Check password confirmation
     if (trimmedData.password !== trimmedData.confirmPassword) {
       setError("Passwords do not match!");
       return;
     }
 
-    // Validate captcha
     if (!captcha.isVerified) {
       setError("Please complete the captcha verification!");
       return;
     }
 
-    // Validate Date of Birth
     if (!trimmedData.dob) {
       setError("Please select your Date of Birth!");
       return;
     }
 
-    // All validations passed - send data to backend
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/signup", {
-        firstName: trimmedData.firstName,
-        lastName: trimmedData.lastName,
-        email: trimmedData.email,
-        gender: trimmedData.gender,
-        dob: trimmedData.dob, // Sending DOB as an ISO string (YYYY-MM-DD)
-        password: trimmedData.password,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/signup",
+        {
+          firstName: trimmedData.firstName,
+          lastName: trimmedData.lastName,
+          email: trimmedData.email,
+          gender: trimmedData.gender,
+          dob: trimmedData.dob,
+          password: trimmedData.password
+        }
+      );
       console.log(response.data);
       navigate("/login");
     } catch (error) {
       console.error("Signup error:", error.response?.data);
       setError(
-        error.response?.data?.error ||
-          "Unexpected error occurred during signup"
+        error.response?.data?.error || "Unexpected error occurred during signup"
       );
     }
   };
 
   return (
     <div className="grid grid-cols-6 gap-4 min-h-screen items-center">
-      <div className="col-span-4 col-start-2 w-full max-w-md bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border border-[rgba(126,34,206,0.2)] rounded-2xl shadow-2xl p-8">
-        <div className="text-white text-center">
+      <div
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className="col-span-4 col-start-2 w-full max-w-md relative bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border-4 border-[rgba(95,30,151,0.2)] rounded-3xl shadow-2xl p-8 transition-all duration-300"
+      >
+        {/* Gradient overlay with dynamic positioning */}
+        <div
+          ref={gradientOverlayRef}
+          className="absolute inset-0 pointer-events-none rounded-2xl z-0 transition-all duration-300"
+          style={{ 
+            opacity: 0,
+            background: 'none'
+          }}
+        />
+        {/* Form content */}
+        <div className="relative z-10 text-white text-center">
+          {/* Rest of the form remains the same as in the original code */}
           <h1 className="text-4xl font-bold mb-4 text-[#E0AAFF]">Sign Up</h1>
           <p className="text-[#94A3B8] mb-8 text-base">
             Enter your details to create a new account and get started
@@ -217,7 +266,7 @@ export default function Signup() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Input
@@ -250,9 +299,7 @@ export default function Signup() {
               required
             />
 
-            {/* Gender and Date of Birth side by side */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Date of Birth Popover with Custom DatePicker */}
               <div>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -260,8 +307,9 @@ export default function Signup() {
                       type="text"
                       name="dob"
                       placeholder="Date of Birth"
-                      // Display the date using local date formatting
-                      value={formData.dob ? isoFormatDMY(new Date(formData.dob)) : ""}
+                      value={
+                        formData.dob ? isoFormatDMY(new Date(formData.dob)) : ""
+                      }
                       readOnly
                       className="cursor-pointer bg-[rgba(126,34,206,0.2)] text-white border-none h-12 focus:ring-2 focus:ring-[#a600c8]"
                       required
@@ -271,7 +319,9 @@ export default function Signup() {
                     <DatePicker
                       value={formData.dob ? new Date(formData.dob) : null}
                       onChange={(newDate) => {
-                        const iso = newDate ? formatLocalDateToISO(newDate) : "";
+                        const iso = newDate
+                          ? formatLocalDateToISO(newDate)
+                          : "";
                         setFormData((prev) => ({ ...prev, dob: iso }));
                       }}
                     />
@@ -279,7 +329,6 @@ export default function Signup() {
                 </Popover>
               </div>
 
-              {/* Gender Select */}
               <Select
                 name="gender"
                 value={formData.gender}
@@ -323,7 +372,6 @@ export default function Signup() {
               required
             />
 
-            {/* Password Strength Indicator */}
             {formData.password && (
               <div className="text-left text-sm">
                 Password Strength:{" "}
@@ -355,7 +403,6 @@ export default function Signup() {
               required
             />
 
-            {/* Complex Captcha Verification */}
             <div className="bg-[rgba(126,34,206,0.2)] p-3 rounded flex items-center justify-between">
               <span className="text-white">{captcha.challenge}</span>
               <Input
