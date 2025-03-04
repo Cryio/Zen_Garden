@@ -12,16 +12,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// Import the custom DatePicker component
 import { DatePicker } from "@/components/ui/date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-// Import Alert components from shadcn UI
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
+// Helper functions using local date values
+function pad(n) {
+  return n < 10 ? "0" + n : n;
+}
+
+// Format a Date object as DD/MM/YYYY using local date methods
+function isoFormatDMY(d) {
+  return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
+}
+
+// Convert a Date object to an ISO string (YYYY-MM-DD) using local date values
+function formatLocalDateToISO(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 export default function Signup() {
   const navigate = useNavigate();
 
-  // Form state (using "dob" for Date of Birth in YYYY-MM-DD format)
+  // Form state (dob is stored as ISO string, e.g. "2025-03-05")
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -32,10 +45,8 @@ export default function Signup() {
     confirmPassword: ""
   });
 
-  // State for password strength
+  // State for password strength and error messages
   const [passwordStrength, setPasswordStrength] = useState("");
-
-  // Error state for validation messages
   const [error, setError] = useState("");
 
   // Captcha state
@@ -104,7 +115,7 @@ export default function Signup() {
     setCaptcha((prev) => ({
       ...prev,
       userAnswer,
-      isVerified: parseInt(userAnswer) === prev.correctAnswer
+      isVerified: parseInt(userAnswer) === prev.correctAnswer,
     }));
   };
 
@@ -113,7 +124,7 @@ export default function Signup() {
     e.preventDefault();
     setError(""); // Clear previous error
 
-    // Trim input values (optional)
+    // Trim input values
     const trimmedData = {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
@@ -177,14 +188,17 @@ export default function Signup() {
         lastName: trimmedData.lastName,
         email: trimmedData.email,
         gender: trimmedData.gender,
-        dob: trimmedData.dob, // sending date of birth as an ISO string
+        dob: trimmedData.dob, // Sending DOB as an ISO string (YYYY-MM-DD)
         password: trimmedData.password,
       });
       console.log(response.data);
       navigate("/login");
     } catch (error) {
       console.error("Signup error:", error.response?.data);
-      setError(error.response?.data?.error || "Unexpected error occurred during signup");
+      setError(
+        error.response?.data?.error ||
+          "Unexpected error occurred during signup"
+      );
     }
   };
 
@@ -246,7 +260,8 @@ export default function Signup() {
                       type="text"
                       name="dob"
                       placeholder="Date of Birth"
-                      value={formData.dob}
+                      // Display the date using local date formatting
+                      value={formData.dob ? isoFormatDMY(new Date(formData.dob)) : ""}
                       readOnly
                       className="cursor-pointer bg-[rgba(126,34,206,0.2)] text-white border-none h-12 focus:ring-2 focus:ring-[#a600c8]"
                       required
@@ -256,9 +271,7 @@ export default function Signup() {
                     <DatePicker
                       value={formData.dob ? new Date(formData.dob) : null}
                       onChange={(newDate) => {
-                        const iso = newDate
-                          ? newDate.toISOString().split("T")[0]
-                          : "";
+                        const iso = newDate ? formatLocalDateToISO(newDate) : "";
                         setFormData((prev) => ({ ...prev, dob: iso }));
                       }}
                     />

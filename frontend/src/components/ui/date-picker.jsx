@@ -87,9 +87,8 @@ export function DatePicker({ startYear, endYear, value, onChange }) {
           initialFocus
           month={internalDate}
           onMonthChange={setInternalDate}
-          className="text-white"
+          className="bg-[rgba(126,34,206,0.2)] text-white border border-[rgba(126,34,206,0.3)] rounded-lg p-2"
         />
-
       </PopoverContent>
     </Popover>
   );
