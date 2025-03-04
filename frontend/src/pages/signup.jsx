@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -8,15 +10,13 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 // Import the custom DatePicker component
 import { DatePicker } from "@/components/ui/date-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+// Import Alert components from shadcn UI
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -29,8 +29,11 @@ export default function Signup() {
     gender: "",
     dob: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
+
+  // Error state for validation messages
+  const [error, setError] = useState("");
 
   // Captcha state
   const [captcha, setCaptcha] = useState(generateCaptcha());
@@ -59,7 +62,7 @@ export default function Signup() {
       challenge: `${num1} ${operator} ${num2} = ?`,
       correctAnswer,
       userAnswer: "",
-      isVerified: false
+      isVerified: false,
     };
   }
 
@@ -80,14 +83,16 @@ export default function Signup() {
     setCaptcha((prev) => ({
       ...prev,
       userAnswer,
-      isVerified: parseInt(userAnswer) === prev.correctAnswer
+      isVerified: parseInt(userAnswer) === prev.correctAnswer,
     }));
   };
 
+  // Form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    // Trim input values
+    setError(""); // Clear any previous errors
+
+    // Trim input values (optional)
     const trimmedData = {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
@@ -97,64 +102,64 @@ export default function Signup() {
       password: formData.password,
       confirmPassword: formData.confirmPassword,
     };
-  
+
     // Validation patterns
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Updated pattern: at least 8 characters, one uppercase, one lowercase, one number, one special char
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-  
+
     // Validate required fields
     for (const [key, value] of Object.entries(trimmedData)) {
       if (!value) {
-        alert(`Please fill in the ${key.replace(/([A-Z])/g, " $1")}`);
+        setError(`Please fill in the ${key.replace(/([A-Z])/g, " $1")}`);
         return;
       }
     }
-  
+
     // Validate email format
     if (!emailRegex.test(trimmedData.email)) {
-      alert("Please enter a valid email address!");
+      setError("Please enter a valid email address!");
       return;
     }
-  
+
     // Validate password format
     if (!passwordRegex.test(trimmedData.password)) {
-      alert(
+      setError(
         "Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character!"
       );
       return;
     }
-  
+
     // Check password confirmation
     if (trimmedData.password !== trimmedData.confirmPassword) {
-      alert("Passwords do not match!");
+      setError("Passwords do not match!");
       return;
     }
-  
+
     // Validate captcha
     if (!captcha.isVerified) {
-      alert("Please complete the captcha verification!");
+      setError("Please complete the captcha verification!");
       return;
     }
-  
+
+    // All validations passed - send data to backend
     try {
       const response = await axios.post("http://localhost:5000/api/auth/signup", {
         firstName: trimmedData.firstName,
         lastName: trimmedData.lastName,
         email: trimmedData.email,
         gender: trimmedData.gender,
-        dob: trimmedData.dob,
+        dob: trimmedData.dob, // sending date of birth as an ISO string
         password: trimmedData.password,
       });
-  
       console.log(response.data);
       navigate("/login");
     } catch (error) {
       console.error("Signup error:", error.response?.data);
-      alert(`Signup failed: ${error.response?.data?.error || "Unexpected error"}`);
+      setError(error.response?.data?.error || "Unexpected error occurred during signup");
     }
   };
-  
 
   return (
     <div className="grid grid-cols-6 gap-4 min-h-screen items-center">
@@ -164,6 +169,13 @@ export default function Signup() {
           <p className="text-[#94A3B8] mb-8 text-base">
             Enter your details to create a new account and get started
           </p>
+
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
