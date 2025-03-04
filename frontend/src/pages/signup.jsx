@@ -29,8 +29,11 @@ export default function Signup() {
     gender: "",
     dob: "",
     password: "",
-    confirmPassword: "",
+    confirmPassword: ""
   });
+
+  // State for password strength
+  const [passwordStrength, setPasswordStrength] = useState("");
 
   // Error state for validation messages
   const [error, setError] = useState("");
@@ -62,7 +65,7 @@ export default function Signup() {
       challenge: `${num1} ${operator} ${num2} = ?`,
       correctAnswer,
       userAnswer: "",
-      isVerified: false,
+      isVerified: false
     };
   }
 
@@ -70,6 +73,24 @@ export default function Signup() {
   useEffect(() => {
     setCaptcha(generateCaptcha());
   }, []);
+
+  // Update password strength when the password changes
+  useEffect(() => {
+    setPasswordStrength(computePasswordStrength(formData.password));
+  }, [formData.password]);
+
+  // Function to compute password strength
+  const computePasswordStrength = (password) => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[@$!%*#?&]/.test(password)) score++;
+    if (score <= 2) return "Weak";
+    if (score <= 4) return "Medium";
+    return "Strong";
+  };
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -83,14 +104,14 @@ export default function Signup() {
     setCaptcha((prev) => ({
       ...prev,
       userAnswer,
-      isVerified: parseInt(userAnswer) === prev.correctAnswer,
+      isVerified: parseInt(userAnswer) === prev.correctAnswer
     }));
   };
 
   // Form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear any previous errors
+    setError(""); // Clear previous error
 
     // Trim input values (optional)
     const trimmedData = {
@@ -105,7 +126,7 @@ export default function Signup() {
 
     // Validation patterns
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // Updated pattern: at least 8 characters, one uppercase, one lowercase, one number, one special char
+    // At least 8 characters, one uppercase, one lowercase, one number, one special character
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
@@ -140,6 +161,12 @@ export default function Signup() {
     // Validate captcha
     if (!captcha.isVerified) {
       setError("Please complete the captcha verification!");
+      return;
+    }
+
+    // Validate Date of Birth
+    if (!trimmedData.dob) {
+      setError("Please select your Date of Birth!");
       return;
     }
 
@@ -282,6 +309,28 @@ export default function Signup() {
               className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8]"
               required
             />
+
+            {/* Password Strength Indicator */}
+            {formData.password && (
+              <div className="text-left text-sm">
+                Password Strength:{" "}
+                <span
+                  className={
+                    formData.password.length < 8
+                      ? "text-red-500"
+                      : formData.password.length < 12
+                      ? "text-yellow-500"
+                      : "text-green-500"
+                  }
+                >
+                  {formData.password.length < 8
+                    ? "Weak"
+                    : formData.password.length < 12
+                    ? "Medium"
+                    : "Strong"}
+                </span>
+              </div>
+            )}
 
             <Input
               type="password"
