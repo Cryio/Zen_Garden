@@ -21,13 +21,16 @@ export default function Signup() {
     confirmPassword: '',
   });
 
-// Generate a CAPTCHA
-const generateCaptcha = () => {
+  // Captcha state
+  const [captcha, setCaptcha] = useState(generateCaptcha());
+
+  // Generate a complex CAPTCHA
+  function generateCaptcha() {
     const num1 = Math.floor(Math.random() * 20) + 1;
     const num2 = Math.floor(Math.random() * 20) + 1;
     const operators = ["+", "-", "*"];
     const operator = operators[Math.floor(Math.random() * operators.length)];
-  
+
     let correctAnswer;
     switch (operator) {
       case "+":
@@ -39,41 +42,39 @@ const generateCaptcha = () => {
       case "*":
         correctAnswer = num1 * num2;
         break;
+      default:
+        correctAnswer = num1 + num2;
     }
-  
-    // Generate a random alphanumeric string (e.g., 'A1B3C')
-    const randomString = Math.random().toString(36).substring(2, 7).toUpperCase();
-  
+
     return {
-      challenge: `${randomString} | ${num1} ${operator} ${num2} = ?`,
+      challenge: `${num1} ${operator} ${num2} = ?`,
       correctAnswer,
       userAnswer: "",
       isVerified: false,
     };
+  }
+
+  // Refresh captcha on mount
+  useEffect(() => {
+    setCaptcha(generateCaptcha());
+  }, []);
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
-  export default function Signup() {
-    const [captcha, setCaptcha] = useState(generateCaptcha());
-    const [formData, setFormData] = useState({});
-  
-    useEffect(() => {
-      setCaptcha(generateCaptcha());
-    }, []);
-  
-    const handleChange = (e) => {
-      const { name, value } = e.target;
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-  
-    const handleCaptchaChange = (e) => {
-      const userAnswer = e.target.value;
-      setCaptcha((prev) => ({
-        ...prev,
-        userAnswer,
-        isVerified: parseInt(userAnswer) === prev.correctAnswer,
-      }));
-    };
-  
+
+  // Handle captcha input change
+  const handleCaptchaChange = (e) => {
+    const userAnswer = e.target.value;
+    setCaptcha(prev => ({
+      ...prev,
+      userAnswer,
+      isVerified: parseInt(userAnswer) === prev.correctAnswer,
+    }));
+  };
+
   // Form submission handler
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -224,7 +225,7 @@ const generateCaptcha = () => {
               <Button 
                 type="button" 
                 variant="ghost" 
-                onClick={generateCaptcha}
+                onClick={() => setCaptcha(generateCaptcha())}
                 className="text-[#94A3B8] hover:bg-[rgba(126,34,206,0.1)]"
               >
                 Refresh
