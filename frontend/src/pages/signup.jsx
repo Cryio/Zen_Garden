@@ -19,6 +19,7 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 // Helper functions using local date values
 function pad(n) {
@@ -36,7 +37,7 @@ function formatLocalDateToISO(d) {
 export default function Signup() {
   const navigate = useNavigate();
 
-  // Form state (dob is stored as ISO string, e.g. "2025-03-05")
+  // Form state (dob stored as ISO string)
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -57,6 +58,10 @@ export default function Signup() {
   // Refs for the gradient overlay and container (for border glow)
   const gradientOverlayRef = useRef(null);
   const containerRef = useRef(null);
+
+  // State for toggling visibility of both password fields
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Generate a complex CAPTCHA
   function generateCaptcha() {
@@ -161,6 +166,7 @@ export default function Signup() {
       gradientOverlayRef.current.style.background = 'none';
     }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -230,7 +236,8 @@ export default function Signup() {
     } catch (error) {
       console.error("Signup error:", error.response?.data);
       setError(
-        error.response?.data?.error || "Unexpected error occurred during signup"
+        error.response?.data?.error ||
+          "Unexpected error occurred during signup"
       );
     }
   };
@@ -247,14 +254,9 @@ export default function Signup() {
         <div
           ref={gradientOverlayRef}
           className="absolute inset-0 pointer-events-none rounded-2xl z-0 transition-all duration-300"
-          style={{ 
-            opacity: 0,
-            background: 'none'
-          }}
+          style={{ opacity: 0, background: "none" }}
         />
-        {/* Form content */}
         <div className="relative z-10 text-white text-center">
-          {/* Rest of the form remains the same as in the original code */}
           <h1 className="text-4xl font-bold mb-4 text-[#E0AAFF]">Sign Up</h1>
           <p className="text-[#94A3B8] mb-8 text-base">
             Enter your details to create a new account and get started
@@ -319,9 +321,7 @@ export default function Signup() {
                     <DatePicker
                       value={formData.dob ? new Date(formData.dob) : null}
                       onChange={(newDate) => {
-                        const iso = newDate
-                          ? formatLocalDateToISO(newDate)
-                          : "";
+                        const iso = newDate ? formatLocalDateToISO(newDate) : "";
                         setFormData((prev) => ({ ...prev, dob: iso }));
                       }}
                     />
@@ -362,15 +362,49 @@ export default function Signup() {
               </Select>
             </div>
 
-            <Input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8]"
-              required
-            />
+            {/* Password field with visibility toggle */}
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                onFocus={() => {}}
+                onBlur={() => {}}
+                className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-white"
+                style={{ background: "none", border: "none" }}
+              >
+                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </button>
+            </div>
+
+            {/* Confirm Password field with its own toggle */}
+            <div className="relative">
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-white"
+                style={{ background: "none", border: "none" }}
+              >
+                {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </button>
+            </div>
 
             {formData.password && (
               <div className="text-left text-sm">
@@ -392,16 +426,6 @@ export default function Signup() {
                 </span>
               </div>
             )}
-
-            <Input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8]"
-              required
-            />
 
             <div className="bg-[rgba(126,34,206,0.2)] p-3 rounded flex items-center justify-between">
               <span className="text-white">{captcha.challenge}</span>
