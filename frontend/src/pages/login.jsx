@@ -37,7 +37,7 @@ function formatLocalDateToISO(d) {
 const inputClass =
   "bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] pr-10";
 const containerClass =
-  "col-span-4 col-start-2 w-full max-w-md relative bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border-4 border-[rgba(95,30,151,0.2)] rounded-3xl shadow-2xl p-8 transition-all duration-300";
+  "col-span-4 col-start-2 w-full max-w-5xl relative bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border-4 border-[rgba(95,30,151,0.2)] rounded-3xl shadow-2xl p-20 transition-all duration-300";
 const overlayClass =
   "absolute inset-0 pointer-events-none rounded-2xl z-0 transition-all duration-300";
 
@@ -132,7 +132,7 @@ export default function Login() {
   };
 
   return (
-    <div className="grid grid-cols-6 gap-4 min-h-screen items-center">
+    <div className="grid grid-cols-6 gap-4 min-h-screen items-center px-4">
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
@@ -144,20 +144,20 @@ export default function Login() {
           className={overlayClass}
           style={{ opacity: 0, background: "none" }}
         />
-        <div className="relative z-10 text-white text-center">
+        <div className="relative z-10 text-white text-center max-w-lg mx-auto">
           {/* Render header icons (stacked cat icons that toggle based on password focus) */}
           <HeaderIcons isFocused={isPasswordFocused} />
-          <h1 className="text-4xl font-bold mb-4 text-[#E0AAFF]">Login</h1>
-          <p className="text-[#94A3B8] mb-8 text-base">
+          <h1 className="text-5xl font-bold mb-6 text-[#E0AAFF]">Login</h1>
+          <p className="text-[#94A3B8] mb-10 text-lg">
             Enter your email and password to log in
           </p>
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive" className="mb-6">
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <Input
               type="email"
               name="email"
@@ -179,23 +179,25 @@ export default function Login() {
             />
             <Button
               type="submit"
-              className="w-full bg-[#a600c8] hover:bg-[#6A1B9A] text-white h-12"
+              className="w-full bg-[#a600c8] hover:bg-[#6A1B9A] text-white h-14 text-lg"
             >
               Login
             </Button>
           </form>
-          <p className="text-[#94A3B8] mt-4 text-sm">
-            Create an account?{" "}
-            <a href="/signup" className="text-[#a600c8] hover:underline">
-              Sign Up
-            </a>
-          </p>  
-          <p className="text-[#94A3B8] mt-4 text-sm">
-            Forgot your password?{" "}
-            <a href="/forgot-password" className="text-[#a600c8] hover:underline">
-              Reset it
-            </a>
-          </p>
+          <div className="space-y-4 mt-6">
+            <p className="text-[#94A3B8] text-base">
+              Create an account?{" "}
+              <a href="/signup" className="text-[#a600c8] hover:underline">
+                Sign Up
+              </a>
+            </p>  
+            <p className="text-[#94A3B8] text-base">
+              Forgot your password?{" "}
+              <a href="/forgot-password" className="text-[#a600c8] hover:underline">
+                Reset it
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
