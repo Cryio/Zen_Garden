@@ -34,6 +34,16 @@ function formatLocalDateToISO(d) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+// Define your frequently used class names as variables
+const inputClass =
+  "bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] pr-10";
+const containerClass =
+  "col-span-4 col-start-2 w-full max-w-md relative bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border-4 border-[rgba(95,30,151,0.2)] rounded-3xl shadow-2xl p-8 transition-all duration-300";
+const selectTriggerClass =
+  "bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8]";
+const overlayClass =
+  "absolute inset-0 pointer-events-none rounded-2xl z-0 transition-all duration-300";
+
 export default function Signup() {
   const navigate = useNavigate();
 
@@ -58,7 +68,7 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Toggle state for header icons (cat icons or other) based on password field focus
+  // Toggle state for header icons based on password field focus
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   function generateCaptcha() {
@@ -131,28 +141,21 @@ export default function Signup() {
     setIsPasswordFocused(false);
   };
 
+  // Border glow and overlay effects
   const handleMouseMove = (event) => {
     const rect = containerRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
     if (containerRef.current) {
-      const borderGradient = `radial-gradient(800px circle at ${x}px ${y}px, 
-        rgba(160,32,240,0.5), 
-        rgba(160,32,240,0.2) 40%, 
-        transparent 70%)`;
+      const borderGradient = `radial-gradient(800px circle at ${x}px ${y}px, rgba(160,32,240,0.5), rgba(160,32,240,0.2) 40%, transparent 70%)`;
       containerRef.current.style.borderImage = `${borderGradient} 1 stretch`;
       containerRef.current.style.borderImageSlice = "1";
     }
 
     if (gradientOverlayRef.current) {
       gradientOverlayRef.current.style.opacity = 1;
-      gradientOverlayRef.current.style.background = `radial-gradient(
-        400px circle at ${x}px ${y}px, 
-        rgba(160,32,240,0.2), 
-        rgba(160,32,240,0.1) 50%, 
-        transparent 80%
-      )`;
+      gradientOverlayRef.current.style.background = `radial-gradient(400px circle at ${x}px ${y}px, rgba(160,32,240,0.2), rgba(160,32,240,0.1) 50%, transparent 80%)`;
     }
   };
 
@@ -249,15 +252,10 @@ export default function Signup() {
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="col-span-4 col-start-2 w-full max-w-md relative bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border-4 border-[rgba(95,30,151,0.2)] rounded-3xl shadow-2xl p-8 transition-all duration-300"
+        className={containerClass}
       >
-        <div
-          ref={gradientOverlayRef}
-          className="absolute inset-0 pointer-events-none rounded-2xl z-0 transition-all duration-300"
-          style={{ opacity: 0, background: "none" }}
-        />
+        <div ref={gradientOverlayRef} className={overlayClass} style={{ opacity: 0, background: "none" }} />
         <div className="relative z-10 text-white text-center">
-          {/* Render the stacked icons from a separate file */}
           <HeaderIcons isFocused={isPasswordFocused} />
           <h1 className="text-4xl font-bold mb-4 text-[#E0AAFF]">Sign Up</h1>
           <p className="text-[#94A3B8] mb-8 text-base">
@@ -277,7 +275,7 @@ export default function Signup() {
                 placeholder="First Name"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="bg-[rgba(126,34,206,0.2)] text-[#ffdee8] border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8]"
+                className={inputClass}
                 required
               />
               <Input
@@ -286,7 +284,7 @@ export default function Signup() {
                 placeholder="Last Name"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="bg-[rgba(126,34,206,0.2)] text-[#ffdee8] border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8]"
+                className={inputClass}
                 required
               />
             </div>
@@ -296,7 +294,7 @@ export default function Signup() {
               placeholder="Email"
               value={formData.email}
               onChange={handleChange}
-              className="bg-[rgba(126,34,206,0.2)] text-[#ffdee8] border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8]"
+              className={inputClass}
               required
             />
             <div className="grid grid-cols-2 gap-4">
@@ -307,11 +305,9 @@ export default function Signup() {
                       type="text"
                       name="dob"
                       placeholder="Date of Birth"
-                      value={
-                        formData.dob ? isoFormatDMY(new Date(formData.dob)) : ""
-                      }
+                      value={formData.dob ? isoFormatDMY(new Date(formData.dob)) : ""}
                       readOnly
-                      className="cursor-pointer bg-[rgba(126,34,206,0.2)] text-white border-none h-12 focus:ring-2 focus:ring-[#a600c8]"
+                      className={`${inputClass} cursor-pointer`}
                       required
                     />
                   </PopoverTrigger>
@@ -333,7 +329,7 @@ export default function Signup() {
                   setFormData((prev) => ({ ...prev, gender: value }))
                 }
               >
-                <SelectTrigger className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8]">
+                <SelectTrigger className={selectTriggerClass}>
                   <SelectValue placeholder="Gender" />
                 </SelectTrigger>
                 <SelectContent className="bg-[rgba(126,34,206,0.5)] backdrop-blur-lg border-none">
