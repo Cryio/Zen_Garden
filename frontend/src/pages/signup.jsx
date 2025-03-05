@@ -10,26 +10,26 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { FiEye, FiEyeOff, FiUser, FiMail } from "react-icons/fi";
+import HeaderIcons from "../components/HeaderIcons";
+import PasswordInput from "../components/PasswordInput";
+import CaptchaComponent from "../components/CaptchaComponent";
 
-// Helper functions using local date values
+// Helper functions
 function pad(n) {
   return n < 10 ? "0" + n : n;
 }
-
 function isoFormatDMY(d) {
   return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
 }
-
 function formatLocalDateToISO(d) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -37,7 +37,6 @@ function formatLocalDateToISO(d) {
 export default function Signup() {
   const navigate = useNavigate();
 
-  // Form state (dob stored as ISO string)
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -45,28 +44,23 @@ export default function Signup() {
     gender: "",
     dob: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
-
-  // State for password strength and error messages
   const [passwordStrength, setPasswordStrength] = useState("");
   const [error, setError] = useState("");
-
-  // Captcha state
   const [captcha, setCaptcha] = useState(generateCaptcha());
 
-  // Refs for gradient overlay and container (for border glow)
+  // Refs for border glow and overlay effects
   const gradientOverlayRef = useRef(null);
   const containerRef = useRef(null);
 
-  // State for toggling password visibility
+  // States for password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // State for toggling the stacked icons (based on password field focus)
+  // Toggle state for header icons (cat icons or other) based on password field focus
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
-  // Generate a complex CAPTCHA
   function generateCaptcha() {
     const num1 = Math.floor(Math.random() * 20) + 1;
     const num2 = Math.floor(Math.random() * 20) + 1;
@@ -90,16 +84,14 @@ export default function Signup() {
       challenge: `${num1} ${operator} ${num2} = ?`,
       correctAnswer,
       userAnswer: "",
-      isVerified: false
+      isVerified: false,
     };
   }
 
-  // Refresh captcha on mount
   useEffect(() => {
     setCaptcha(generateCaptcha());
   }, []);
 
-  // Update password strength when the password changes
   useEffect(() => {
     setPasswordStrength(computePasswordStrength(formData.password));
   }, [formData.password]);
@@ -126,11 +118,11 @@ export default function Signup() {
     setCaptcha((prev) => ({
       ...prev,
       userAnswer,
-      isVerified: parseInt(userAnswer) === prev.correctAnswer
+      isVerified: parseInt(userAnswer) === prev.correctAnswer,
     }));
   };
 
-  // Handlers to toggle password field focus state (for icon toggling)
+  // Use the same focus/blur handlers for both password fields
   const handlePasswordFocus = () => {
     setIsPasswordFocused(true);
   };
@@ -139,43 +131,40 @@ export default function Signup() {
     setIsPasswordFocused(false);
   };
 
-  // Enhanced mouse move handler to create both border glow and card hover effect
   const handleMouseMove = (event) => {
-    const rect = event.currentTarget.getBoundingClientRect();
+    const rect = containerRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    // Border glow effect
     if (containerRef.current) {
       const borderGradient = `radial-gradient(800px circle at ${x}px ${y}px, 
-      rgba(160,32,240,0.5), 
-      rgba(160,32,240,0.2) 40%, 
-      transparent 70%)`;
+        rgba(160,32,240,0.5), 
+        rgba(160,32,240,0.2) 40%, 
+        transparent 70%)`;
       containerRef.current.style.borderImage = `${borderGradient} 1 stretch`;
-      containerRef.current.style.borderImageSlice = '1';
+      containerRef.current.style.borderImageSlice = "1";
     }
 
-    // Card hover gradient overlay effect
     if (gradientOverlayRef.current) {
       gradientOverlayRef.current.style.opacity = 1;
       gradientOverlayRef.current.style.background = `radial-gradient(
         400px circle at ${x}px ${y}px, 
-        rgba(160,32,240,0.1), 
-        rgba(160,32,240,0.05) 50%, 
+        rgba(160,32,240,0.2), 
+        rgba(160,32,240,0.1) 50%, 
         transparent 80%
       )`;
     }
   };
 
-  // Modified mouse leave to reset both effects
   const handleMouseLeave = () => {
     if (containerRef.current) {
-      containerRef.current.style.borderImage = 'border';
-      containerRef.current.style.transition = 'border-image 1s ease-in-out';
+      containerRef.current.style.borderImage = "border";
+      containerRef.current.style.transition = "border-image 1s ease-in-out";
     }
     if (gradientOverlayRef.current) {
       gradientOverlayRef.current.style.opacity = 0;
-      gradientOverlayRef.current.style.background = 'none';
+      gradientOverlayRef.current.style.background = "none";
+      gradientOverlayRef.current.style.transition = "opacity 1s ease-in-out";
     }
   };
 
@@ -190,7 +179,7 @@ export default function Signup() {
       gender: formData.gender,
       dob: formData.dob,
       password: formData.password,
-      confirmPassword: formData.confirmPassword
+      confirmPassword: formData.confirmPassword,
     };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -240,7 +229,7 @@ export default function Signup() {
           email: trimmedData.email,
           gender: trimmedData.gender,
           dob: trimmedData.dob,
-          password: trimmedData.password
+          password: trimmedData.password,
         }
       );
       console.log(response.data);
@@ -262,40 +251,24 @@ export default function Signup() {
         onMouseLeave={handleMouseLeave}
         className="col-span-4 col-start-2 w-full max-w-md relative bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border-4 border-[rgba(95,30,151,0.2)] rounded-3xl shadow-2xl p-8 transition-all duration-300"
       >
-        {/* Gradient overlay with dynamic positioning */}
         <div
           ref={gradientOverlayRef}
           className="absolute inset-0 pointer-events-none rounded-2xl z-0 transition-all duration-300"
           style={{ opacity: 0, background: "none" }}
         />
         <div className="relative z-10 text-white text-center">
-          {/* Stacked icons container toggling based on password focus */}
-          <div className="relative w-12 h-12 mx-auto mb-4">
-            <div
-              className="absolute inset-0 transition-opacity duration-300"
-              style={{ opacity: isPasswordFocused ? 0 : 1 }}
-            >
-              <FiUser size={32} color="#E0AAFF" />
-            </div>
-            <div
-              className="absolute inset-0 transition-opacity duration-300"
-              style={{ opacity: isPasswordFocused ? 1 : 0 }}
-            >
-              <FiMail size={32} color="#E0AAFF" />
-            </div>
-          </div>
+          {/* Render the stacked icons from a separate file */}
+          <HeaderIcons isFocused={isPasswordFocused} />
           <h1 className="text-4xl font-bold mb-4 text-[#E0AAFF]">Sign Up</h1>
           <p className="text-[#94A3B8] mb-8 text-base">
             Enter your details to create a new account and get started
           </p>
-
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Input
@@ -317,7 +290,6 @@ export default function Signup() {
                 required
               />
             </div>
-
             <Input
               type="email"
               name="email"
@@ -327,7 +299,6 @@ export default function Signup() {
               className="bg-[rgba(126,34,206,0.2)] text-[#ffdee8] border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8]"
               required
             />
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Popover>
@@ -355,7 +326,6 @@ export default function Signup() {
                   </PopoverContent>
                 </Popover>
               </div>
-
               <Select
                 name="gender"
                 value={formData.gender}
@@ -388,51 +358,26 @@ export default function Signup() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Password field with visibility toggle and focus handlers */}
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                onFocus={handlePasswordFocus}
-                onBlur={handlePasswordBlur}
-                className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] pr-10"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-white"
-                style={{ background: "none", border: "none" }}
-              >
-                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-              </button>
-            </div>
-
-            {/* Confirm Password field with visibility toggle */}
-            <div className="relative">
-              <Input
-                type={showConfirmPassword ? "text" : "password"}
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] pr-10"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-white"
-                style={{ background: "none", border: "none" }}
-              >
-                {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-              </button>
-            </div>
-
+            <PasswordInput
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              show={showPassword}
+              toggleShow={() => setShowPassword(!showPassword)}
+              onFocus={handlePasswordFocus}
+              onBlur={handlePasswordBlur}
+            />
+            <PasswordInput
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              show={showConfirmPassword}
+              toggleShow={() => setShowConfirmPassword(!showConfirmPassword)}
+              onFocus={handlePasswordFocus}
+              onBlur={handlePasswordBlur}
+            />
             {formData.password && (
               <div className="text-left text-sm">
                 Password Strength:{" "}
@@ -453,26 +398,11 @@ export default function Signup() {
                 </span>
               </div>
             )}
-
-            <div className="bg-[rgba(126,34,206,0.2)] p-3 rounded flex items-center justify-between">
-              <span className="text-white">{captcha.challenge}</span>
-              <Input
-                type="text"
-                placeholder="Your Answer"
-                value={captcha.userAnswer}
-                onChange={handleCaptchaChange}
-                className="w-35 bg-[rgba(0,0,0,0.3)] text-[#a600c8] border-none h-10 text-center"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setCaptcha(generateCaptcha())}
-                className="text-[#94A3B8] hover:bg-[rgba(126,34,206,0.1)]"
-              >
-                Refresh
-              </Button>
-            </div>
-
+            <CaptchaComponent
+              captcha={captcha}
+              onChange={handleCaptchaChange}
+              refreshCaptcha={() => setCaptcha(generateCaptcha())}
+            />
             <Button
               type="submit"
               className="w-full bg-[#a600c8] hover:bg-[#6A1B9A] text-white h-12"
@@ -481,7 +411,6 @@ export default function Signup() {
               Create Account
             </Button>
           </form>
-
           <p className="text-[#94A3B8] mt-4 text-sm">
             Already have an account?{" "}
             <a href="/login" className="text-[#a600c8] ml-1 hover:underline">
