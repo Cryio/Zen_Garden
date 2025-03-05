@@ -19,7 +19,7 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiUser, FiMail } from "react-icons/fi";
 
 // Helper functions using local date values
 function pad(n) {
@@ -55,13 +55,16 @@ export default function Signup() {
   // Captcha state
   const [captcha, setCaptcha] = useState(generateCaptcha());
 
-  // Refs for the gradient overlay and container (for border glow)
+  // Refs for gradient overlay and container (for border glow)
   const gradientOverlayRef = useRef(null);
   const containerRef = useRef(null);
 
-  // State for toggling visibility of both password fields
+  // State for toggling password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // State for toggling the stacked icons (based on password field focus)
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   // Generate a complex CAPTCHA
   function generateCaptcha() {
@@ -125,6 +128,15 @@ export default function Signup() {
       userAnswer,
       isVerified: parseInt(userAnswer) === prev.correctAnswer
     }));
+  };
+
+  // Handlers to toggle password field focus state (for icon toggling)
+  const handlePasswordFocus = () => {
+    setIsPasswordFocused(true);
+  };
+
+  const handlePasswordBlur = () => {
+    setIsPasswordFocused(false);
   };
 
   // Enhanced mouse move handler to create both border glow and card hover effect
@@ -257,6 +269,21 @@ export default function Signup() {
           style={{ opacity: 0, background: "none" }}
         />
         <div className="relative z-10 text-white text-center">
+          {/* Stacked icons container toggling based on password focus */}
+          <div className="relative w-12 h-12 mx-auto mb-4">
+            <div
+              className="absolute inset-0 transition-opacity duration-300"
+              style={{ opacity: isPasswordFocused ? 0 : 1 }}
+            >
+              <FiUser size={32} color="#E0AAFF" />
+            </div>
+            <div
+              className="absolute inset-0 transition-opacity duration-300"
+              style={{ opacity: isPasswordFocused ? 1 : 0 }}
+            >
+              <FiMail size={32} color="#E0AAFF" />
+            </div>
+          </div>
           <h1 className="text-4xl font-bold mb-4 text-[#E0AAFF]">Sign Up</h1>
           <p className="text-[#94A3B8] mb-8 text-base">
             Enter your details to create a new account and get started
@@ -362,7 +389,7 @@ export default function Signup() {
               </Select>
             </div>
 
-            {/* Password field with visibility toggle */}
+            {/* Password field with visibility toggle and focus handlers */}
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
@@ -370,8 +397,8 @@ export default function Signup() {
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
-                onFocus={() => {}}
-                onBlur={() => {}}
+                onFocus={handlePasswordFocus}
+                onBlur={handlePasswordBlur}
                 className="bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] pr-10"
                 required
               />
@@ -385,7 +412,7 @@ export default function Signup() {
               </button>
             </div>
 
-            {/* Confirm Password field with its own toggle */}
+            {/* Confirm Password field with visibility toggle */}
             <div className="relative">
               <Input
                 type={showConfirmPassword ? "text" : "password"}
