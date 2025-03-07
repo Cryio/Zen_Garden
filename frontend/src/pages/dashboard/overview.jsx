@@ -1,94 +1,212 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Leaf, Trophy, Calendar, TrendingUp } from 'lucide-react';
+import { BentoGrid, BentoCard } from "@/components/ui/bento-grid";
+import { 
+  Flower2, 
+  Target, 
+  Calendar, 
+  LineChart, 
+  Trophy, 
+  Leaf, 
+  Clock, 
+  Star 
+} from 'lucide-react';
+import { Marquee } from "@/components/ui/marquee";
+import { cn } from "@/lib/utils";
+
+const achievements = [
+  {
+    name: "First Streak",
+    body: "Complete a habit for 7 days in a row",
+  },
+  {
+    name: "Garden Master",
+    body: "Unlock all garden features",
+  },
+  {
+    name: "Focus King",
+    body: "Accumulate 100 hours of focus time",
+  },
+  {
+    name: "Habit Hero",
+    body: "Complete 50 habits in a month",
+  },
+];
+
+const AnimatedBackground = ({ className }) => (
+  <div className={cn(
+    "absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent",
+    "opacity-0 group-hover/bento:opacity-100 transition-opacity duration-300",
+    className
+  )} />
+);
 
 export default function Overview() {
-  // Mock data for demonstration
-  const stats = [
-    { title: "Active Habits", value: "8", icon: Leaf, color: "text-green-500" },
-    { title: "Achievements", value: "12", icon: Trophy, color: "text-yellow-500" },
-    { title: "Current Streak", value: "5 days", icon: Calendar, color: "text-blue-500" },
-    { title: "Monthly Progress", value: "78%", icon: TrendingUp, color: "text-purple-500" }
-  ];
-
-  const recentActivity = [
-    { habit: "Morning Meditation", status: "Completed", time: "2 hours ago" },
-    { habit: "Read a Book", status: "Missed", time: "Yesterday" },
-    { habit: "Exercise", status: "Completed", time: "Yesterday" },
+  const features = [
+    {
+      title: "Daily Progress",
+      description: "Track your daily habit completion rate",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+            85%
+          </div>
+          <div className="text-sm text-green-500">+5% from yesterday</div>
+        </div>
+      ),
+      icon: <Flower2 className="h-6 w-6 text-primary" />,
+      className: "md:col-span-2",
+      background: (
+        <Marquee
+          pauseOnHover
+          className="absolute top-10 [--duration:20s] [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)]"
+        >
+          {achievements.map((achievement, idx) => (
+            <figure
+              key={idx}
+              className={cn(
+                "relative w-32 cursor-pointer overflow-hidden rounded-xl border p-4",
+                "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
+                "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
+                "transform-gpu blur-[1px] transition-all duration-300 ease-out hover:blur-none",
+              )}
+            >
+              <div className="flex flex-row items-center gap-2">
+                <div className="flex flex-col">
+                  <figcaption className="text-sm font-medium dark:text-white">
+                    {achievement.name}
+                  </figcaption>
+                </div>
+              </div>
+              <blockquote className="mt-2 text-xs">{achievement.body}</blockquote>
+            </figure>
+          ))}
+        </Marquee>
+      ),
+    },
+    {
+      title: "Active Habits",
+      description: "Number of habits you're currently tracking",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+            12
+          </div>
+          <div className="text-sm text-muted-foreground">7 day streak</div>
+        </div>
+      ),
+      icon: <Target className="h-6 w-6 text-primary" />,
+      background: <AnimatedBackground />,
+    },
+    {
+      title: "Weekly Overview",
+      description: "Your habit completion for the week",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+            92%
+          </div>
+          <div className="text-sm text-green-500">+2% from last week</div>
+        </div>
+      ),
+      icon: <Calendar className="h-6 w-6 text-primary" />,
+      background: (
+        <Calendar
+          mode="single"
+          selected={new Date()}
+          className="absolute right-0 top-10 origin-top scale-75 rounded-md border transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)] group-hover:scale-90"
+        />
+      ),
+    },
+    {
+      title: "Monthly Analytics",
+      description: "Detailed insights and trends",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+            78%
+          </div>
+          <div className="text-sm text-muted-foreground">Monthly average</div>
+        </div>
+      ),
+      icon: <LineChart className="h-6 w-6 text-primary" />,
+      className: "md:col-span-2",
+      background: <AnimatedBackground />,
+    },
+    {
+      title: "Achievements",
+      description: "Milestones and badges earned",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+            8
+          </div>
+          <div className="text-sm text-yellow-500">2 new this month</div>
+        </div>
+      ),
+      icon: <Trophy className="h-6 w-6 text-primary" />,
+      background: <AnimatedBackground />,
+    },
+    {
+      title: "Garden Status",
+      description: "Your Zen Garden progress",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+            Level 5
+          </div>
+          <div className="text-sm text-green-500">3 new flowers</div>
+        </div>
+      ),
+      icon: <Leaf className="h-6 w-6 text-primary" />,
+      background: <AnimatedBackground />,
+    },
+    {
+      title: "Focus Time",
+      description: "Time spent on habits today",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+            2.5h
+          </div>
+          <div className="text-sm text-muted-foreground">Daily average</div>
+        </div>
+      ),
+      icon: <Clock className="h-6 w-6 text-primary" />,
+      className: "md:col-span-2",
+      background: <AnimatedBackground />,
+    },
+    {
+      title: "Best Streak",
+      description: "Longest habit streak",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+            30d
+          </div>
+          <div className="text-sm text-green-500">Personal best</div>
+        </div>
+      ),
+      icon: <Star className="h-6 w-6 text-primary" />,
+      background: <AnimatedBackground />,
+    },
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Welcome Section */}
+    <div className="space-y-8 animate-slide-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, User!</h1>
-          <p className="text-muted-foreground">Here's your habit tracking overview</p>
+          <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+          <p className="text-muted-foreground">Welcome back! Here's your progress summary</p>
         </div>
-        <Button>Add New Habit</Button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
+      <BentoGrid>
+        {features.map((feature, i) => (
+          <BentoCard
+            key={i}
+            {...feature}
+          />
         ))}
-      </div>
-
-      {/* Garden Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Garden Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span>Current Garden Level</span>
-              <span className="font-bold">Level 3</span>
-            </div>
-            <Progress value={65} />
-            <p className="text-sm text-muted-foreground">
-              235 points until next level
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{activity.habit}</p>
-                  <p className="text-sm text-muted-foreground">{activity.time}</p>
-                </div>
-                <span className={`text-sm ${
-                  activity.status === "Completed" ? "text-green-500" : "text-red-500"
-                }`}>
-                  {activity.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      </BentoGrid>
     </div>
   );
 } 

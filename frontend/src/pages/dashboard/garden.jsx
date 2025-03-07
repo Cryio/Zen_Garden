@@ -3,15 +3,79 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Leaf, Star, Trophy } from 'lucide-react';
+import { BentoGrid, BentoCard } from "@/components/ui/bento-grid";
+import { Leaf, Star, Trophy, Flower2, Target, Calendar } from 'lucide-react';
 import DashboardLayout from './layout';
 
 export default function Garden() {
   // Mock data for garden achievements
   const achievements = [
-    { name: "Early Bird", description: "Complete morning routine for 7 days", progress: 5, total: 7, icon: <Star className="w-4 h-4" /> },
-    { name: "Green Thumb", description: "Grow 10 flowers in your garden", progress: 8, total: 10, icon: <Leaf className="w-4 h-4" /> },
-    { name: "Consistency King", description: "30-day streak", progress: 12, total: 30, icon: <Trophy className="w-4 h-4" /> },
+    {
+      title: "Early Bird",
+      description: "Complete morning routine for 7 days",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold">5/7</div>
+          <div className="text-sm text-yellow-500">In Progress</div>
+        </div>
+      ),
+      icon: <Star className="h-4 w-4 text-primary" />,
+    },
+    {
+      title: "Green Thumb",
+      description: "Grow 10 flowers in your garden",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold">8/10</div>
+          <div className="text-sm text-green-500">Almost there!</div>
+        </div>
+      ),
+      icon: <Leaf className="h-4 w-4 text-primary" />,
+    },
+    {
+      title: "Consistency King",
+      description: "30-day streak",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold">12/30</div>
+          <div className="text-sm text-muted-foreground">Long way to go</div>
+        </div>
+      ),
+      icon: <Trophy className="h-4 w-4 text-primary" />,
+    },
+    {
+      title: "Garden Master",
+      description: "Unlock all garden features",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold">3/5</div>
+          <div className="text-sm text-blue-500">In Progress</div>
+        </div>
+      ),
+      icon: <Flower2 className="h-4 w-4 text-primary" />,
+    },
+    {
+      title: "Habit Hero",
+      description: "Complete 50 habits in a month",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold">32/50</div>
+          <div className="text-sm text-green-500">On track</div>
+        </div>
+      ),
+      icon: <Target className="h-4 w-4 text-primary" />,
+    },
+    {
+      title: "Time Master",
+      description: "Maintain a 90% completion rate for 2 weeks",
+      header: (
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold">85%</div>
+          <div className="text-sm text-yellow-500">Almost there</div>
+        </div>
+      ),
+      icon: <Calendar className="h-4 w-4 text-primary" />,
+    },
   ];
 
   // Mock data for garden items
@@ -109,32 +173,18 @@ export default function Garden() {
         {/* Achievements */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Garden Achievements</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {achievements.map((achievement, index) => (
-              <Card key={index} className="p-4 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                    {achievement.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{achievement.name}</h3>
-                    <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-all"
-                      style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
-                    />
-                  </div>
-                  <div className="text-sm text-muted-foreground text-right">
-                    {achievement.progress}/{achievement.total}
-                  </div>
-                </div>
-              </Card>
+          <BentoGrid className="px-4">
+            {achievements.map((achievement, i) => (
+              <BentoCard
+                key={i}
+                title={achievement.title}
+                description={achievement.description}
+                header={achievement.header}
+                icon={achievement.icon}
+                className={i === 3 ? "md:col-span-2" : ""}
+              />
             ))}
-          </div>
+          </BentoGrid>
         </div>
       </div>
     </DashboardLayout>
