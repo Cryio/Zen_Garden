@@ -4,6 +4,7 @@ import Signup from './pages/signup';
 import ForgotPassword from './pages/ForgotPassword';
 import NotFound from './pages/NotFound';
 import DashboardLayout from './components/DashboardLayout';
+import LandingPage from './components/LandingPage';
 
 // Import dashboard pages
 import Overview from './pages/dashboard/overview';
@@ -18,7 +19,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

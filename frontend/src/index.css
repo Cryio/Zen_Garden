@@ -4,59 +4,32 @@
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
   color-scheme: dark;
   color: oklch(0% 0.0052 301);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-a {
-  font-weight: 500;
-  color: oklch(0.5 0.3 320); /* Vibrant purple */
-  text-decoration: inherit;
+
+@layer base {
+  body {
+    @apply m-0 grid place-items-center min-w-[320px] min-h-screen;
+  }
+  
+  a {
+    @apply font-medium text-purple-500 no-underline hover:text-purple-400;
+  }
+  
+  h1 {
+    @apply text-5xl leading-tight text-purple-100;
+  }
+  
+  button {
+    @apply rounded-lg border border-purple-800 px-5 py-2.5 text-base font-medium 
+           bg-purple-900/20 text-purple-100 cursor-pointer transition-colors
+           hover:border-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50;
+  }
 }
-a:hover {
-  color: oklch(0.6 0.35 320); /* Slightly lighter purple */
-}
-body {
-  margin: 0;
-  display: grid;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-  color: oklch(0.9 0.05 320); /* Light purple-white */
-}
-button {
-  border-radius: 8px;
-  border: 1px solid oklch(0.25 0.2 320); /* Dark purple border */
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: oklch(0.15 0.15 320); /* Slightly lighter black with purple hint */
-  color: oklch(0.9 0.05 320); /* Light purple-white */
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: oklch(0.5 0.3 320); /* Vibrant purple */
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto oklch(0.5 0.3 320 / 0.5); /* Purple focus ring with some transparency */
-}
+
 .svg-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  pointer-events: none;
+  @apply fixed inset-0 w-full h-full -z-10 pointer-events-none;
 }
