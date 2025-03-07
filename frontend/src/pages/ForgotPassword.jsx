@@ -6,6 +6,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import HeaderIcons from "../components/HeaderIcons";
+import AnimatedBackground from "../components/AnimatedBackground";
 
 // Frequently used class names as variables
 const inputClass =
@@ -81,7 +82,22 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="grid grid-cols-6 gap-4 min-h-screen items-center">
+    <div className="min-h-screen grid grid-cols-6 gap-4 items-center px-4 relative">
+      <AnimatedBackground />
+      <style jsx>{`
+        a {
+          font-weight: 500;
+          color: #a600c8;
+          text-decoration: inherit;
+        }
+        a:hover {
+          color: #6A1B9A;
+        }
+        button:focus,
+        button:focus-visible {
+          outline: 4px auto rgba(160,32,240,0.5);
+        }
+      `}</style>
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
