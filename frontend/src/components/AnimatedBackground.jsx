@@ -18,8 +18,8 @@ export default function AnimatedBackground() {
       svg.innerHTML = `
         <defs>
           <linearGradient id="backgroundGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#0A0E1B" stop-opacity="1"/>
-            <stop offset="100%" stop-color="#1A0B2E" stop-opacity="1"/>
+            <stop offset="0%" stop-color="rgba(28, 25, 23, 1)" stop-opacity="1"/>
+            <stop offset="100%" stop-color="rgba(41, 37, 36, 1)" stop-opacity="1"/>
           </linearGradient>
         
           <filter id="softBlur">
@@ -53,9 +53,9 @@ export default function AnimatedBackground() {
         <!-- Curved Animated Paths -->
         <g filter="url(#softBlur)">
           ${[
-            { color: "rgba(126, 34, 206, 0.3)", amplitude: 50, frequency: 0.002, speed: 8 },
-            { color: "rgba(186, 85, 211, 0.2)", amplitude: 40, frequency: 0.0015, speed: 10 },
-            { color: "rgba(147, 112, 219, 0.15)", amplitude: 30, frequency: 0.001, speed: 12 }
+            { color: "rgba(239, 68, 68, 0.3)", amplitude: 50, frequency: 0.002, speed: 8 },
+            { color: "rgba(248, 113, 113, 0.2)", amplitude: 40, frequency: 0.0015, speed: 10 },
+            { color: "rgba(252, 165, 165, 0.15)", amplitude: 30, frequency: 0.001, speed: 12 }
           ].map((pathConfig, index) => `
             <path
               d="M-100 ${height/2} 
@@ -87,7 +87,7 @@ export default function AnimatedBackground() {
               y1="-50" 
               x2="${width * position}" 
               y2="${height + 50}" 
-              stroke="rgba(138, 43, 226, ${0.1 + index * 0.05})" 
+              stroke="rgba(248, 113, 113, ${0.1 + index * 0.05})" 
               stroke-width="0.5"
             >
               <animateTransform
@@ -105,9 +105,9 @@ export default function AnimatedBackground() {
         <!-- Wavy Layers -->
         <g opacity="0.4">
           ${[
-            { color: "rgba(186, 85, 211, 0.1)", yOffset: 0.7, duration: 15 },
-            { color: "rgba(147, 112, 219, 0.15)", yOffset: 0.8, duration: 18 },
-            { color: "rgba(138, 43, 226, 0.2)", yOffset: 0.9, duration: 20 }
+            { color: "rgba(252, 165, 165, 0.1)", yOffset: 0.7, duration: 15 },
+            { color: "rgba(248, 113, 113, 0.15)", yOffset: 0.8, duration: 18 },
+            { color: "rgba(239, 68, 68, 0.2)", yOffset: 0.9, duration: 20 }
           ].map((waveConfig, index) => `
             <path
               d="M0 ${height * waveConfig.yOffset} 

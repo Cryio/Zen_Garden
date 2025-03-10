@@ -49,7 +49,7 @@ export default function Overview() {
           <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             85%
           </div>
-          <div className="text-sm text-green-500">+5% from yesterday</div>
+          <div className="text-sm text-wax-flower-500">+5% from yesterday</div>
         </div>
       ),
       icon: <Flower2 className="h-6 w-6 text-primary" />,
@@ -64,8 +64,8 @@ export default function Overview() {
               key={idx}
               className={cn(
                 "relative w-32 cursor-pointer overflow-hidden rounded-xl border p-4",
-                "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
-                "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
+                "border-wax-flower-950/10 bg-wax-flower-950/1 hover:bg-wax-flower-950/5",
+                "dark:border-wax-flower-50/10 dark:bg-wax-flower-50/10 dark:hover:bg-wax-flower-50/15",
                 "transform-gpu blur-[1px] transition-all duration-300 ease-out hover:blur-none",
               )}
             >
@@ -90,7 +90,7 @@ export default function Overview() {
           <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             12
           </div>
-          <div className="text-sm text-muted-foreground">7 day streak</div>
+          <div className="text-sm text-wax-flower-500">7 day streak</div>
         </div>
       ),
       icon: <Target className="h-6 w-6 text-primary" />,
@@ -104,7 +104,7 @@ export default function Overview() {
           <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             92%
           </div>
-          <div className="text-sm text-green-500">+2% from last week</div>
+          <div className="text-sm text-wax-flower-500">+2% from last week</div>
         </div>
       ),
       icon: <Calendar className="h-6 w-6 text-primary" />,
@@ -124,7 +124,7 @@ export default function Overview() {
           <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             78%
           </div>
-          <div className="text-sm text-muted-foreground">Monthly average</div>
+          <div className="text-sm text-wax-flower-500">Monthly average</div>
         </div>
       ),
       icon: <LineChart className="h-6 w-6 text-primary" />,
@@ -139,7 +139,7 @@ export default function Overview() {
           <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             8
           </div>
-          <div className="text-sm text-yellow-500">2 new this month</div>
+          <div className="text-sm text-wax-flower-500">2 new this month</div>
         </div>
       ),
       icon: <Trophy className="h-6 w-6 text-primary" />,
@@ -153,7 +153,7 @@ export default function Overview() {
           <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             Level 5
           </div>
-          <div className="text-sm text-green-500">3 new flowers</div>
+          <div className="text-sm text-wax-flower-500">3 new flowers</div>
         </div>
       ),
       icon: <Leaf className="h-6 w-6 text-primary" />,
@@ -167,7 +167,7 @@ export default function Overview() {
           <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             2.5h
           </div>
-          <div className="text-sm text-muted-foreground">Daily average</div>
+          <div className="text-sm text-wax-flower-500">Daily average</div>
         </div>
       ),
       icon: <Clock className="h-6 w-6 text-primary" />,
@@ -182,7 +182,7 @@ export default function Overview() {
           <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             30d
           </div>
-          <div className="text-sm text-green-500">Personal best</div>
+          <div className="text-sm text-wax-flower-500">Personal best</div>
         </div>
       ),
       icon: <Star className="h-6 w-6 text-primary" />,
@@ -195,7 +195,7 @@ export default function Overview() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Welcome back! Here's your progress summary</p>
+          <p className="text-wax-flower-foreground">Welcome back! Here's your progress summary</p>
         </div>
       </div>
 

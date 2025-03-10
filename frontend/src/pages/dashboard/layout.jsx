@@ -48,7 +48,7 @@ export default function DashboardLayout() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden hover:bg-wax-flower-950/10 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950"
             onClick={() => setIsSidebarOpen(false)}
           >
             <Menu />
@@ -61,7 +61,7 @@ export default function DashboardLayout() {
             <Link
               key={link.path}
               to={link.path}
-              className={`sidebar-link ${location.pathname === link.path ? 'active' : ''}`}
+              className={`sidebar-link hover:bg-wax-flower-950/10 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950 ${location.pathname === link.path ? 'bg-wax-flower-950/20 text-wax-flower-500' : ''}`}
             >
               {link.icon}
               <span>{link.name}</span>
@@ -70,12 +70,12 @@ export default function DashboardLayout() {
         </nav>
 
         {/* Bottom Links */}
-        <div className="mt-auto pt-6 border-t border-muted-foreground/10">
+        <div className="mt-auto pt-6 border-t border-wax-flower-500/10">
           {bottomLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
-              className={`sidebar-link ${location.pathname === link.path ? 'active' : ''}`}
+              className={`sidebar-link hover:bg-wax-flower-950/10 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950 ${location.pathname === link.path ? 'bg-wax-flower-950/20 text-wax-flower-500' : ''}`}
             >
               {link.icon}
               <span>{link.name}</span>
@@ -89,7 +89,7 @@ export default function DashboardLayout() {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="md:hidden hover:bg-wax-flower-950/10 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950"
           onClick={() => setIsSidebarOpen(true)}
         >
           <Menu />
@@ -99,20 +99,28 @@ export default function DashboardLayout() {
           <Input
             type="search"
             placeholder="Search habits, achievements, or plants..."
-            className="max-w-md"
+            className="max-w-md bg-wax-flower-950/20 text-white border-none h-12 placeholder-wax-flower-400 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950"
           />
         </div>
 
         <div className="topbar-actions">
-          <Button variant="ghost" size="icon" className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative hover:bg-wax-flower-950/10 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950"
+          >
             <Bell />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full" />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-wax-flower-500 rounded-full" />
           </Button>
           <Avatar>
             <AvatarImage src="https://github.com/shadcn.png" />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
-          <Button variant="ghost" size="icon">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="hover:bg-wax-flower-950/10 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950"
+          >
             <LogOut />
           </Button>
         </div>

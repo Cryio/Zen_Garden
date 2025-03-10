@@ -38,17 +38,18 @@ function formatLocalDateToISO(d) {
 
 // Define your frequently used class names as variables
 const inputClass =
-  "bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] focus:ring-offset-0 pr-10 w-full";
+  "bg-wax-flower-950/20 text-wax-flower-200 border-none h-12 placeholder-wax-flower-200 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-200 pr-10 w-full";
 const containerClass =
-  "col-span-4 col-start-2 w-full max-w-2xl relative bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border-2 border-[rgba(95,30,151,0.2)] rounded-3xl shadow-2xl p-8 transition-all duration-300";
+  "col-span-4 col-start-2 w-full max-w-xl relative bg-wax-flower-950/5 backdrop-blur-xl border-2 border-wax-flower-800/20 rounded-3xl shadow-2xl p-8 transition-all duration-300";
 const selectTriggerClass =
-  "bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] focus:ring-offset-0 w-full";
+  "bg-wax-flower-950/20 text-wax-flower-200 border-none h-12 placeholder-wax-flower-200 focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-200 w-full";
 const buttonClass = 
-  "w-full bg-[#a600c8] hover:bg-[#6A1B9A] text-white h-12 font-medium transition-colors";
+  "w-full bg-wax-flower-500 hover:bg-wax-flower-600 text-white h-12 font-medium transition-colors focus:ring-2 focus:ring-wax-flower-500/50 focus:ring-offset-2 focus:ring-offset-wax-flower-950 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-wax-flower-500";
 const googleButtonClass = 
-  "w-full bg-white/5 hover:bg-white/10 text-white h-12 font-medium border-[rgba(126,34,206,0.2)] transition-colors";
+  "w-full bg-transparent hover:bg-wax-flower-950/10 text-white h-12 font-medium border border-wax-flower-500/20 hover:border-wax-flower-500/40 transition-all focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950";
 const overlayClass =
   "absolute inset-0 pointer-events-none rounded-3xl z-0 transition-all duration-300";
+const actionLinkClass = "text-wax-flower-500 hover:text-wax-flower-400 hover:underline transition-colors";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -154,14 +155,14 @@ export default function Signup() {
     const y = event.clientY - rect.top;
 
     if (containerRef.current) {
-      const borderGradient = `radial-gradient(800px circle at ${x}px ${y}px, rgba(160,32,240,0.5), rgba(160,32,240,0.2) 40%, transparent 70%)`;
+      const borderGradient = `radial-gradient(800px circle at ${x}px ${y}px, rgba(220, 38, 38, 0.7), rgba(185, 28, 28, 0.3) 40%, transparent 70%)`;
       containerRef.current.style.borderImage = `${borderGradient} 1 stretch`;
       containerRef.current.style.borderImageSlice = "1";
     }
 
     if (gradientOverlayRef.current) {
       gradientOverlayRef.current.style.opacity = 1;
-      gradientOverlayRef.current.style.background = `radial-gradient(400px circle at ${x}px ${y}px, rgba(160,32,240,0.2), rgba(160,32,240,0.1) 50%, transparent 80%)`;
+      gradientOverlayRef.current.style.background = `radial-gradient(400px circle at ${x}px ${y}px, rgba(220, 38, 38, 0.3), rgba(185, 28, 28, 0.1) 50%, transparent 80%)`;
     }
   };
 
@@ -258,23 +259,28 @@ export default function Signup() {
       <style jsx>{`
         a {
           font-weight: 500;
-          color: #a600c8;
+          color: var(--wax-flower-500);
           text-decoration: inherit;
           transition: color 0.2s ease;
         }
         a:hover {
-          color: #6A1B9A;
+          color: var(--wax-flower-600);
         }
         button:focus,
         button:focus-visible {
           outline: none;
-          ring: 2px;
-          ring-color: rgba(160,32,240,0.5);
-          ring-offset: 2px;
         }
         select:focus {
           outline: none;
-          box-shadow: 0 0 0 2px rgba(166,0,200,0.5);
+          box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
+        }
+        .datepicker-input:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
+        }
+        input:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
         }
       `}</style>
       <div
@@ -284,14 +290,14 @@ export default function Signup() {
         className={containerClass}
       >
         <div ref={gradientOverlayRef} className={overlayClass} style={{ opacity: 0, background: "none" }} />
-        <div className="relative z-10 text-white text-center">
+        <div className="relative z-10 text-wax-flower-200 text-center">
           <HeaderIcons isFocused={isPasswordFocused} />
-          <h1 className="text-4xl font-bold mb-4 text-[#E0AAFF]">Sign Up</h1>
-          <p className="text-[#94A3B8] mb-8 text-base">
+          <h1 className="text-4xl font-bold mb-4 text-wax-flower-200">Sign Up</h1>
+          <p className="text-wax-flower-400 mb-8 text-base">
             Enter your details to create a new account and get started
           </p>
           {error && (
-            <Alert variant="destructive" className="mb-6 bg-red-500/10 text-red-400 border-red-500/20">
+            <Alert variant="destructive" className="mb-6 bg-wax-flower-500/10 text-wax-flower-400 border-wax-flower-500/20">
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -337,11 +343,11 @@ export default function Signup() {
                         placeholder="Date of Birth"
                         value={formData.dob ? isoFormatDMY(new Date(formData.dob)) : ""}
                         readOnly
-                        className={`${inputClass} cursor-pointer`}
+                        className={`${inputClass} cursor-pointer focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2`}
                         required
                       />
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2 bg-[rgba(126,34,206,0.5)] backdrop-blur-lg border border-[rgba(126,34,206,0.3)] rounded-lg shadow-lg">
+                    <PopoverContent className="w-auto p-2 bg-wax-flower-950/50 backdrop-blur-lg border border-wax-flower-500/20 rounded-lg shadow-lg">
                       <DatePicker
                         value={formData.dob ? new Date(formData.dob) : null}
                         onChange={(newDate) => {
@@ -359,25 +365,25 @@ export default function Signup() {
                     setFormData((prev) => ({ ...prev, gender: value }))
                   }
                 >
-                  <SelectTrigger className={selectTriggerClass}>
+                  <SelectTrigger className={`${selectTriggerClass} focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2`}>
                     <SelectValue placeholder="Gender" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[rgba(126,34,206,0.5)] backdrop-blur-lg border-none">
+                  <SelectContent className="bg-wax-flower-950/50 backdrop-blur-lg border-wax-flower-500/20">
                     <SelectItem
                       value="male"
-                      className="hover:bg-[rgba(126,34,206,0.3)] focus:bg-[rgba(126,34,206,0.3)] text-white"
+                      className="hover:bg-wax-flower-500/20 focus:bg-wax-flower-500/20 text-wax-flower-200"
                     >
                       Male
                     </SelectItem>
                     <SelectItem
                       value="female"
-                      className="hover:bg-[rgba(126,34,206,0.3)] focus:bg-[rgba(126,34,206,0.3)] text-white"
+                      className="hover:bg-wax-flower-500/20 focus:bg-wax-flower-500/20 text-wax-flower-200"
                     >
                       Female
                     </SelectItem>
                     <SelectItem
                       value="other"
-                      className="hover:bg-[rgba(126,34,206,0.3)] focus:bg-[rgba(126,34,206,0.3)] text-white"
+                      className="hover:bg-wax-flower-500/20 focus:bg-wax-flower-500/20 text-wax-flower-200"
                     >
                       Other
                     </SelectItem>
@@ -405,7 +411,7 @@ export default function Signup() {
                 onBlur={handlePasswordBlur}
               />
               {formData.password && (
-                <div className="text-left text-sm">
+                <div className="text-left text-sm text-wax-flower-200">
                   Password Strength:{" "}
                   <span
                     className={
@@ -442,7 +448,7 @@ export default function Signup() {
                 <Separator className="w-full bg-[rgba(126,34,206,0.2)]" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[rgba(180,177,177,0.05)] px-2 text-[#94A3B8]">
+                <span className="bg-wax-flower-950/5 px-2 text-wax-flower-400">
                   Or continue with
                 </span>
               </div>
@@ -473,9 +479,9 @@ export default function Signup() {
               Continue with Google
             </Button>
           </form>
-          <p className="text-[#94A3B8] mt-6 text-sm">
+          <p className="text-wax-flower-400 mt-6 text-sm">
             Already have an account?{" "}
-            <a href="/login" className="text-[#a600c8] hover:underline">
+            <a href="/login" className={actionLinkClass}>
               Login
             </a>
           </p>

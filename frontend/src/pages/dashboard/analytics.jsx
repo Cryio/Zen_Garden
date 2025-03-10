@@ -60,15 +60,15 @@ export default function Analytics() {
                 {stat.title}
               </CardTitle>
               {stat.trend === "up" ? (
-                <TrendingUp className="h-4 w-4 text-green-500" />
+                <TrendingUp className="h-4 w-4 text-wax-flower-500" />
               ) : (
-                <TrendingDown className="h-4 w-4 text-red-500" />
+                <TrendingDown className="h-4 w-4 text-wax-flower-600" />
               )}
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground">
-                <span className={stat.trend === "up" ? "text-green-500" : "text-red-500"}>
+                <span className={stat.trend === "up" ? "text-wax-flower-500" : "text-wax-flower-600"}>
                   {stat.change}
                 </span>
                 {" "}

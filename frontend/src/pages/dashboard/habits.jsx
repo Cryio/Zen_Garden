@@ -61,7 +61,7 @@ export default function Habits() {
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
+                      <DropdownMenuItem className="text-wax-flower-600">
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>

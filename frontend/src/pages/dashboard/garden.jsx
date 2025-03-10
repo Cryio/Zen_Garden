@@ -16,7 +16,7 @@ export default function Garden() {
       header: (
         <div className="flex items-center justify-between">
           <div className="text-2xl font-bold">5/7</div>
-          <div className="text-sm text-yellow-500">In Progress</div>
+          <div className="text-sm text-wax-flower-500">In Progress</div>
         </div>
       ),
       icon: <Star className="h-4 w-4 text-primary" />,
@@ -27,7 +27,7 @@ export default function Garden() {
       header: (
         <div className="flex items-center justify-between">
           <div className="text-2xl font-bold">8/10</div>
-          <div className="text-sm text-green-500">Almost there!</div>
+          <div className="text-sm text-wax-flower-500">Almost there!</div>
         </div>
       ),
       icon: <Leaf className="h-4 w-4 text-primary" />,
@@ -49,7 +49,7 @@ export default function Garden() {
       header: (
         <div className="flex items-center justify-between">
           <div className="text-2xl font-bold">3/5</div>
-          <div className="text-sm text-blue-500">In Progress</div>
+          <div className="text-sm text-wax-flower-400">In Progress</div>
         </div>
       ),
       icon: <Flower2 className="h-4 w-4 text-primary" />,
@@ -60,7 +60,7 @@ export default function Garden() {
       header: (
         <div className="flex items-center justify-between">
           <div className="text-2xl font-bold">32/50</div>
-          <div className="text-sm text-green-500">On track</div>
+          <div className="text-sm text-wax-flower-500">On track</div>
         </div>
       ),
       icon: <Target className="h-4 w-4 text-primary" />,
@@ -71,7 +71,7 @@ export default function Garden() {
       header: (
         <div className="flex items-center justify-between">
           <div className="text-2xl font-bold">85%</div>
-          <div className="text-sm text-yellow-500">Almost there</div>
+          <div className="text-sm text-wax-flower-500">Almost there</div>
         </div>
       ),
       icon: <Calendar className="h-4 w-4 text-primary" />,
@@ -143,16 +143,16 @@ export default function Garden() {
                   <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        item.rarity === 'epic' ? 'bg-purple-500/20' :
-                        item.rarity === 'rare' ? 'bg-blue-500/20' :
-                        item.rarity === 'uncommon' ? 'bg-green-500/20' :
-                        'bg-gray-500/20'
+                        item.rarity === 'epic' ? 'bg-wax-flower-500/20' :
+                        item.rarity === 'rare' ? 'bg-wax-flower-400/20' :
+                        item.rarity === 'uncommon' ? 'bg-wax-flower-300/20' :
+                        'bg-wax-flower-200/20'
                       }`}>
                         <Leaf className={`w-6 h-6 ${
-                          item.rarity === 'epic' ? 'text-purple-500' :
-                          item.rarity === 'rare' ? 'text-blue-500' :
-                          item.rarity === 'uncommon' ? 'text-green-500' :
-                          'text-gray-500'
+                          item.rarity === 'epic' ? 'text-wax-flower-500' :
+                          item.rarity === 'rare' ? 'text-wax-flower-400' :
+                          item.rarity === 'uncommon' ? 'text-wax-flower-300' :
+                          'text-wax-flower-200'
                         }`} />
                       </div>
                       <div>

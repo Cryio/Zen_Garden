@@ -93,7 +93,7 @@ export default function Settings() {
       {/* Danger Zone */}
       <Card className="border-red-200">
         <CardHeader>
-          <CardTitle className="text-red-500">Danger Zone</CardTitle>
+          <CardTitle className="text-wax-flower-600">Danger Zone</CardTitle>
           <CardDescription>Irreversible actions</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
