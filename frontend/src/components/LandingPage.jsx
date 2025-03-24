@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const LandingPage = () => {
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-wax-flower-950 to-wax-flower-900 overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-b from-wax-flower-950/30 to-wax-flower-900/30 overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 bg-[url('/zen-pattern.svg')] opacity-5"></div>
       

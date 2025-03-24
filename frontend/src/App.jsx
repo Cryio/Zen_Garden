@@ -10,7 +10,6 @@ import LandingPage from './components/LandingPage';
 import Overview from './pages/dashboard/overview';
 import Garden from './pages/dashboard/garden';
 import Habits from './pages/dashboard/habits';
-import Calendar from './pages/dashboard/calendar';
 import Analytics from './pages/dashboard/analytics';
 import Settings from './pages/dashboard/settings';
 import Help from './pages/dashboard/help';
@@ -29,7 +28,6 @@ function App() {
           <Route index element={<Overview />} />
           <Route path="garden" element={<Garden />} />
           <Route path="habits" element={<Habits />} />
-          <Route path="calendar" element={<Calendar />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />

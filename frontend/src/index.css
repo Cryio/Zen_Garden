@@ -2,34 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  color-scheme: dark;
-  color: oklch(0% 0.0052 301);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 210 40% 98%;
+    --card: 0 0% 3%;
+    --card-foreground: 210 40% 98%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 7%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 0 0% 7%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 0 0% 7%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 0 0% 7%;
+    --input: 0 0% 7%;
+    --ring: 212.7 26.8% 83.9%;
+    --radius: 0.5rem;
+  }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+  }
 }
 
 @layer base {
+  * {
+    @apply border-border;
+  }
   body {
-    @apply m-0 grid place-items-center min-w-[320px] min-h-screen;
-  }
-  
-  a {
-    @apply font-medium text-purple-500 no-underline hover:text-purple-400;
-  }
-  
-  h1 {
-    @apply text-5xl leading-tight text-purple-100;
-  }
-  
-  button {
-    @apply rounded-lg border border-purple-800 px-5 py-2.5 text-base font-medium 
-           bg-purple-900/20 text-purple-100 cursor-pointer transition-colors
-           hover:border-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-500/50;
+    @apply bg-background text-foreground;
   }
 }
 
-.svg-background {
-  @apply fixed inset-0 w-full h-full -z-10 pointer-events-none;
+@layer components {
+  .btn-primary {
+    @apply rounded-lg border border-wax-flower-800 px-5 py-2.5 text-base font-medium 
+           bg-wax-flower-900/20 text-wax-flower-100 cursor-pointer transition-colors
+           hover:border-wax-flower-500 focus:outline-none focus:ring-4 focus:ring-wax-flower-500/50;
+  }
 }
