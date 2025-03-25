@@ -1,11 +1,18 @@
-import React, { useEffect, useRef, useState, Suspense } from 'react';
+import React, { useEffect, useRef, useState, Suspense, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment } from '@react-three/drei';
+import { Environment, Stats } from '@react-three/drei';
 import { Pane } from 'tweakpane';
 import { Grass } from './Grass';
+import { Patches } from './Patches';
 import { ParallaxCamera } from './ParallaxCamera';
 import { CustomCursor } from './CustomCursor';
 import * as THREE from 'three';
+
+// Grid configuration
+const GRID_SIZE = 8; // 8x8 grid
+const PATCH_SIZE = 4; // Size of each patch
+const BRICK_HEIGHT = 0.2;
+const BRICK_COLOR = '#8B4513';
 
 function LoadingFallback() {
   return (
@@ -15,11 +22,57 @@ function LoadingFallback() {
   );
 }
 
+function GardenPatch({ position, size, color }) {
+  const brickGeometry = new THREE.BoxGeometry(size, BRICK_HEIGHT, size);
+  const brickMaterial = new THREE.MeshPhongMaterial({
+    color: BRICK_COLOR,
+    shininess: 30,
+    specular: 0x333333
+  });
+
+  return (
+    <group position={position}>
+      {/* Brick perimeter */}
+      <mesh
+        geometry={brickGeometry}
+        material={brickMaterial}
+        position={[0, -0.1, 0]}
+      />
+      {/* Flower */}
+      <mesh position={[0, 0.1, 0]}>
+        <sphereGeometry args={[0.3, 16, 16]} />
+        <meshPhongMaterial
+          color={color}
+          shininess={100}
+          specular={0xffffff}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function GardenScene({ params }) {
   const sceneRef = useRef();
+  const groundRef = useRef();
   const mousePosition = useRef({ x: 0.5, y: 0.5 });
   const targetPosition = useRef(new THREE.Vector3(0, 0, 0));
   const currentPosition = useRef(new THREE.Vector3(0, 0, 0));
+
+  // Generate grid of patches
+  const patches = useMemo(() => {
+    const patches = [];
+    const offset = (GRID_SIZE * PATCH_SIZE) / 2;
+    
+    for (let i = 0; i < GRID_SIZE; i++) {
+      for (let j = 0; j < GRID_SIZE; j++) {
+        const x = (i * PATCH_SIZE) - offset;
+        const z = (j * PATCH_SIZE) - offset;
+        const color = `hsl(${(i * j * 360) / (GRID_SIZE * GRID_SIZE)}, 70%, 50%)`;
+        patches.push({ position: [x, 0, z], color });
+      }
+    }
+    return patches;
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (event) => {
@@ -50,41 +103,53 @@ function GardenScene({ params }) {
 
   useFrame((state, delta) => {
     if (mousePosition.current) {
-      const x = (mousePosition.current.x - 0.5) * 2; // -1 to 1
-      const y = (mousePosition.current.y - 0.5) * 2; // -1 to 1
+      const x = (mousePosition.current.x - 0.5) * 2;
+      const y = (mousePosition.current.y - 0.5) * 2;
       
-      // Scale the movement (more subtle values)
       targetPosition.current.set(
-        x * 0.2, // Subtle movement
-        y * 0.1, // Subtle movement
-        0       // No forward/backward movement
+        x * 0.2,
+        y * 0.1,
+        0
       );
     } else {
-      // Reset to default position when mouse is not available
       targetPosition.current.set(0, 0, 0);
     }
 
-    // Smooth interpolation
     currentPosition.current.lerp(targetPosition.current, delta * 1.5);
     sceneRef.current.position.copy(currentPosition.current);
+    
+    // Update ground position to follow camera (create infinite ground effect)
+    if (groundRef.current) {
+      const cameraPos = state.camera.position;
+      groundRef.current.position.x = cameraPos.x;
+      groundRef.current.position.z = cameraPos.z;
+    }
   });
 
   return (
     <>
       <group ref={sceneRef}>
-        {/* Ground */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[100, 100]} />
+        {/* Infinite Ground */}
+        <mesh 
+          ref={groundRef}
+          rotation={[-Math.PI / 2, 0, 0]} 
+          receiveShadow
+          position={[0, -0.01, 0]}
+        >
+          <planeGeometry args={[10000, 10000]} />
           <meshStandardMaterial 
             color={params.groundColor}
             roughness={params.groundRoughness}
             metalness={params.groundMetalness}
-            side={2}
+            side={THREE.DoubleSide}
           />
         </mesh>
 
         {/* Grass */}
         <Grass params={params} />
+
+        {/* Garden Patches */}
+        <Patches />
 
         {/* Lighting */}
         <ambientLight intensity={params.ambientIntensity} />
@@ -93,35 +158,13 @@ function GardenScene({ params }) {
           intensity={params.lightIntensity}
           castShadow
         />
-
-        {/* Flower */}
-        <group position={[0, 0, 0]}>
-          {/* Stem */}
-          <mesh castShadow>
-            <cylinderGeometry args={[0.1, 0.1, params.stemHeight, 8]} />
-            <meshStandardMaterial 
-              color={params.stemColor}
-              roughness={params.stemRoughness}
-              metalness={params.stemMetalness}
-            />
-          </mesh>
-          {/* Flower Head */}
-          <mesh position={[0, params.stemHeight, 0]} castShadow>
-            <sphereGeometry args={[params.flowerSize, 16, 16]} />
-            <meshStandardMaterial 
-              color={params.flowerColor}
-              roughness={params.flowerRoughness}
-              metalness={params.flowerMetalness}
-            />
-          </mesh>
-        </group>
       </group>
       <ParallaxCamera />
     </>
   );
 }
 
-function GardenCanvas({ params }) {
+function GardenCanvas({ params, showDebug }) {
   return (
     <Canvas
       shadows
@@ -130,14 +173,19 @@ function GardenCanvas({ params }) {
         alpha: true
       }}
       style={{ 
-        background: '#1a1a1a',
+        background: 'transparent',
         width: '100%',
         height: '100%',
         cursor: 'none' // Hide the cursor but allow mouse events
       }}
     >
       <GardenScene params={params} />
-      <Environment preset="sunset" background={false} />
+      <Environment 
+        files="/HDRI/wildflower_field_1k.hdr" 
+        background={true}
+        blur={0.3}
+        intensity={0.5}
+      />
     </Canvas>
   );
 }
@@ -342,10 +390,17 @@ export default function Garden3D() {
 
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden bg-gradient-to-b from-wax-flower-900 to-wax-flower-950">
-      {showDebug && <div id="tweakpane-container" className="absolute top-4 right-4 z-10" />}
+      {showDebug && (
+        <>
+          <div id="tweakpane-container" className="absolute top-4 right-4 z-10" />
+          <div className="absolute top-4 left-4 z-10">
+            <Stats />
+          </div>
+        </>
+      )}
       <CustomCursor />
       <Suspense fallback={<LoadingFallback />}>
-        <GardenCanvas params={params} />
+        <GardenCanvas params={params} showDebug={showDebug} />
       </Suspense>
     </div>
   );

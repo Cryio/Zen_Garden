@@ -7,7 +7,7 @@ import grassFragShader from './shaders/grass.frag.glsl';
 
 // Parameters
 const PLANE_SIZE = 100;
-const BLADE_WIDTH = 0.1;
+const BLADE_WIDTH = 0.15;
 const BLADE_HEIGHT = 0.8;
 const BLADE_HEIGHT_VARIATION = 0.6;
 
@@ -16,24 +16,15 @@ function convertRange(val, oldMin, oldMax, newMin, newMax) {
 }
 
 function generateBlade(center, vArrOffset, uv) {
-  const MID_WIDTH = BLADE_WIDTH * 0.5;
-  const TIP_OFFSET = 0.1;
   const height = BLADE_HEIGHT + (Math.random() * BLADE_HEIGHT_VARIATION);
 
   const yaw = Math.random() * Math.PI * 2;
   const yawUnitVec = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
-  const tipBend = Math.random() * Math.PI * 2;
-  const tipBendUnitVec = new THREE.Vector3(Math.sin(tipBend), 0, -Math.cos(tipBend));
 
-  const bl = new THREE.Vector3().addVectors(center, new THREE.Vector3().copy(yawUnitVec).multiplyScalar((BLADE_WIDTH / 2) * 1));
-  const br = new THREE.Vector3().addVectors(center, new THREE.Vector3().copy(yawUnitVec).multiplyScalar((BLADE_WIDTH / 2) * -1));
-  const tl = new THREE.Vector3().addVectors(center, new THREE.Vector3().copy(yawUnitVec).multiplyScalar((MID_WIDTH / 2) * 1));
-  const tr = new THREE.Vector3().addVectors(center, new THREE.Vector3().copy(yawUnitVec).multiplyScalar((MID_WIDTH / 2) * -1));
-  const tc = new THREE.Vector3().addVectors(center, new THREE.Vector3().copy(tipBendUnitVec).multiplyScalar(TIP_OFFSET));
-
-  tl.y += height / 2;
-  tr.y += height / 2;
-  tc.y += height;
+  // Simplified blade geometry - just one triangle
+  const bl = new THREE.Vector3().addVectors(center, new THREE.Vector3().copy(yawUnitVec).multiplyScalar(BLADE_WIDTH / 2));
+  const br = new THREE.Vector3().addVectors(center, new THREE.Vector3().copy(yawUnitVec).multiplyScalar(-BLADE_WIDTH / 2));
+  const tc = new THREE.Vector3(center.x, center.y + height, center.z);
 
   // Vertex Colors
   const black = [0, 0, 0];
@@ -43,20 +34,12 @@ function generateBlade(center, vArrOffset, uv) {
   const verts = [
     { pos: bl.toArray(), uv: uv, color: black },
     { pos: br.toArray(), uv: uv, color: black },
-    { pos: tr.toArray(), uv: uv, color: gray },
-    { pos: tl.toArray(), uv: uv, color: gray },
     { pos: tc.toArray(), uv: uv, color: white }
   ];
 
   const indices = [
     vArrOffset,
     vArrOffset + 1,
-    vArrOffset + 2,
-    vArrOffset + 2,
-    vArrOffset + 4,
-    vArrOffset + 3,
-    vArrOffset + 3,
-    vArrOffset,
     vArrOffset + 2
   ];
 
@@ -76,7 +59,7 @@ export function Grass({ params }) {
     const timeOffsets = [];
 
     for (let i = 0; i < params.bladeCount; i++) {
-      const VERTEX_COUNT = 5;
+      const VERTEX_COUNT = 3;
       const surfaceMin = PLANE_SIZE / 2 * -1;
       const surfaceMax = PLANE_SIZE / 2;
       const radius = PLANE_SIZE / 2;
