@@ -1,28 +1,30 @@
-varying vec2 vUv;
-varying vec3 vColor;
+precision highp float;
 
-uniform float iTime;
+attribute float timeOffset;
+
+uniform float time;
 uniform float waveSize;
-uniform float tipDistance;
-uniform float centerDistance;
 uniform float waveSpeed;
 uniform float windStrength;
 uniform float windFrequency;
 
+varying vec3 vColor;
+varying vec2 vUv;
+
 void main() {
-  vUv = uv;
   vColor = color;
-  vec3 cpos = position;
-
-  float windOffset = iTime * windFrequency;
-  float wave = sin(windOffset + (uv.x * waveSize)) * windStrength;
-
-  if (color.x > 0.6) {
-    cpos.x += wave * tipDistance;
-  } else if (color.x > 0.0) {
-    cpos.x += wave * centerDistance;
+  vUv = uv;
+  vec3 pos = position;
+  
+  if (position.y > 0.0) {
+    float wave = sin(time * waveSpeed + timeOffset) * waveSize * 0.3;
+    float heightFactor = position.y;
+    float wind = sin(time * windFrequency + position.x) * windStrength * heightFactor * 0.2;
+    
+    pos.x += wave * heightFactor;
+    pos.z += wind;
+    pos.y += sin(time * waveSpeed * 0.3) * waveSize * 0.05 * heightFactor;
   }
-
-  vec4 mvPosition = projectionMatrix * modelViewMatrix * vec4(cpos, 1.0);
-  gl_Position = mvPosition;
+  
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }

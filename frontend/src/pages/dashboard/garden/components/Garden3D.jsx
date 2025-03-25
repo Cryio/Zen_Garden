@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, PerspectiveCamera } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Environment } from '@react-three/drei';
 import { Pane } from 'tweakpane';
 import { Grass } from './Grass';
+import { ParallaxCamera } from './ParallaxCamera';
+import { CustomCursor } from './CustomCursor';
+import * as THREE from 'three';
 
 function LoadingFallback() {
   return (
@@ -13,51 +16,107 @@ function LoadingFallback() {
 }
 
 function GardenScene({ params }) {
+  const sceneRef = useRef();
+  const mousePosition = useRef({ x: 0.5, y: 0.5 });
+  const targetPosition = useRef(new THREE.Vector3(0, 0, 0));
+  const currentPosition = useRef(new THREE.Vector3(0, 0, 0));
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      const rect = event.target.getBoundingClientRect();
+      mousePosition.current = {
+        x: (event.clientX - rect.left) / rect.width,
+        y: (event.clientY - rect.top) / rect.height
+      };
+    };
+
+    const handleMouseLeave = () => {
+      mousePosition.current = null;
+    };
+
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      canvas.addEventListener('mousemove', handleMouseMove);
+      canvas.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener('mousemove', handleMouseMove);
+        canvas.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, []);
+
+  useFrame((state, delta) => {
+    if (mousePosition.current) {
+      const x = (mousePosition.current.x - 0.5) * 2; // -1 to 1
+      const y = (mousePosition.current.y - 0.5) * 2; // -1 to 1
+      
+      // Scale the movement (more subtle values)
+      targetPosition.current.set(
+        x * 0.2, // Subtle movement
+        y * 0.1, // Subtle movement
+        0       // No forward/backward movement
+      );
+    } else {
+      // Reset to default position when mouse is not available
+      targetPosition.current.set(0, 0, 0);
+    }
+
+    // Smooth interpolation
+    currentPosition.current.lerp(targetPosition.current, delta * 1.5);
+    sceneRef.current.position.copy(currentPosition.current);
+  });
+
   return (
     <>
-      {/* Ground */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial 
-          color={params.groundColor}
-          roughness={params.groundRoughness}
-          metalness={params.groundMetalness}
-          side={2}
+      <group ref={sceneRef}>
+        {/* Ground */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[100, 100]} />
+          <meshStandardMaterial 
+            color={params.groundColor}
+            roughness={params.groundRoughness}
+            metalness={params.groundMetalness}
+            side={2}
+          />
+        </mesh>
+
+        {/* Grass */}
+        <Grass params={params} />
+
+        {/* Lighting */}
+        <ambientLight intensity={params.ambientIntensity} />
+        <directionalLight
+          position={[params.lightX, params.lightY, params.lightZ]}
+          intensity={params.lightIntensity}
+          castShadow
         />
-      </mesh>
 
-      {/* Grass */}
-      <Grass params={params} />
-
-      {/* Lighting */}
-      <ambientLight intensity={params.ambientIntensity} />
-      <directionalLight
-        position={[params.lightX, params.lightY, params.lightZ]}
-        intensity={params.lightIntensity}
-        castShadow
-      />
-
-      {/* Example Flower */}
-      <group position={[0, 0, 0]}>
-        {/* Stem */}
-        <mesh castShadow>
-          <cylinderGeometry args={[0.1, 0.1, params.stemHeight, 8]} />
-          <meshStandardMaterial 
-            color={params.stemColor}
-            roughness={params.stemRoughness}
-            metalness={params.stemMetalness}
-          />
-        </mesh>
-        {/* Flower Head */}
-        <mesh position={[0, params.stemHeight, 0]} castShadow>
-          <sphereGeometry args={[params.flowerSize, 16, 16]} />
-          <meshStandardMaterial 
-            color={params.flowerColor}
-            roughness={params.flowerRoughness}
-            metalness={params.flowerMetalness}
-          />
-        </mesh>
+        {/* Flower */}
+        <group position={[0, 0, 0]}>
+          {/* Stem */}
+          <mesh castShadow>
+            <cylinderGeometry args={[0.1, 0.1, params.stemHeight, 8]} />
+            <meshStandardMaterial 
+              color={params.stemColor}
+              roughness={params.stemRoughness}
+              metalness={params.stemMetalness}
+            />
+          </mesh>
+          {/* Flower Head */}
+          <mesh position={[0, params.stemHeight, 0]} castShadow>
+            <sphereGeometry args={[params.flowerSize, 16, 16]} />
+            <meshStandardMaterial 
+              color={params.flowerColor}
+              roughness={params.flowerRoughness}
+              metalness={params.flowerMetalness}
+            />
+          </mesh>
+        </group>
       </group>
+      <ParallaxCamera />
     </>
   );
 }
@@ -66,7 +125,6 @@ function GardenCanvas({ params }) {
   return (
     <Canvas
       shadows
-      camera={{ position: [5, 5, 5], fov: 75 }}
       gl={{ 
         antialias: true,
         alpha: true
@@ -74,16 +132,10 @@ function GardenCanvas({ params }) {
       style={{ 
         background: '#1a1a1a',
         width: '100%',
-        height: '100%'
+        height: '100%',
+        cursor: 'none' // Hide the cursor but allow mouse events
       }}
     >
-      <OrbitControls 
-        enableDamping 
-        dampingFactor={0.05}
-        minDistance={3}
-        maxDistance={10}
-        maxPolarAngle={Math.PI / 2}
-      />
       <GardenScene params={params} />
       <Environment preset="sunset" background={false} />
     </Canvas>
@@ -92,6 +144,7 @@ function GardenCanvas({ params }) {
 
 export default function Garden3D() {
   const [isLoading, setIsLoading] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
   const [params, setParams] = useState({
     // Ground parameters
     groundColor: '#4d4327',
@@ -118,19 +171,35 @@ export default function Garden3D() {
     flowerMetalness: 0.1,
 
     // Grass parameters
-    bladeCount: 100000,
-    waveSize: 10.0,
-    tipDistance: 0.3,
-    centerDistance: 0.1,
-    waveSpeed: 500.0,
-    windStrength: 1.0,
-    windFrequency: 1.0
+    bladeCount: 500000,
+    waveSize: 1.0, // Reduced from 3.0 for more subtle movement
+    waveSpeed: 0.5, // Slower wave speed for more natural movement
+    windStrength: 0.8, // Reduced wind strength for gentler movement
+    windFrequency: 0.5, // Lower frequency for more natural wind patterns
+    pathWidth: 2.0,
+    pathDensity: 0.1
   });
 
   const paneRef = useRef(null);
 
   useEffect(() => {
-    if (!paneRef.current) {
+    // Check if URL contains #debug
+    setShowDebug(window.location.hash === '#debug');
+
+    // Listen for hash changes
+    const handleHashChange = () => {
+      setShowDebug(window.location.hash === '#debug');
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!paneRef.current && showDebug) {
       const pane = new Pane({
         container: document.getElementById('tweakpane-container'),
       });
@@ -149,12 +218,7 @@ export default function Garden3D() {
         max: 1,
         step: 0.1,
       });
-      groundFolder.addBinding(params, 'groundMetalness', {
-        label: 'Metalness',
-        min: 0,
-        max: 1,
-        step: 0.1,
-      });
+
 
       // Lighting folder
       const lightFolder = pane.addFolder({
@@ -238,18 +302,6 @@ export default function Garden3D() {
         max: 20,
         step: 0.5,
       });
-      grassFolder.addBinding(params, 'tipDistance', {
-        label: 'Tip Distance',
-        min: 0,
-        max: 1,
-        step: 0.1,
-      });
-      grassFolder.addBinding(params, 'centerDistance', {
-        label: 'Center Distance',
-        min: 0,
-        max: 1,
-        step: 0.1,
-      });
       grassFolder.addBinding(params, 'waveSpeed', {
         label: 'Wave Speed',
         min: 100,
@@ -286,11 +338,12 @@ export default function Garden3D() {
         paneRef.current = null;
       }
     };
-  }, []);
+  }, [showDebug]);
 
   return (
     <div className="relative w-full h-[600px] rounded-lg overflow-hidden bg-gradient-to-b from-wax-flower-900 to-wax-flower-950">
-      <div id="tweakpane-container" className="absolute top-4 right-4 z-10" />
+      {showDebug && <div id="tweakpane-container" className="absolute top-4 right-4 z-10" />}
+      <CustomCursor />
       <Suspense fallback={<LoadingFallback />}>
         <GardenCanvas params={params} />
       </Suspense>

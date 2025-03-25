@@ -70,9 +70,10 @@ export function Grass({ params }) {
 
   const { geometry, material } = useMemo(() => {
     const positions = [];
-    const uvs = [];
     const indices = [];
+    const uvs = [];
     const colors = [];
+    const timeOffsets = [];
 
     for (let i = 0; i < params.bladeCount; i++) {
       const VERTEX_COUNT = 5;
@@ -87,12 +88,14 @@ export function Grass({ params }) {
 
       const pos = new THREE.Vector3(x, 0, y);
       const uv = [convertRange(pos.x, surfaceMin, surfaceMax, 0, 1), convertRange(pos.z, surfaceMin, surfaceMax, 0, 1)];
+      const timeOffset = Math.random() * Math.PI * 2;
 
       const blade = generateBlade(pos, i * VERTEX_COUNT, uv);
       blade.verts.forEach(vert => {
         positions.push(...vert.pos);
         uvs.push(...vert.uv);
         colors.push(...vert.color);
+        timeOffsets.push(timeOffset);
       });
       blade.indices.forEach(indice => indices.push(indice));
     }
@@ -101,32 +104,30 @@ export function Grass({ params }) {
     geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
     geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
     geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+    geometry.setAttribute('timeOffset', new THREE.BufferAttribute(new Float32Array(timeOffsets), 1));
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
 
     const material = new THREE.ShaderMaterial({
+      vertexShader: grassVertShader,
+      fragmentShader: grassFragShader,
       uniforms: {
-        iTime: { value: 0 },
+        time: { value: 0 },
         waveSize: { value: params.waveSize },
-        tipDistance: { value: params.tipDistance },
-        centerDistance: { value: params.centerDistance },
         waveSpeed: { value: params.waveSpeed },
         windStrength: { value: params.windStrength },
         windFrequency: { value: params.windFrequency }
       },
-      vertexShader: grassVertShader,
-      fragmentShader: grassFragShader,
       vertexColors: true,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      transparent: true
     });
 
     return { geometry, material };
   }, [params]);
 
   useEffect(() => {
-    // Handle window resize
     const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       gl.setSize(window.innerWidth, window.innerHeight);
     };
@@ -138,7 +139,7 @@ export function Grass({ params }) {
   useFrame((state, delta) => {
     if (meshRef.current) {
       const elapsedTime = Date.now() - startTime.current;
-      material.uniforms.iTime.value = elapsedTime * 0.001; // Convert to seconds
+      material.uniforms.time.value = elapsedTime * 0.001; // Convert to seconds
     }
   });
 
