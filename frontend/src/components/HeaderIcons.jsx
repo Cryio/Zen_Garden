@@ -12,7 +12,7 @@ const CatOpenSvg = () => (
     <g id="line">
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -20,7 +20,7 @@ const CatOpenSvg = () => (
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -28,7 +28,7 @@ const CatOpenSvg = () => (
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -36,16 +36,16 @@ const CatOpenSvg = () => (
       />
       <path
         d="M30,35a3,3,0,1,1-3-3,3.0011,3.0011,0,0,1,3,3"
-        fill="#E0AAFF"
+        fill="rgba(239, 68, 68, 0.8)"
       />
       <path
         d="M48,35a3,3,0,1,1-3-3,3.001,3.001,0,0,1,3,3"
-        fill="#E0AAFF"
+        fill="rgba(239, 68, 68, 0.8)"
       />
       <path
         d="M29.6,61.8,31.4,60c2.5-.6,9.9-2.8,11.5-5.5a1.5418,1.5418,0,0,0-.1-2.1c-.1-.1-.1-.2-.2-.2.5-.3.8-.6.9-.6a2.1081,2.1081,0,0,0,.7-2.9,1.205,1.205,0,0,0-.5-.5,1.8071,1.8071,0,0,0-.1-2.1c-.5-.6-1.6-1.1-3.1,0a.7786.7786,0,0,0-.3-.7,1.9047,1.9047,0,0,0-2.7-.4.0979.0979,0,0,0-.1.1,31.9553,31.9553,0,0,1-6.3,4c.5026-1.286,1.69-5.814-.6-5.1-.6.2-1.2,1.7-1.5,2.2-1.738,2.511-2.258,5.218-2.8,8.1.031,1.077-1.076,1.676-1.8,2.4"
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -66,7 +66,7 @@ const CatSleepySvg = () => (
     <g id="line">
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -74,7 +74,7 @@ const CatSleepySvg = () => (
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -82,7 +82,7 @@ const CatSleepySvg = () => (
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -90,7 +90,7 @@ const CatSleepySvg = () => (
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -98,7 +98,7 @@ const CatSleepySvg = () => (
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -106,7 +106,7 @@ const CatSleepySvg = () => (
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -114,7 +114,7 @@ const CatSleepySvg = () => (
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"
@@ -122,11 +122,11 @@ const CatSleepySvg = () => (
       />
       <path
         d="M46.9428,33.6341c0,1.0703-.8693,1.9388-1.9388,1.9388s-1.9388-.8678-1.9388-1.9388c0-1.0695,.8693-1.9388,1.9388-1.9388s1.9388,.8693,1.9388,1.9388"
-        fill="#E0AAFF"
+        fill="rgba(239, 68, 68, 0.8)"
       />
       <path
         fill="none"
-        stroke="#E0AAFF"
+        stroke="rgba(239, 68, 68, 0.8)"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"

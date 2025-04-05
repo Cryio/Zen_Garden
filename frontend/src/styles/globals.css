@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 15 100% 97%;
+    --foreground: 6 97% 14%;
+    --card: 15 100% 97%;
+    --card-foreground: 6 97% 14%;
+    --popover: 15 100% 97%;
+    --popover-foreground: 6 97% 14%;
+    --primary: 12 97% 53%;
+    --primary-foreground: 15 100% 97%;
+    --secondary: 20 100% 81%;
+    --secondary-foreground: 6 97% 14%;
+    --muted: 20 100% 81%;
+    --muted-foreground: 12 97% 53%;
+    --accent: 12 97% 53%;
+    --accent-foreground: 15 100% 97%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 15 100% 97%;
+    --border: 20 100% 81%;
+    --input: 20 100% 81%;
+    --ring: 12 97% 53%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 6 97% 14%;
+    --foreground: 15 100% 97%;
+    --card: 6 97% 14%;
+    --card-foreground: 15 100% 97%;
+    --popover: 6 97% 14%;
+    --popover-foreground: 15 100% 97%;
+    --primary: 12 97% 53%;
+    --primary-foreground: 15 100% 97%;
+    --secondary: 6 85% 38%;
+    --secondary-foreground: 15 100% 97%;
+    --muted: 6 85% 38%;
+    --muted-foreground: 20 100% 81%;
+    --accent: 12 97% 53%;
+    --accent-foreground: 15 100% 97%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 15 100% 97%;
+    --border: 6 85% 38%;
+    --input: 6 85% 38%;
+    --ring: 12 97% 53%;
+  }
+}
+
+@layer utilities {
+  .animate-slide-in {
+    animation: slide-in 0.5s ease-out;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Marquee Animation */
+[data-marquee] {
+  animation: marquee var(--duration) linear infinite;
+}
+
+[data-marquee][data-reverse] {
+  animation-direction: reverse;
+}
+
+[data-marquee][data-pause-on-hover]:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - var(--gap) / 2));
+  }
+} 

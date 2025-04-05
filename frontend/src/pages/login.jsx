@@ -1,46 +1,28 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import HeaderIcons from "../components/HeaderIcons";
 import PasswordInput from "../components/PasswordInput";
-
-// Helper functions
-function pad(n) {
-  return n < 10 ? "0" + n : n;
-}
-function isoFormatDMY(d) {
-  return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear();
-}
-function formatLocalDateToISO(d) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
+import AnimatedBackground from "../components/AnimatedBackground";
 
 // Frequently used class name variables
 const inputClass =
-  "bg-[rgba(126,34,206,0.2)] text-white border-none h-12 placeholder-[#94A3B8] focus:ring-2 focus:ring-[#a600c8] pr-10";
+  "bg-wax-flower-950/20 text-wax-flower-200 h-10 placeholder-wax-flower-200 border-none focus:ring-0 focus:ring-offset-2 focus:ring-offset-wax-flower-200 pr-10 w-full";
 const containerClass =
-  "col-span-4 col-start-2 w-full max-w-5xl relative bg-[rgba(180,177,177,0.05)] backdrop-blur-xl border-4 border-[rgba(95,30,151,0.2)] rounded-3xl shadow-2xl p-20 transition-all duration-300";
+  "col-span-4 col-start-2 w-full max-w-md relative bg-wax-flower-950/5 backdrop-blur-xl border-2 border-wax-flower-800/20 rounded-3xl shadow-2xl p-8 transition-all duration-300";
+const buttonClass = 
+  "w-full bg-wax-flower-500 hover:bg-wax-flower-600 text-white h-12 font-medium transition-colors focus:ring-2 focus:ring-wax-flower-500/50 focus:ring-offset-2 focus:ring-offset-wax-flower-950 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-wax-flower-500";
+const googleButtonClass = 
+  "w-full bg-transparent hover:bg-wax-flower-950/10 text-white h-12 font-medium border border-wax-flower-500/20 hover:border-wax-flower-500/40 transition-all focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2 focus:ring-offset-wax-flower-950";
 const overlayClass =
-  "absolute inset-0 pointer-events-none rounded-2xl z-0 transition-all duration-300";
+  "absolute inset-0 pointer-events-none rounded-3xl z-0 transition-all duration-300";
+const actionLinkClass = "text-wax-flower-500 hover:text-wax-flower-400 hover:underline transition-colors";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -83,13 +65,13 @@ export default function Login() {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     if (containerRef.current) {
-      const borderGradient = `radial-gradient(800px circle at ${x}px ${y}px, rgba(160,32,240,0.5), rgba(160,32,240,0.2) 40%, transparent 70%)`;
+      const borderGradient = `radial-gradient(800px circle at ${x}px ${y}px, rgba(220, 38, 38, 0.7), rgba(185, 28, 28, 0.3) 40%, transparent 70%)`;
       containerRef.current.style.borderImage = `${borderGradient} 1 stretch`;
       containerRef.current.style.borderImageSlice = "1";
     }
     if (gradientOverlayRef.current) {
       gradientOverlayRef.current.style.opacity = 1;
-      gradientOverlayRef.current.style.background = `radial-gradient(400px circle at ${x}px ${y}px, rgba(160,32,240,0.2), rgba(160,32,240,0.1) 50%, transparent 80%)`;
+      gradientOverlayRef.current.style.background = `radial-gradient(400px circle at ${x}px ${y}px, rgba(220, 38, 38, 0.3), rgba(185, 28, 28, 0.1) 50%, transparent 80%)`;
     }
   };
 
@@ -115,14 +97,13 @@ export default function Login() {
       return;
     }
 
-    // You can add more validations as needed
     try {
       const response = await axios.post("http://localhost:5000/api/auth/login", {
         email: formData.email,
         password: formData.password,
       });
       console.log(response.data);
-      navigate("/dashboard"); // or your landing page after login
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error.response?.data);
       setError(
@@ -133,7 +114,31 @@ export default function Login() {
   };
 
   return (
-    <div className="grid grid-cols-6 gap-4 min-h-screen items-center px-4">
+    <div className="min-h-screen w-full grid grid-cols-6 gap-4 items-center px-4 relative overflow-hidden">
+      <AnimatedBackground />
+      <style jsx>{`
+        a {
+          font-weight: 500;
+          color: var(--wax-flower-500);
+          text-decoration: inherit;
+          transition: color 0.2s ease;
+        }
+        a:hover {
+          color: var(--wax-flower-600);
+        }
+        button:focus,
+        button:focus-visible {
+          outline: none;
+        }
+        select:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
+        }
+        input:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
+        }
+      `}</style>
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
@@ -145,51 +150,52 @@ export default function Login() {
           className={overlayClass}
           style={{ opacity: 0, background: "none" }}
         />
-        <div className="relative z-10 text-white text-center max-w-lg mx-auto">
-          {/* Render header icons (stacked cat icons that toggle based on password focus) */}
+        <div className="relative z-10 text-wax-flower-200 text-center">
           <HeaderIcons isFocused={isPasswordFocused} />
-          <h1 className="text-5xl font-bold mb-6 text-[#E0AAFF]">Login</h1>
-          <p className="text-[#94A3B8] mb-10 text-lg">
+          <h1 className="text-4xl font-bold mb-4 text-wax-flower-200">Login</h1>
+          <p className="text-wax-flower-400 mb-8 text-base">
             Enter your email and password to log in
           </p>
           {error && (
-            <Alert variant="destructive" className="mb-6">
+            <Alert variant="destructive" className="mb-6 bg-wax-flower-500/10 text-wax-flower-400 border-wax-flower-500/20">
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              className={inputClass}
-              required
-            />
-            <PasswordInput
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              show={showPassword}
-              toggleShow={() => setShowPassword(!showPassword)}
-              onFocus={handlePasswordFocus}
-              onBlur={handlePasswordBlur}
-            />
+            <div className="space-y-4">
+              <Input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+                className={inputClass}
+                required
+              />
+              <PasswordInput
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                show={showPassword}
+                toggleShow={() => setShowPassword(!showPassword)}
+                onFocus={handlePasswordFocus}
+                onBlur={handlePasswordBlur}
+              />
+            </div>
             <Button
               type="submit"
-              className="w-full bg-[#a600c8] hover:bg-[#6A1B9A] text-white h-14 text-lg"
+              className={buttonClass}
             >
               Login
             </Button>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <Separator className="bg-[rgba(126,34,206,0.2)]" />
+                <Separator className="w-full bg-wax-flower-950/20" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[rgba(180,177,177,0.05)] px-2 text-[#94A3B8]">
+                <span className="bg-wax-flower-950/5 px-2 text-wax-flower-400">
                   Or continue with
                 </span>
               </div>
@@ -197,7 +203,7 @@ export default function Login() {
             <Button
               type="button"
               variant="outline"
-              className="w-full bg-white/5 hover:bg-white/10 text-white h-14 text-lg border-[rgba(126,34,206,0.2)]"
+              className={googleButtonClass}
             >
               <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                 <path
@@ -220,16 +226,16 @@ export default function Login() {
               Continue with Google
             </Button>
           </form>
-          <div className="space-y-4 mt-6">
-            <p className="text-[#94A3B8] text-base">
+          <div className="space-y-3 mt-6">
+            <p className="text-wax-flower-400 text-sm">
               Create an account?{" "}
-              <a href="/signup" className="text-[#a600c8] hover:underline">
+              <a href="/signup" className={actionLinkClass}>
                 Sign Up
               </a>
-            </p>  
-            <p className="text-[#94A3B8] text-base">
+            </p>
+            <p className="text-wax-flower-400 text-sm">
               Forgot your password?{" "}
-              <a href="/forgot-password" className="text-[#a600c8] hover:underline">
+              <a href="/forgot-password" className={actionLinkClass}>
                 Reset it
               </a>
             </p>

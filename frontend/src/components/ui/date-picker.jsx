@@ -47,7 +47,7 @@ export function DatePicker({ startYear, endYear, value, onChange }) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-[250px] justify-start text-left font-normal text-base text-white"
+          className="w-[250px] justify-start text-left font-normal text-base text-wax-flower-200"
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {internalDate ? format(internalDate, "PPP") : "Pick a date"}
@@ -56,24 +56,24 @@ export function DatePicker({ startYear, endYear, value, onChange }) {
       <PopoverContent className="w-auto p-2 bg-[rgba(126,34,206,0.5)] backdrop-blur-lg border border-[rgba(126,34,206,0.3)] rounded-lg shadow-lg">
         <div className="flex justify-between p-2">
           <Select onValueChange={handleMonthChange} value={months[getMonth(internalDate)]}>
-            <SelectTrigger className="w-[110px] bg-[rgba(126,34,206,0.3)] text-white border-none h-10 text-sm">
+            <SelectTrigger className="w-[110px] bg-[rgba(126,34,206,0.3)] text-wax-flower-200 border-none h-10 text-sm">
               <SelectValue placeholder="Month" />
             </SelectTrigger>
             <SelectContent className="w-auto p-2 bg-[rgba(126,34,206,0.5)] backdrop-blur-lg border border-[rgba(126,34,206,0.3)] rounded-lg shadow-lg">
               {months.map((month) => (
-                <SelectItem key={month} value={month} className="text-white hover:bg-[rgba(126,34,206,0.4)]">
+                <SelectItem key={month} value={month} className="text-wax-flower-200 hover:bg-[rgba(126,34,206,0.4)]">
                   {month}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select onValueChange={handleYearChange} value={getYear(internalDate).toString()}>
-            <SelectTrigger className="w-[110px] bg-[rgba(126,34,206,0.3)] text-white border-none h-10 text-sm">
+            <SelectTrigger className="w-[110px] bg-[rgba(126,34,206,0.3)] text-wax-flower-200 border-none h-10 text-sm">
               <SelectValue placeholder="Year" />
             </SelectTrigger>
             <SelectContent className="w-auto p-2 bg-[rgba(126,34,206,0.5)] backdrop-blur-lg border border-[rgba(126,34,206,0.3)] rounded-lg shadow-lg">
               {years.map((year) => (
-                <SelectItem key={year} value={year.toString()} className="text-white hover:bg-[rgba(126,34,206,0.4)]">
+                <SelectItem key={year} value={year.toString()} className="text-wax-flower-200 hover:bg-[rgba(126,34,206,0.4)]">
                   {year}
                 </SelectItem>
               ))}
@@ -87,7 +87,7 @@ export function DatePicker({ startYear, endYear, value, onChange }) {
           initialFocus
           month={internalDate}
           onMonthChange={setInternalDate}
-          className="bg-[rgba(126,34,206,0.2)] text-white border border-[rgba(126,34,206,0.3)] rounded-lg p-2"
+          className="bg-[rgba(126,34,206,0.2)] text-wax-flower-200 border border-[rgba(126,34,206,0.3)] rounded-lg p-2"
         />
       </PopoverContent>
     </Popover>
