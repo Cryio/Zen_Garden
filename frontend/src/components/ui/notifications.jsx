@@ -1,125 +1,95 @@
-import React from 'react';
+import * as React from "react"
+import { Bell } from "lucide-react"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Bell, Check, Clock, X } from 'lucide-react';
-import { ScrollArea } from "@/components/ui/scroll-area";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-const mockNotifications = [
+const notifications = [
   {
     id: 1,
-    title: "Habit Streak Achieved!",
-    message: "You've maintained your meditation habit for 7 days!",
-    time: "2 hours ago",
-    type: "success",
+    title: "Daily Meditation Complete",
+    description: "You've completed your daily meditation goal!",
+    time: "2 minutes ago"
   },
   {
     id: 2,
-    title: "Garden Update",
-    message: "New flower has bloomed in your garden",
-    time: "5 hours ago",
-    type: "info",
+    title: "New Achievement",
+    description: "You've unlocked the 'Early Bird' badge",
+    time: "1 hour ago"
   },
   {
     id: 3,
-    title: "Reminder",
-    message: "Time to water your virtual plants",
-    time: "1 day ago",
-    type: "reminder",
-  },
-];
+    title: "Garden Update",
+    description: "Your virtual garden is flourishing!",
+    time: "2 hours ago"
+  }
+]
 
-export function NotificationsPopover() {
-  const [notifications, setNotifications] = React.useState(mockNotifications);
-  const [hasUnread, setHasUnread] = React.useState(true);
+export function NotificationsMenu() {
+  const [unreadCount, setUnreadCount] = React.useState(3)
 
-  const clearNotification = (id) => {
-    setNotifications(notifications.filter((n) => n.id !== id));
-  };
-
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'success':
-        return <Check className="h-4 w-4 text-green-500" />;
-      case 'reminder':
-        return <Clock className="h-4 w-4 text-wax-flower-500" />;
-      default:
-        return <Bell className="h-4 w-4 text-wax-flower-400" />;
-    }
-  };
+  const markAllAsRead = () => {
+    setUnreadCount(0)
+  }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="relative text-wax-flower-300 hover:bg-wax-flower-900/50 hover:text-wax-flower-300"
-        >
-          <Bell className="h-5 w-5" />
-          {hasUnread && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-wax-flower-500 rounded-full ring-2 ring-white dark:ring-wax-flower-950" />
+    <DropdownMenu>
+      <DropdownMenuTrigger className="relative inline-flex items-center justify-center rounded-md p-2 text-wax-flower-300 hover:bg-wax-flower-900/50 hover:text-wax-flower-300 focus:outline-none">
+        <Bell className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 w-2 h-2 bg-wax-flower-500 rounded-full ring-2 ring-white dark:ring-wax-flower-950" />
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        className="w-80 bg-wax-flower-950/80 backdrop-blur-sm border border-wax-flower-800/30 shadow-lg" 
+        align="end"
+      >
+        <div className="flex items-center justify-between p-4">
+          <DropdownMenuLabel className="text-base text-wax-flower-100">Notifications</DropdownMenuLabel>
+          {unreadCount > 0 && (
+            <button 
+              onClick={markAllAsRead}
+              className="text-xs text-wax-flower-400 hover:text-wax-flower-300"
+            >
+              Mark all as read
+            </button>
           )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 bg-white dark:bg-wax-flower-950 border border-wax-flower-200/30 dark:border-wax-flower-800/30 shadow-lg" align="end">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-wax-flower-200/20 dark:border-wax-flower-800/20">
-          <h4 className="text-sm font-semibold text-wax-flower-200 dark:text-wax-flower-100">Notifications</h4>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setHasUnread(false)}
-            className="text-xs text-wax-flower-400 hover:text-wax-flower-300"
-          >
-            Mark all as read
-          </Button>
         </div>
-        <ScrollArea className="h-[300px]">
-          {notifications.length > 0 ? (
-            <div className="divide-y divide-wax-flower-200/20 dark:divide-wax-flower-800/20">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className="flex items-start gap-4 p-4 hover:bg-wax-flower-100/5 dark:hover:bg-wax-flower-900/20 transition-colors"
-                >
-                  <div className="mt-1">
-                    {getNotificationIcon(notification.type)}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium text-wax-flower-200 dark:text-wax-flower-100">
-                      {notification.title}
-                    </p>
-                    <p className="text-xs text-wax-flower-400 dark:text-wax-flower-300">
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-wax-flower-500 dark:text-wax-flower-400">
-                      {notification.time}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-wax-flower-400 hover:text-wax-flower-300"
-                    onClick={() => clearNotification(notification.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full p-4">
-              <Bell className="h-8 w-8 text-wax-flower-400 mb-2" />
-              <p className="text-sm text-wax-flower-300 text-center">
-                No new notifications
-              </p>
-            </div>
-          )}
-        </ScrollArea>
-      </PopoverContent>
-    </Popover>
-  );
+        <DropdownMenuSeparator className="bg-wax-flower-800/30" />
+        <DropdownMenuGroup className="max-h-[300px] overflow-auto">
+          {notifications.map((notification) => (
+            <DropdownMenuItem 
+              key={notification.id} 
+              className="p-4 focus:bg-wax-flower-900/50 hover:bg-wax-flower-900/50"
+            >
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium text-wax-flower-100">
+                  {notification.title}
+                </p>
+                <p className="text-xs text-wax-flower-400">
+                  {notification.description}
+                </p>
+                <p className="text-xs text-wax-flower-500">
+                  {notification.time}
+                </p>
+              </div>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+        {notifications.length === 0 && (
+          <div className="p-4 text-center">
+            <p className="text-sm text-wax-flower-400">
+              No new notifications
+            </p>
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 } 
