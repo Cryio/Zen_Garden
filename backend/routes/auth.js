@@ -1,5 +1,4 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 require("dotenv").config(); // Load .env variables
@@ -17,10 +16,6 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "Email already exists" });
     }
 
-    // Hash password before saving
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
     // Create new user
     const newUser = new User({
       firstName,
@@ -28,7 +23,7 @@ router.post("/signup", async (req, res) => {
       email,
       gender,
       dob,
-      password: hashedPassword, // Save hashed password
+      password // Save hashed password
     });
 
     await newUser.save();
@@ -45,4 +40,35 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-module.exports = router;
+// POST /api/auth/login
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // 1. Find user
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // 2. Compare password directly
+    if (existingUser.password !== password) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // 3. Generate JWT token
+    const token = jwt.sign({ userId: existingUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h"
+    });
+
+    // 4. Send token
+    res.status(200).json({ message: "Login successful", token });
+
+  } catch (err) {
+    console.error("Login Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+  module.exports = router;
