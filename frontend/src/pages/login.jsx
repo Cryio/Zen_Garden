@@ -10,8 +10,6 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import HeaderIcons from "../components/HeaderIcons";
 import PasswordInput from "../components/PasswordInput";
 import AnimatedBackground from "../components/AnimatedBackground";
-import { prepareSecureData, clearSensitiveData } from "@/lib/security/encryption";
-import { API_URL, secureAxiosConfig } from "@/lib/security/apiConfig";
 
 // Frequently used class name variables
 const inputClass =
@@ -99,54 +97,19 @@ export default function Login() {
       return;
     }
 
-    // Log login attempt (without sensitive data)
-    console.log({
-      timestamp: new Date().toISOString(),
-      event: "LOGIN_ATTEMPT",
-      email: formData.email.split('@')[0] + '@***', // Mask email domain
-      userAgent: navigator.userAgent,
-    });
-
     try {
-      // Prepare secure payload
-      const securePayload = prepareSecureData(formData);
-
-      // Log the encrypted payload (for development purposes)
-      console.log('Encrypted Payload:', {
-        timestamp: new Date().toISOString(),
-        event: "ENCRYPTED_LOGIN_DATA",
-        payload: JSON.stringify(securePayload, null, 2)
-      });
-
-      // Make secure API call
+      // Send plain data to backend
       const response = await axios.post(
-        `${API_URL}/api/auth/login`,
-        securePayload,
-        secureAxiosConfig
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        {
+          email: formData.email,
+          password: formData.password
+        }
       );
 
-      // Clear sensitive data from memory
-      clearSensitiveData(formData);
-
-      // Log successful login (without sensitive data)
-      console.log({
-        timestamp: new Date().toISOString(),
-        event: "LOGIN_SUCCESS",
-        email: formData.email.split('@')[0] + '@***', // Mask email domain
-        status: response.status,
-      });
-
+      console.log('API Response:', response.data);
       navigate("/dashboard");
     } catch (error) {
-      // Log login failure (without sensitive data)
-      console.log({
-        timestamp: new Date().toISOString(),
-        event: "LOGIN_FAILURE",
-        email: formData.email.split('@')[0] + '@***', // Mask email domain
-        error: error.response?.status || 'Unknown error',
-        message: error.response?.data?.error || 'Unexpected error occurred during login'
-      });
-
       console.error("Login error:", error.response?.data);
       setError(
         error.response?.data?.error ||

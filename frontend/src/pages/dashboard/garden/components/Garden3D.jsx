@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, Suspense, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Stats } from '@react-three/drei';
 import { Pane } from 'tweakpane';
-import { Grass } from './Grass';
+import { Grass } from './grass';
 import { Patches } from './Patches';
 import { ParallaxCamera } from './ParallaxCamera';
 import { CustomCursor } from './CustomCursor';
