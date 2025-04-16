@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 
-const GROQ_API_KEY = "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";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;;
 
 router.post("/chat", async (req, res) => {
   try {
