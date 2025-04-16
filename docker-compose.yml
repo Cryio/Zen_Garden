@@ -54,3 +54,6 @@ services:
 
 volumes:
   mongodb_data: 
+
+networks:
+  my-network:

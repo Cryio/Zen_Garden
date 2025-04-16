@@ -33,6 +33,33 @@ const UserSchema = new mongoose.Schema({
     type: String, 
     required: [true, "Password is required"],
     minlength: [6, "Password must be at least 6 characters long"]
+  },
+  bio: {
+    type: String,
+    default: '',
+    trim: true
+  },
+  theme: {
+    type: String,
+    enum: ['light', 'dark'],
+    default: 'light'
+  },
+  gardenPreference: {
+    type: String,
+    enum: ['zen', 'cottage', 'modern'],
+    default: 'zen'
+  },
+  notifications: {
+    type: Boolean,
+    default: true
+  },
+  timezone: {
+    type: String,
+    default: 'UTC'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true
