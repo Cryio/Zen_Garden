@@ -40,31 +40,52 @@ export function Chatbot() {
     })
   }
 
-  const handleSend = (e) => {
-    e.preventDefault()
-    if (!input.trim()) return
+const handleSend = async (e) => {
+  e.preventDefault()
+  if (!input.trim()) return
 
-    const now = new Date()
+  const now = new Date()
 
-    // Add user message
-    const newUserMessage = {
-      id: chatMessages.length + 1,
-      sender: "user",
-      content: input,
-      timestamp: formatTime(now)
-    }
+  // Add user message
+  const newUserMessage = {
+    id: chatMessages.length + 1,
+    sender: "user",
+    content: input,
+    timestamp: formatTime(now)
+  }
 
-    // Add bot response
+  setChatMessages(prev => [...prev, newUserMessage])
+  setInput("")
+
+  try {
+    const res = await fetch("http://localhost:5000/api/chatbot/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: input })
+    })
+
+    const data = await res.json()
     const newBotMessage = {
       id: chatMessages.length + 2,
       sender: "bot",
-      content: "I'm here to help you with your Zen Garden journey. What would you like to know?",
-      timestamp: formatTime(now)
+      content: data.message || "Sorry, something went wrong.",
+      timestamp: formatTime(new Date())
     }
 
-    setChatMessages([...chatMessages, newUserMessage, newBotMessage])
-    setInput("")
+    setChatMessages(prev => [...prev, newBotMessage])
+  } catch (error) {
+    console.error("Chatbot error:", error)
+    const errorMessage = {
+      id: chatMessages.length + 2,
+      sender: "bot",
+      content: "Error contacting assistant. Please try again later.",
+      timestamp: formatTime(new Date())
+    }
+    setChatMessages(prev => [...prev, errorMessage])
   }
+}
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
