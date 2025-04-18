@@ -25,9 +25,6 @@ import PasswordInput from "../components/PasswordInput";
 import CaptchaComponent from "../components/CaptchaComponent";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { Calendar } from "@/components/ui/calendar";
-import CryptoJS from 'crypto-js';
-import { prepareSecureData, clearSensitiveData } from '@/lib/security/encryption';
-import { API_URL, secureAxiosConfig } from '@/lib/security/apiConfig';
 
 // Helper functions and constants
 const months = [
@@ -243,28 +240,20 @@ export default function Signup() {
     }
 
     try {
-      // Prepare secure payload
-      const securePayload = prepareSecureData(trimmedData);
-
-      // Log the encrypted payload (remove in production)
-      console.log('Encrypted Payload:', JSON.stringify(securePayload, null, 2));
-
-      // Make secure API call
+      // Send plain data to backend
       const response = await axios.post(
-        `${API_URL}/api/auth/signup`,
-        securePayload,
-        secureAxiosConfig
+        `${import.meta.env.VITE_API_URL}/api/auth/signup`,
+        {
+          firstName: trimmedData.firstName,
+          lastName: trimmedData.lastName,
+          email: trimmedData.email,
+          gender: trimmedData.gender,
+          dob: trimmedData.dob,
+          password: trimmedData.password
+        }
       );
 
       console.log('API Response:', response.data);
-      
-      // Clear sensitive data
-      clearSensitiveData({
-        email: trimmedData.email,
-        password: trimmedData.password,
-        dob: trimmedData.dob
-      });
-      
       navigate("/login");
     } catch (error) {
       console.error("Signup error:", error.response?.data);

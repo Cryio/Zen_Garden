@@ -10,8 +10,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import HeaderIcons from "../components/HeaderIcons";
 import PasswordInput from "../components/PasswordInput";
 import AnimatedBackground from "../components/AnimatedBackground";
-import { prepareSecureData, clearSensitiveData } from "@/lib/security/encryption";
-import { API_URL, secureAxiosConfig } from "@/lib/security/apiConfig";
+import { toast } from 'sonner';
 
 // Frequently used class name variables
 const inputClass =
@@ -35,6 +34,7 @@ export default function Login() {
     password: "",
   });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Refs for border glow and overlay effects
   const gradientOverlayRef = useRef(null);
@@ -91,67 +91,35 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     setError("");
     
     // Basic validation
     if (!formData.email || !formData.password) {
       setError("Please fill in both email and password!");
+      setIsLoading(false);
       return;
     }
 
-    // Log login attempt (without sensitive data)
-    console.log({
-      timestamp: new Date().toISOString(),
-      event: "LOGIN_ATTEMPT",
-      email: formData.email.split('@')[0] + '@***', // Mask email domain
-      userAgent: navigator.userAgent,
-    });
-
     try {
-      // Prepare secure payload
-      const securePayload = prepareSecureData(formData);
-
-      // Log the encrypted payload (for development purposes)
-      console.log('Encrypted Payload:', {
-        timestamp: new Date().toISOString(),
-        event: "ENCRYPTED_LOGIN_DATA",
-        payload: JSON.stringify(securePayload, null, 2)
-      });
-
-      // Make secure API call
       const response = await axios.post(
-        `${API_URL}/api/auth/login`,
-        securePayload,
-        secureAxiosConfig
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        formData
       );
 
-      // Clear sensitive data from memory
-      clearSensitiveData(formData);
-
-      // Log successful login (without sensitive data)
-      console.log({
-        timestamp: new Date().toISOString(),
-        event: "LOGIN_SUCCESS",
-        email: formData.email.split('@')[0] + '@***', // Mask email domain
-        status: response.status,
-      });
-
-      navigate("/dashboard");
+      // Store the token in localStorage
+      localStorage.setItem('token', response.data.token);
+      
+      // Show success message
+      toast.success('Login successful');
+      
+      // Redirect to dashboard page
+      navigate('/dashboard');
     } catch (error) {
-      // Log login failure (without sensitive data)
-      console.log({
-        timestamp: new Date().toISOString(),
-        event: "LOGIN_FAILURE",
-        email: formData.email.split('@')[0] + '@***', // Mask email domain
-        error: error.response?.status || 'Unknown error',
-        message: error.response?.data?.error || 'Unexpected error occurred during login'
-      });
-
-      console.error("Login error:", error.response?.data);
-      setError(
-        error.response?.data?.error ||
-          "Unexpected error occurred during login"
-      );
+      console.error('Login error:', error);
+      setError(error.response?.data?.error || 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -229,8 +197,9 @@ export default function Login() {
             <Button
               type="submit"
               className={buttonClass}
+              disabled={isLoading}
             >
-              Login
+              {isLoading ? 'Signing in...' : 'Login'}
             </Button>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">

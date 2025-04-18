@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { toast } from "sonner"
 
 const notifications = [
   {
@@ -33,10 +34,48 @@ const notifications = [
 
 export function NotificationsMenu() {
   const [unreadCount, setUnreadCount] = React.useState(3)
+  const [toastNotifications, setToastNotifications] = React.useState([])
+
+  // Function to add a new toast notification
+  const addToastNotification = (title, description) => {
+    setToastNotifications(prev => [...prev, {
+      id: Date.now(),
+      title: title || "Notification",
+      description: description || "",
+      time: "Just now",
+      type: "toast"
+    }])
+    setUnreadCount(prev => prev + 1)
+  }
+
+  // Example of how to use the toast notification
+  React.useEffect(() => {
+    // This is just an example - in real usage, you would call addToastNotification
+    // when you want to show a notification
+    const handleSuccess = () => {
+      addToastNotification("Success", "Operation completed successfully")
+    }
+
+    const handleError = () => {
+      addToastNotification("Error", "Something went wrong")
+    }
+
+    // Example event listeners - replace these with your actual event handlers
+    window.addEventListener('success', handleSuccess)
+    window.addEventListener('error', handleError)
+
+    return () => {
+      window.removeEventListener('success', handleSuccess)
+      window.removeEventListener('error', handleError)
+    }
+  }, [])
 
   const markAllAsRead = () => {
     setUnreadCount(0)
+    setToastNotifications([])
   }
+
+  const allNotifications = [...notifications, ...toastNotifications]
 
   return (
     <DropdownMenu>
@@ -63,7 +102,7 @@ export function NotificationsMenu() {
         </div>
         <DropdownMenuSeparator className="bg-wax-flower-800/30" />
         <DropdownMenuGroup className="max-h-[300px] overflow-auto">
-          {notifications.map((notification) => (
+          {allNotifications.map((notification) => (
             <DropdownMenuItem 
               key={notification.id} 
               className="p-4 focus:bg-wax-flower-900/50 hover:bg-wax-flower-900/50"
@@ -82,7 +121,7 @@ export function NotificationsMenu() {
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
-        {notifications.length === 0 && (
+        {allNotifications.length === 0 && (
           <div className="p-4 text-center">
             <p className="text-sm text-wax-flower-400">
               No new notifications

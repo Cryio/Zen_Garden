@@ -148,6 +148,10 @@ const DashboardLayout = () => {
                 variant="ghost" 
                 size="icon"
                 className="relative text-wax-flower-300 hover:bg-wax-flower-900/50 hover:text-wax-flower-300"
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  window.location.href = '/login';
+                }}
               >
                 <LogOut className="h-5 w-5" />
               </Button>
