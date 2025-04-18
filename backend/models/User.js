@@ -10,5 +10,26 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true }//hashed from the front end
 });
 
+const HabitSchema = new mongoose.Schema({
+  habitName: String,
+  streak: Number,
+  progress: Number,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const StatsSchema = new mongoose.Schema({
+  completionRate: Number,
+  currentStreak: Number,
+  bestStreak: Number,
+  focusTime: Number,
+  totalHabits: Number,
+  activeHabits: Number,
+  dailyProgress: Number,
+  weeklyOverview: Number,
+  monthlyAnalytics: Number,
+});
 
 module.exports = mongoose.model("User", UserSchema);
