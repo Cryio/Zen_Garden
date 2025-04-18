@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies with specific esbuild version
-RUN npm install esbuild@0.25.2
+RUN npm install esbuild@0.21.5
 RUN npm install
 
 # Copy the rest of the application
