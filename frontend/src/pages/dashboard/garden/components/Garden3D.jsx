@@ -1,18 +1,17 @@
 import React, { useEffect, useRef, useState, Suspense, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, Stats } from '@react-three/drei';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Environment, Stats, PerspectiveCamera } from '@react-three/drei';
 import { Pane } from 'tweakpane';
-import { Grass } from './grass';
+import { Grass } from './Grass';
 import { Patches } from './Patches';
 import { ParallaxCamera } from './ParallaxCamera';
 import { CustomCursor } from './CustomCursor';
+import { Environment3D } from './Environment3D';
 import * as THREE from 'three';
 
 // Grid configuration
 const GRID_SIZE = 8; // 8x8 grid
 const PATCH_SIZE = 4; // Size of each patch
-const BRICK_HEIGHT = 0.2;
-const BRICK_COLOR = '#8B4513';
 
 function LoadingFallback() {
   return (
@@ -22,41 +21,13 @@ function LoadingFallback() {
   );
 }
 
-function GardenPatch({ position, size, color }) {
-  const brickGeometry = new THREE.BoxGeometry(size, BRICK_HEIGHT, size);
-  const brickMaterial = new THREE.MeshPhongMaterial({
-    color: BRICK_COLOR,
-    shininess: 30,
-    specular: 0x333333
-  });
-
-  return (
-    <group position={position}>
-      {/* Brick perimeter */}
-      <mesh
-        geometry={brickGeometry}
-        material={brickMaterial}
-        position={[0, -0.1, 0]}
-      />
-      {/* Flower */}
-      <mesh position={[0, 0.1, 0]}>
-        <sphereGeometry args={[0.3, 16, 16]} />
-        <meshPhongMaterial
-          color={color}
-          shininess={100}
-          specular={0xffffff}
-        />
-      </mesh>
-    </group>
-  );
-}
-
 function GardenScene({ params }) {
   const sceneRef = useRef();
   const groundRef = useRef();
   const mousePosition = useRef({ x: 0.5, y: 0.5 });
   const targetPosition = useRef(new THREE.Vector3(0, 0, 0));
   const currentPosition = useRef(new THREE.Vector3(0, 0, 0));
+  const { scene } = useThree();
 
   // Generate grid of patches
   const patches = useMemo(() => {
@@ -136,7 +107,7 @@ function GardenScene({ params }) {
           receiveShadow
           position={[0, -0.01, 0]}
         >
-          <planeGeometry args={[10000, 10000]} />
+          <planeGeometry args={[1000, 1000]} />
           <meshStandardMaterial 
             color={params.groundColor}
             roughness={params.groundRoughness}
@@ -145,8 +116,8 @@ function GardenScene({ params }) {
           />
         </mesh>
 
-        {/* Grass */}
-        <Grass params={params} />
+        {/* Background Environment */}
+        <Environment3D />
 
         {/* Garden Patches */}
         <Patches />
@@ -170,19 +141,27 @@ function GardenCanvas({ params, showDebug }) {
       shadows
       gl={{ 
         antialias: true,
-        alpha: true
+        alpha: false
       }}
       style={{ 
         background: 'transparent',
         width: '100%',
         height: '100%',
-        cursor: 'none' // Hide the cursor but allow mouse events
+        cursor: 'none'
+      }}
+      camera={{
+        position: [0, 5, 10],
+        fov: 50,
+        near: 0.1,
+        far: 100
       }}
     >
+      <color attach="background" args={[params.fogColor]} />
+      <fog attach="fog" args={[params.fogColor, 10, 35]} />
       <GardenScene params={params} />
       <Environment 
-        files="/HDRI/wildflower_field_1k.hdr" 
-        background={true}
+        files="/HDRI/wildflower_field_1k.hdr"
+        background={false}
         blur={0.3}
         intensity={0.5}
       />
@@ -219,13 +198,18 @@ export default function Garden3D() {
     flowerMetalness: 0.1,
 
     // Grass parameters
-    bladeCount: 500000,
-    waveSize: 1.0, // Reduced from 3.0 for more subtle movement
-    waveSpeed: 0.5, // Slower wave speed for more natural movement
-    windStrength: 0.8, // Reduced wind strength for gentler movement
-    windFrequency: 0.5, // Lower frequency for more natural wind patterns
+    bladeCount: 100000,
+    waveSize: 1.0,
+    waveSpeed: 0.5,
+    windStrength: 0.8,
+    windFrequency: 0.5,
     pathWidth: 2.0,
-    pathDensity: 0.1
+    pathDensity: 0.1,
+
+    // Fog parameters
+    fogColor: '#87CEEB', // Sky blue color
+    fogNear: 15,
+    fogFar: 50
   });
 
   const paneRef = useRef(null);
@@ -367,6 +351,27 @@ export default function Garden3D() {
         min: 0,
         max: 2,
         step: 0.1,
+      });
+
+      // Fog folder
+      const fogFolder = pane.addFolder({
+        title: 'Fog',
+        expanded: false,
+      });
+      fogFolder.addBinding(params, 'fogColor', {
+        label: 'Color',
+      });
+      fogFolder.addBinding(params, 'fogNear', {
+        label: 'Near',
+        min: 1,
+        max: 20,
+        step: 0.5,
+      });
+      fogFolder.addBinding(params, 'fogFar', {
+        label: 'Far',
+        min: 20,
+        max: 100,
+        step: 1,
       });
 
       // Add change handlers

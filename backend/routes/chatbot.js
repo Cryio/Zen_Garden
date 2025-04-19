@@ -4,26 +4,23 @@ const router = express.Router();
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-// Knowledge base for RAG
 const knowledgeBase = {
   meditation: [
-    "Meditation helps reduce stress and improve focus. Try starting with just 5 minutes a day! 🌿",
-    "Deep breathing exercises can help calm your mind. Inhale for 4 counts, hold for 4, exhale for 4. 🌬️",
-    "Mindfulness meditation involves focusing on the present moment without judgment. 🧘‍♂️"
+    "Meditation helps reduce stress and improve focus. Try starting with just 5 minutes a day!",
+    "Deep breathing exercises can help calm your mind. Inhale for 4 counts, hold for 4, exhale for 4.",
+    "Mindfulness meditation involves focusing on the present moment without judgment."
   ],
   habits: [
-    "Start small and build up gradually for lasting habits! 🎯",
-    "Consistency is more important than perfection. Keep going! 💪",
-    "Track your progress to stay motivated! 📈"
+    "Start small and build up gradually for lasting habits!",
+    "Consistency is more important than perfection. Keep going!",
+    "Track your progress to stay motivated!"
   ]
 };
 
-// Function to find relevant context
 function findRelevantContext(query) {
   const lowerQuery = query.toLowerCase();
   let relevantContexts = [];
 
-  // Check each category
   Object.entries(knowledgeBase).forEach(([category, facts]) => {
     if (lowerQuery.includes(category)) {
       relevantContexts = relevantContexts.concat(facts);
