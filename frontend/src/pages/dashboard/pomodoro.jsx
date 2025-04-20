@@ -1,9 +1,18 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PomodoroTimer from '@/components/PomodoroTimer';
 import SessionHistory from '@/components/SessionHistory';
 import FocusStats from '@/components/FocusStats';
 
 export default function PomodoroPage() {
+  const sessionHistoryRef = useRef();
+
+  const handleSessionComplete = () => {
+    // Refresh session history when a session is completed
+    if (sessionHistoryRef.current) {
+      sessionHistoryRef.current.fetchSessions();
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -13,10 +22,10 @@ export default function PomodoroPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
-          <PomodoroTimer />
+          <PomodoroTimer onSessionComplete={handleSessionComplete} />
           <FocusStats />
         </div>
-        <SessionHistory />
+        <SessionHistory ref={sessionHistoryRef} />
       </div>
     </div>
   );

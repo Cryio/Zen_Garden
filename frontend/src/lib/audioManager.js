@@ -50,63 +50,58 @@ const backgroundMusic = [
   }
 ];
 
-// Sound effects for different actions
-const soundEffects = {
-  start: {
-    src: '/audio/effects/start.mp3',
-    volume: 0.7
-  },
-  pause: {
-    src: '/audio/effects/pause.mp3',
-    volume: 0.6
-  },
-  resume: {
-    src: '/audio/effects/resume.mp3',
-    volume: 0.6
-  },
-  stop: {
-    src: '/audio/effects/stop.mp3',
-    volume: 0.7
-  },
-  complete: {
-    src: '/audio/effects/complete.mp3',
-    volume: 0.8
-  },
-  tick: {
-    src: '/audio/effects/tick.mp3',
-    volume: 0.3
-  }
-};
-
 class AudioManager {
   constructor() {
-    this.backgroundAudio = new Audio();
-    this.currentMusicIndex = Math.floor(Math.random() * backgroundMusic.length); // Start with random track
-    this.isPlaying = false;
-    this.volume = 0.4; // Lower default volume for ambient music
-    this.isMuted = false;
-    this.effectsVolume = 0.7;
-    this.effects = new Map();
-    this.shuffle = true; // Add shuffle mode
-    this.playedTracks = new Set(); // Track played songs for shuffle mode
+    // Sound effects
+    this.startSound = new Audio('/audio/effects/play.mp3');
+    this.pauseSound = new Audio('/audio/effects/pause.mp3');
+    this.completeSound = new Audio('/audio/effects/complete.mp3');
     
-    // Initialize sound effects
-    Object.entries(soundEffects).forEach(([key, value]) => {
-      const audio = new Audio(value.src);
-      audio.volume = value.volume * this.effectsVolume;
-      this.effects.set(key, audio);
-    });
+    // Background music setup
+    this.backgroundAudio = new Audio();
+    this.currentMusicIndex = Math.floor(Math.random() * backgroundMusic.length);
+    this.isPlaying = false;
+    this.volume = 0.4;
+    this.isMuted = false;
+    
+    // Preload sounds
+    this.startSound.load();
+    this.pauseSound.load();
+    this.completeSound.load();
+    
+    // Set volumes
+    this.startSound.volume = 0.7;
+    this.pauseSound.volume = 0.6;
+    this.completeSound.volume = 0.8;
 
     // Set up background music ended event
     this.backgroundAudio.addEventListener('ended', () => {
-      this.playNextTrack();
+      if (this.isPlaying) {
+        this.playNextTrack();
+      }
     });
+  }
 
-    // Add error handling for audio loading
-    this.backgroundAudio.addEventListener('error', (e) => {
-      console.error('Audio loading error:', e);
-      this.playNextTrack(); // Skip to next track if current fails
-    });
+  // Sound effects
+  playStart() {
+    if (!this.isMuted) {
+      this.startSound.currentTime = 0;
+      this.startSound.play().catch(err => console.warn('Could not play start sound:', err));
+    }
+  }
+
+  playPause() {
+    if (!this.isMuted) {
+      this.pauseSound.currentTime = 0;
+      this.pauseSound.play().catch(err => console.warn('Could not play pause sound:', err));
+    }
+  }
+
+  playComplete() {
+    if (!this.isMuted) {
+      this.completeSound.currentTime = 0;
+      this.completeSound.play().catch(err => console.warn('Could not play complete sound:', err));
+    }
   }
 
   // Background music controls
@@ -121,7 +116,6 @@ class AudioManager {
     this.backgroundAudio.pause();
     this.backgroundAudio.currentTime = 0;
     this.isPlaying = false;
-    this.playedTracks.clear(); // Reset played tracks list
   }
 
   pauseBackgroundMusic() {
@@ -133,56 +127,15 @@ class AudioManager {
     if (!this.isPlaying) {
       this.backgroundAudio.play().catch(error => {
         console.error('Resume playback failed:', error);
-        this.playNextTrack(); // Try next track if current fails
+        this.playNextTrack();
       });
       this.isPlaying = true;
     }
   }
 
   playNextTrack() {
-    if (this.shuffle) {
-      this.playNextShuffled();
-    } else {
-      this.currentMusicIndex = (this.currentMusicIndex + 1) % backgroundMusic.length;
-      this.loadAndPlayTrack(this.currentMusicIndex);
-    }
-  }
-
-  playPreviousTrack() {
-    if (this.shuffle) {
-      // In shuffle mode, previous just restarts the current track
-      this.backgroundAudio.currentTime = 0;
-    } else {
-      this.currentMusicIndex = (this.currentMusicIndex - 1 + backgroundMusic.length) % backgroundMusic.length;
-      this.loadAndPlayTrack(this.currentMusicIndex);
-    }
-  }
-
-  playNextShuffled() {
-    // Add current track to played list
-    this.playedTracks.add(this.currentMusicIndex);
-
-    // If all tracks have been played, reset the played list
-    if (this.playedTracks.size >= backgroundMusic.length) {
-      this.playedTracks.clear();
-      this.playedTracks.add(this.currentMusicIndex); // Keep current track in list
-    }
-
-    // Get available tracks
-    const availableTracks = [...Array(backgroundMusic.length).keys()]
-      .filter(i => !this.playedTracks.has(i));
-
-    // Pick random track from available ones
-    this.currentMusicIndex = availableTracks[Math.floor(Math.random() * availableTracks.length)];
+    this.currentMusicIndex = (this.currentMusicIndex + 1) % backgroundMusic.length;
     this.loadAndPlayTrack(this.currentMusicIndex);
-  }
-
-  toggleShuffle() {
-    this.shuffle = !this.shuffle;
-    if (this.shuffle) {
-      this.playedTracks.clear();
-      this.playedTracks.add(this.currentMusicIndex);
-    }
   }
 
   loadAndPlayTrack(index) {
@@ -191,17 +144,8 @@ class AudioManager {
     this.backgroundAudio.volume = this.isMuted ? 0 : this.volume;
     this.backgroundAudio.play().catch(error => {
       console.error('Audio playback failed:', error);
-      this.playNextTrack(); // Try next track if current fails
+      this.playNextTrack();
     });
-  }
-
-  // Sound effects controls
-  playEffect(effectName) {
-    const effect = this.effects.get(effectName);
-    if (effect && !this.isMuted) {
-      effect.currentTime = 0;
-      effect.play().catch(error => console.error('Effect playback failed:', error));
-    }
   }
 
   // Volume controls
@@ -210,19 +154,9 @@ class AudioManager {
     this.backgroundAudio.volume = this.isMuted ? 0 : value;
   }
 
-  setEffectsVolume(value) {
-    this.effectsVolume = value;
-    this.effects.forEach(effect => {
-      effect.volume = this.isMuted ? 0 : value;
-    });
-  }
-
   toggleMute() {
     this.isMuted = !this.isMuted;
     this.backgroundAudio.volume = this.isMuted ? 0 : this.volume;
-    this.effects.forEach(effect => {
-      effect.volume = this.isMuted ? 0 : this.effectsVolume;
-    });
   }
 
   getCurrentTrackInfo() {
@@ -230,11 +164,8 @@ class AudioManager {
   }
 
   cleanup() {
-    this.stopBackgroundMusic();
-    this.effects.forEach(effect => {
-      effect.pause();
-      effect.currentTime = 0;
-    });
+    this.backgroundAudio.pause();
+    this.backgroundAudio.src = '';
   }
 }
 

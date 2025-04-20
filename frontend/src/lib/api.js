@@ -156,7 +156,16 @@ const habitApi = {
   // Focus Mode API calls
   createFocusSession: async (sessionData) => {
     try {
-      const response = await api.post(`/api/focus/${sessionData.userId}/focus`, sessionData);
+      const response = await api.post(`/api/focus/${sessionData.userId}/focus`, {
+        startTime: sessionData.startTime,
+        endTime: sessionData.endTime,
+        duration: sessionData.duration,
+        habitId: sessionData.habitId,
+        type: sessionData.type,
+        completed: sessionData.completed,
+        interruptions: sessionData.interruptions,
+        notes: sessionData.notes
+      });
       return response;
     } catch (error) {
       console.error('Error creating focus session:', error);

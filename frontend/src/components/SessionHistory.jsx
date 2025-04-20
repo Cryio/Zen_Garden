@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,23 +6,20 @@ import { useToast } from "@/components/ui/use-toast";
 import { habitApi } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { format } from 'date-fns';
-import { Timer, AlertCircle, Check, X } from 'lucide-react';
+import { Timer, Clock, RefreshCw } from 'lucide-react';
 
-export default function SessionHistory() {
+const SessionHistory = forwardRef((props, ref) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('date');
   const { user } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchSessions();
-  }, [user?.id]);
-
   const fetchSessions = async () => {
     try {
-      if (!user?.id) return;
-      const response = await habitApi.getFocusSessions(user.id);
+      if (!user?._id) return;
+      setLoading(true);
+      const response = await habitApi.getFocusSessions(user._id);
       setSessions(response.data);
     } catch (error) {
       toast({
@@ -35,7 +32,16 @@ export default function SessionHistory() {
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    fetchSessions
+  }));
+
+  useEffect(() => {
+    fetchSessions();
+  }, [user?._id]);
+
   const formatDuration = (minutes) => {
+    if (minutes === 0) return '0m';
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     if (hours === 0) return `${remainingMinutes}m`;
@@ -50,48 +56,22 @@ export default function SessionHistory() {
         case 'duration':
           return b.duration - a.duration;
         case 'type':
-          return a.sessionType.localeCompare(b.sessionType);
+          return a.type.localeCompare(b.type);
         default:
           return 0;
       }
     });
   };
 
-  const getSessionTypeColor = (type) => {
-    switch (type.toLowerCase()) {
-      case 'pomodoro':
-        return 'text-green-500';
-      case 'break':
-        return 'text-blue-500';
-      case 'long-break':
-        return 'text-purple-500';
-      default:
-        return 'text-gray-500';
-    }
-  };
-
-  const getSessionTypeIcon = (type) => {
-    switch (type) {
-      case 'pomodoro':
-        return <Timer className="h-4 w-4 text-wax-flower-500" />;
-      case 'break':
-        return <Timer className="h-4 w-4 text-green-500" />;
-      case 'long-break':
-        return <Timer className="h-4 w-4 text-blue-500" />;
-      default:
-        return <Timer className="h-4 w-4" />;
-    }
-  };
-
   if (loading) {
     return (
-      <Card className="w-full bg-black/50 border-wax-flower-200/20">
+      <Card className="w-full h-[590px] bg-wax-flower-100/10 border-wax-flower-200/20">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-4 bg-wax-flower-500/20 rounded w-1/4"></div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 bg-wax-flower-500/20 rounded"></div>
+                <div key={i} className="h-20 bg-wax-flower-500/20 rounded"></div>
               ))}
             </div>
           </div>
@@ -101,11 +81,20 @@ export default function SessionHistory() {
   }
 
   return (
-    <Card className="w-full bg-black/50 border-wax-flower-200/20">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-bold text-wax-flower-200">Session History</CardTitle>
+    <Card className="w-full h-[590px] bg-wax-flower-100/10 border-wax-flower-200/20">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-wax-flower-200/10">
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-xl font-bold text-wax-flower-200">Session History</CardTitle>
+          <button
+            onClick={fetchSessions}
+            className="p-1 rounded-full hover:bg-wax-flower-200/10 transition-colors"
+            title="Refresh history"
+          >
+            <RefreshCw className="h-4 w-4 text-wax-flower-200" />
+          </button>
+        </div>
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[100px] h-8 text-sm bg-transparent border-wax-flower-200/20 text-wax-flower-200">
             <SelectValue placeholder="Sort by..." />
           </SelectTrigger>
           <SelectContent>
@@ -115,43 +104,56 @@ export default function SessionHistory() {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
-          {sessions.length === 0 ? (
-            <div className="text-center py-8 text-wax-flower-400">
-              No focus sessions recorded yet
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {sortSessions(sessions).map((session) => (
+      <CardContent className="p-0">
+        <ScrollArea className="h-[470px]">
+          <div className="space-y-px">
+            {sessions.length === 0 ? (
+              <div className="text-center py-8 text-wax-flower-400">
+                No focus sessions recorded yet
+              </div>
+            ) : (
+              sortSessions(sessions).map((session) => (
                 <div
                   key={session._id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-wax-flower-100/10 hover:bg-wax-flower-100/20 transition-colors"
+                  className="px-4 py-3 hover:bg-wax-flower-200/5 transition-colors"
                 >
-                  <div className="space-y-1">
-                    <p className={`font-medium ${getSessionTypeColor(session.sessionType)}`}>
-                      {session.sessionType}
-                    </p>
-                    <p className="text-sm text-wax-flower-400">
-                      {format(new Date(session.startTime), 'MMM d, yyyy h:mm a')}
-                    </p>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <Timer className="h-4 w-4 text-wax-flower-200" />                                
+                      <span className="text-wax-flower-200 font-medium">
+                        {session.type.charAt(0).toUpperCase() + session.type.slice(1)}
+                      </span>
+                      {!session.completed && (
+                        <span className="text-xs text-red-500">×</span>
+                      )}
+                    </div>
+                    <span className="text-wax-flower-200">{formatDuration(session.duration)}</span>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-wax-flower-200">
-                      {formatDuration(session.duration)}
-                    </p>
-                    {session.interruptions > 0 && (
-                      <p className="text-sm text-wax-flower-400">
-                        {session.interruptions} interruption{session.interruptions > 1 ? 's' : ''}
-                      </p>
-                    )}
+                  <div className="flex flex-col text-sm text-wax-flower-400">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span>Started: {format(new Date(session.startTime), 'MMM d, yyyy h:mm a')}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span>Ended: {format(new Date(session.endTime), 'h:mm a')}</span>
+                    </div>
                   </div>
+                  {session.notes && (
+                    <p className="mt-1 text-sm text-wax-flower-400">
+                      {session.notes}
+                    </p>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </ScrollArea>
       </CardContent>
     </Card>
   );
-} 
+});
+
+SessionHistory.displayName = 'SessionHistory';
+
+export default SessionHistory; 
