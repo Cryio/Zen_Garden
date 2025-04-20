@@ -4,6 +4,7 @@ const connectDB = require('./config/database');
 const habitRoutes = require('./routes/habit');
 const { router: authRoutes } = require('./routes/auth');
 const chatbotRoutes = require("./routes/chatbot");
+const focusModeRoutes = require('./routes/focusMode');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.get('/health', (req, res) => {
 app.use('/api/habits', habitRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use('/api/focus', focusModeRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

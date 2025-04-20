@@ -151,7 +151,48 @@ const habitApi = {
       console.error('Error deleting habit:', error);
       throw error;
     }
-  }
+  },
+
+  // Focus Mode API calls
+  createFocusSession: async (sessionData) => {
+    try {
+      const response = await api.post(`/api/focus/${sessionData.userId}/focus`, sessionData);
+      return response;
+    } catch (error) {
+      console.error('Error creating focus session:', error);
+      throw error;
+    }
+  },
+
+  getFocusSessions: async (userId) => {
+    try {
+      const response = await api.get(`/api/focus/${userId}/focus`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching focus sessions:', error);
+      throw error;
+    }
+  },
+
+  updateFocusSession: async (userId, sessionId, sessionData) => {
+    try {
+      const response = await api.put(`/api/focus/${userId}/focus/${sessionId}`, sessionData);
+      return response;
+    } catch (error) {
+      console.error('Error updating focus session:', error);
+      throw error;
+    }
+  },
+
+  getFocusStats: async (userId, timeframe = 'week') => {
+    try {
+      const response = await api.get(`/api/focus/${userId}/focus/stats?timeframe=${timeframe}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching focus stats:', error);
+      throw error;
+    }
+  },
 };
 
 export { api, habitApi };
