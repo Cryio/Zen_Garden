@@ -23,6 +23,20 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+// Get current user data
+router.get("/me", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'Failed to fetch user data' });
+  }
+});
+
 // User Signup
 router.post("/signup", async (req, res) => {
   try {
@@ -85,25 +99,25 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Find user
-    const user = await User.findOne({ email });
+    // Find user and include password field
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // Compare password
+    // Compare passwords
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
     // Generate JWT token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h"
+      expiresIn: "1h",
     });
 
-    res.status(200).json({ 
-      message: "Login successful", 
+    res.json({
+      message: "Login successful",
       token,
       user: {
         id: user._id,
@@ -112,10 +126,9 @@ router.post("/login", async (req, res) => {
         email: user.email
       }
     });
-
   } catch (err) {
     console.error("Login Error:", err);
-    res.status(500).json({ error: "Internal Server Error", details: err.message });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -164,4 +177,4 @@ router.put('/profile', verifyToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = { router, verifyToken };

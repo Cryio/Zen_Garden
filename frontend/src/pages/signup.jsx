@@ -240,7 +240,6 @@ export default function Signup() {
     }
 
     try {
-      // Send plain data to backend
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/auth/signup`,
         {
@@ -253,14 +252,35 @@ export default function Signup() {
         }
       );
 
-      console.log('API Response:', response.data);
-      navigate("/login");
+      if (response.data && response.data.token) {
+        // Store the token in localStorage
+        localStorage.setItem('token', response.data.token);
+        
+        // Store user data if needed
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        
+        // Navigate to dashboard or home page
+        navigate("/dashboard");
+      } else {
+        setError("Unexpected response from server");
+      }
     } catch (error) {
-      console.error("Signup error:", error.response?.data);
-      setError(
-        error.response?.data?.error ||
-          "Unexpected error occurred during signup"
-      );
+      console.error("Signup error:", error);
+      
+      // Handle different types of errors
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        setError(error.response.data.error || "An error occurred during signup");
+      } else if (error.request) {
+        // The request was made but no response was received
+        setError("No response from server. Please try again later.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError("An unexpected error occurred. Please try again.");
+      }
     }
   };
 

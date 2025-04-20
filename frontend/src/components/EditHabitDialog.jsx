@@ -18,33 +18,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function NewHabitDialog({ open, onOpenChange, onSave, goalId }) {
+export default function EditHabitDialog({ open, onOpenChange, habit, onSave }) {
   const [formData, setFormData] = React.useState({
-    name: '',
-    frequency: 'daily'
+    name: habit?.name || '',
+    frequency: habit?.frequency || 'daily'
   });
 
   React.useEffect(() => {
-    if (!goalId) {
-      console.error('No goal ID provided to NewHabitDialog');
-      onOpenChange(false);
+    if (habit) {
+      setFormData({
+        name: habit.name,
+        frequency: habit.frequency
+      });
     }
-  }, [goalId, onOpenChange]);
+  }, [habit]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!goalId) {
-      console.error('No goal ID provided');
-      return;
-    }
     onSave({
-      name: formData.name,
-      frequency: formData.frequency,
-      completed: false,
-      streak: 0,
-      lastCompleted: null
+      ...habit,
+      ...formData
     });
-    setFormData({ name: '', frequency: 'daily' });
     onOpenChange(false);
   };
 
@@ -53,9 +47,9 @@ export default function NewHabitDialog({ open, onOpenChange, onSave, goalId }) {
       <DialogContent className="sm:max-w-[425px] bg-black border-wax-flower-200/20">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-wax-flower-200">Create New Habit</DialogTitle>
+            <DialogTitle className="text-wax-flower-200">Edit Habit</DialogTitle>
             <DialogDescription className="text-wax-flower-400">
-              Add a new habit to track your daily progress.
+              Update your habit details.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -95,7 +89,7 @@ export default function NewHabitDialog({ open, onOpenChange, onSave, goalId }) {
               type="submit"
               className="bg-wax-flower-500 hover:bg-wax-flower-600 text-black"
             >
-              Create Habit
+              Save Changes
             </Button>
           </DialogFooter>
         </form>

@@ -33,7 +33,8 @@ const UserSchema = new mongoose.Schema({
   password: { 
     type: String, 
     required: [true, "Password is required"],
-    minlength: [6, "Password must be at least 6 characters long"]
+    minlength: [8, "Password must be at least 8 characters long"],
+    select: false // Don't include password in query results
   },
   bio: {
     type: String,
@@ -50,6 +51,107 @@ const UserSchema = new mongoose.Schema({
     enum: ['zen', 'cottage', 'modern'],
     default: 'zen'
   },
+  goals: {
+    type: [{
+      id: {
+        type: String,
+        required: true
+      },
+      name: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      description: {
+        type: String,
+        trim: true
+      },
+      habits: [{
+        id: {
+          type: String,
+          required: true
+        },
+        name: {
+          type: String,
+          required: true,
+          trim: true
+        },
+        description: {
+          type: String,
+          trim: true
+        },
+        completed: {
+          type: Boolean,
+          default: false
+        },
+        streak: {
+          type: Number,
+          default: 0
+        },
+        completionHistory: {
+          type: [Boolean],
+          default: Array(7).fill(false)
+        },
+        frequency: {
+          type: String,
+          enum: ['daily', 'weekly', 'monthly'],
+          default: 'daily'
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        },
+        updatedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }],
+      progress: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    default: []
+  },
+  stats: {
+    type: {
+      totalGoals: {
+        type: Number,
+        default: 0
+      },
+      totalHabits: {
+        type: Number,
+        default: 0
+      },
+      completedHabits: {
+        type: Number,
+        default: 0
+      },
+      currentStreak: {
+        type: Number,
+        default: 0
+      },
+      bestStreak: {
+        type: Number,
+        default: 0
+      },
+      lastUpdated: {
+        type: Date,
+        default: Date.now
+      }
+    },
+    default: {}
+  },
   notifications: {
     type: Boolean,
     default: true
@@ -61,14 +163,18 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true
 });
 
 // Hash password before saving
-UserSchema.pre("save", async function(next) {
-  if (!this.isModified("password")) return next();
+UserSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
   
   try {
     const salt = await bcrypt.genSalt(10);
@@ -77,6 +183,12 @@ UserSchema.pre("save", async function(next) {
   } catch (error) {
     next(error);
   }
+});
+
+// Update the updatedAt field before saving
+UserSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 // Method to compare password
