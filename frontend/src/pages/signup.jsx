@@ -24,8 +24,19 @@ import HeaderIcons from "../components/HeaderIcons";
 import PasswordInput from "../components/PasswordInput";
 import CaptchaComponent from "../components/CaptchaComponent";
 import AnimatedBackground from "../components/AnimatedBackground";
+import { Calendar } from "@/components/ui/calendar";
 
-// Helper functions
+// Helper functions and constants
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+const years = Array.from(
+  { length: new Date().getFullYear() - 1920 + 1 },
+  (_, i) => (1920 + i).toString()
+);
+
 function pad(n) {
   return n < 10 ? "0" + n : n;
 }
@@ -66,6 +77,8 @@ export default function Signup() {
   const [passwordStrength, setPasswordStrength] = useState("");
   const [error, setError] = useState("");
   const [captcha, setCaptcha] = useState(generateCaptcha());
+
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Refs for border glow and overlay effects
   const gradientOverlayRef = useRef(null);
@@ -192,6 +205,7 @@ export default function Signup() {
       confirmPassword: formData.confirmPassword,
     };
 
+    // Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
@@ -220,29 +234,26 @@ export default function Signup() {
       return;
     }
 
-    if (!captcha.isVerified) {
-      setError("Please complete the captcha verification!");
-      return;
-    }
-
     if (!trimmedData.dob) {
       setError("Please select your Date of Birth!");
       return;
     }
 
     try {
+      // Send plain data to backend
       const response = await axios.post(
-        "http://localhost:5000/api/auth/signup",
+        `${import.meta.env.VITE_API_URL}/api/auth/signup`,
         {
           firstName: trimmedData.firstName,
           lastName: trimmedData.lastName,
           email: trimmedData.email,
           gender: trimmedData.gender,
           dob: trimmedData.dob,
-          password: trimmedData.password,
+          password: trimmedData.password
         }
       );
-      console.log(response.data);
+
+      console.log('API Response:', response.data);
       navigate("/login");
     } catch (error) {
       console.error("Signup error:", error.response?.data);
@@ -250,6 +261,32 @@ export default function Signup() {
         error.response?.data?.error ||
           "Unexpected error occurred during signup"
       );
+    }
+  };
+
+  // Update currentMonth when month dropdown changes
+  const handleMonthChange = (month) => {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(months.indexOf(month));
+    setCurrentMonth(newDate);
+    
+    if (formData.dob) {
+      const dobDate = new Date(formData.dob);
+      dobDate.setMonth(months.indexOf(month));
+      setFormData(prev => ({ ...prev, dob: formatLocalDateToISO(dobDate) }));
+    }
+  };
+
+  // Update currentMonth when year dropdown changes
+  const handleYearChange = (year) => {
+    const newDate = new Date(currentMonth);
+    newDate.setFullYear(parseInt(year));
+    setCurrentMonth(newDate);
+    
+    if (formData.dob) {
+      const dobDate = new Date(formData.dob);
+      dobDate.setFullYear(parseInt(year));
+      setFormData(prev => ({ ...prev, dob: formatLocalDateToISO(dobDate) }));
     }
   };
 
@@ -337,23 +374,80 @@ export default function Signup() {
                 <div>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Input
-                        type="text"
-                        name="dob"
-                        placeholder="Date of Birth"
-                        value={formData.dob ? isoFormatDMY(new Date(formData.dob)) : ""}
-                        readOnly
-                        className={`${inputClass} cursor-pointer focus:ring-2 focus:ring-wax-flower-500 focus:ring-offset-2`}
-                        required
-                      />
+                      <div>
+                        <Input
+                          type="text"
+                          name="dob"
+                          placeholder="Date of Birth"
+                          value={formData.dob ? isoFormatDMY(new Date(formData.dob)) : ""}
+                          readOnly
+                          className={`${inputClass} cursor-pointer`}
+                          required
+                        />
+                      </div>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2 bg-wax-flower-950/50 backdrop-blur-lg border border-wax-flower-500/20 rounded-lg shadow-lg">
-                      <DatePicker
-                        value={formData.dob ? new Date(formData.dob) : null}
-                        onChange={(newDate) => {
-                          const iso = newDate ? formatLocalDateToISO(newDate) : "";
-                          setFormData((prev) => ({ ...prev, dob: iso }));
+                    <PopoverContent align="start" className="w-auto p-2 bg-wax-flower-950/50 backdrop-blur-lg border border-wax-flower-500/20 rounded-lg shadow-lg">
+                      <div className="flex space-x-4 mb-4">
+                        <Select
+                          value={currentMonth ? months[currentMonth.getMonth()] : undefined}
+                          onValueChange={handleMonthChange}
+                        >
+                          <SelectTrigger className="w-[120px] bg-wax-flower-950/20 text-wax-flower-200">
+                            <SelectValue placeholder="Month" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {months.map((month) => (
+                              <SelectItem 
+                                key={month} 
+                                value={month}
+                                className="text-wax-flower-200 hover:bg-wax-flower-500/20"
+                              >
+                                {month}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={currentMonth ? currentMonth.getFullYear().toString() : undefined}
+                          onValueChange={handleYearChange}
+                        >
+                          <SelectTrigger className="w-[120px] bg-wax-flower-950/20 text-wax-flower-200">
+                            <SelectValue placeholder="Year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {years.map((year) => (
+                              <SelectItem 
+                                key={year} 
+                                value={year}
+                                className="text-wax-flower-200 hover:bg-wax-flower-500/20"
+                              >
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Calendar
+                        mode="single"
+                        selected={formData.dob ? new Date(formData.dob) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setFormData(prev => ({ ...prev, dob: formatLocalDateToISO(date) }));
+                            setCurrentMonth(date);
+                          }
                         }}
+                        month={currentMonth}
+                        onMonthChange={setCurrentMonth}
+                        disabled={(date) => {
+                          const today = new Date();
+                          const minDate = new Date();
+                          minDate.setFullYear(today.getFullYear() - 100);
+                          return date > today || date < minDate;
+                        }}
+                        initialFocus
+                        className="rounded-md border border-wax-flower-500/20"
+                        showOutsideDays={false}
+                        fixedWeeks
                       />
                     </PopoverContent>
                   </Popover>

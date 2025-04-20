@@ -1,4 +1,7 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,8 +11,106 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Camera, Globe, Moon, Sun, User } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 export default function Settings() {
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    bio: '',
+    theme: 'light',
+    gardenPreference: 'zen',
+    notifications: true,
+    timezone: 'UTC'
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/auth/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        setProfile(response.data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast.error('Failed to load profile data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/auth/profile`,
+        profile,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      setProfile(response.data);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-wax-flower-200/20 rounded w-1/4"></div>
+          <div className="space-y-2">
+            <div className="h-4 bg-wax-flower-200/20 rounded w-3/4"></div>
+            <div className="h-4 bg-wax-flower-200/20 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6 animate-slide-in">
       <div className="flex items-center justify-between">
@@ -30,7 +131,7 @@ export default function Settings() {
             <Avatar className="h-20 w-20 border-2 border-wax-flower-200/20 dark:border-wax-flower-100/20">
               <AvatarImage src="/avatars/01.png" />
               <AvatarFallback className="bg-wax-flower-500/20 text-wax-flower-200 dark:text-wax-flower-100">
-                <User className="h-8 w-8" />
+                {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div className="space-y-2">
@@ -42,170 +143,62 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-wax-flower-200 dark:text-wax-flower-100">First Name</Label>
+                <Input
+                  id="firstName" 
+                  name="firstName"
+                  value={profile.firstName}
+                  onChange={handleChange}
+                  className="border-wax-flower-200/20 dark:border-wax-flower-100/20" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-wax-flower-200 dark:text-wax-flower-100">Last Name</Label>
+                <Input
+                  id="lastName" 
+                  name="lastName"
+                  value={profile.lastName}
+                  onChange={handleChange}
+                  className="border-wax-flower-200/20 dark:border-wax-flower-100/20" 
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-wax-flower-200 dark:text-wax-flower-100">First Name</Label>
-              <Input id="firstName" placeholder="Anmol" className="border-wax-flower-200/20 dark:border-wax-flower-100/20" />
+              <Label htmlFor="email" className="text-wax-flower-200 dark:text-wax-flower-100">Email</Label>
+              <Input
+                id="email" 
+                name="email"
+                type="email" 
+                value={profile.email}
+                onChange={handleChange}
+                className="border-wax-flower-200/20 dark:border-wax-flower-100/20" 
+              />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-wax-flower-200 dark:text-wax-flower-100">Last Name</Label>
-              <Input id="lastName" placeholder="Ranjan" className="border-wax-flower-200/20 dark:border-wax-flower-100/20" />
+              <Label htmlFor="bio" className="text-wax-flower-200 dark:text-wax-flower-100">Bio</Label>
+              <Textarea 
+                id="bio" 
+                name="bio"
+                value={profile.bio}
+                onChange={handleChange}
+                placeholder="Tell us about yourself..." 
+                className="border-wax-flower-200/20 dark:border-wax-flower-100/20 min-h-[100px]"
+              />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-wax-flower-200 dark:text-wax-flower-100">Email</Label>
-            <Input id="email" type="email" placeholder="anmol.ranjan@example.com" className="border-wax-flower-200/20 dark:border-wax-flower-100/20" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bio" className="text-wax-flower-200 dark:text-wax-flower-100">Bio</Label>
-            <Textarea 
-              id="bio" 
-              placeholder="Tell us about yourself..." 
-              className="border-wax-flower-200/20 dark:border-wax-flower-100/20 min-h-[100px]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="timezone" className="text-wax-flower-200 dark:text-wax-flower-100">Timezone</Label>
-            <Select>
-              <SelectTrigger className="border-wax-flower-200/20 dark:border-wax-flower-100/20">
-                <SelectValue placeholder="Select your timezone" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="utc">UTC</SelectItem>
-                <SelectItem value="est">Eastern Time</SelectItem>
-                <SelectItem value="pst">Pacific Time</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button className="bg-wax-flower-500 hover:bg-wax-flower-600 text-white">
-            Save Changes
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Garden Preferences */}
-      <Card className="border-wax-flower-200/20 dark:border-wax-flower-100/20">
-        <CardHeader>
-          <CardTitle className="text-wax-flower-200 dark:text-wax-flower-100">Garden Preferences</CardTitle>
-          <CardDescription className="text-wax-flower-400 dark:text-wax-flower-300">Customize your Zen Garden experience</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-wax-flower-200 dark:text-wax-flower-100">Garden Theme</Label>
-              <p className="text-sm text-wax-flower-400 dark:text-wax-flower-300">
-                Choose your preferred garden theme
-              </p>
-            </div>
-            <Select defaultValue="spring">
-              <SelectTrigger className="w-[180px] border-wax-flower-200/20 dark:border-wax-flower-100/20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="spring">Spring Garden</SelectItem>
-                <SelectItem value="summer">Summer Garden</SelectItem>
-                <SelectItem value="autumn">Autumn Garden</SelectItem>
-                <SelectItem value="winter">Winter Garden</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-wax-flower-200 dark:text-wax-flower-100">Garden Size</Label>
-              <p className="text-sm text-wax-flower-400 dark:text-wax-flower-300">
-                Adjust your garden's size
-              </p>
-            </div>
-            <Select defaultValue="medium">
-              <SelectTrigger className="w-[180px] border-wax-flower-200/20 dark:border-wax-flower-100/20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="small">Small</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="large">Large</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Notifications */}
-      <Card className="border-wax-flower-200/20 dark:border-wax-flower-100/20">
-        <CardHeader>
-          <CardTitle className="text-wax-flower-200 dark:text-wax-flower-100">Notifications</CardTitle>
-          <CardDescription className="text-wax-flower-400 dark:text-wax-flower-300">Configure how you want to be notified</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-wax-flower-200 dark:text-wax-flower-100">Daily Reminders</Label>
-              <p className="text-sm text-wax-flower-400 dark:text-wax-flower-300">
-                Receive daily notifications for your habits
-              </p>
-            </div>
-            <Switch className="data-[state=checked]:bg-wax-flower-500" />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-wax-flower-200 dark:text-wax-flower-100">Weekly Summary</Label>
-              <p className="text-sm text-wax-flower-400 dark:text-wax-flower-300">
-                Get a weekly report of your progress
-              </p>
-            </div>
-            <Switch className="data-[state=checked]:bg-wax-flower-500" />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-wax-flower-200 dark:text-wax-flower-100">Garden Milestones</Label>
-              <p className="text-sm text-wax-flower-400 dark:text-wax-flower-300">
-                Get notified when you reach garden milestones
-              </p>
-            </div>
-            <Switch className="data-[state=checked]:bg-wax-flower-500" />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Theme Settings */}
-      <Card className="border-wax-flower-200/20 dark:border-wax-flower-100/20">
-        <CardHeader>
-          <CardTitle className="text-wax-flower-200 dark:text-wax-flower-100">Theme Settings</CardTitle>
-          <CardDescription className="text-wax-flower-400 dark:text-wax-flower-300">Customize your app appearance</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-wax-flower-200 dark:text-wax-flower-100">Dark Mode</Label>
-              <p className="text-sm text-wax-flower-400 dark:text-wax-flower-300">
-                Toggle dark mode theme
-              </p>
-            </div>
-            <Switch className="data-[state=checked]:bg-wax-flower-500" />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-wax-flower-200 dark:text-wax-flower-100">Color Scheme</Label>
-              <p className="text-sm text-wax-flower-400 dark:text-wax-flower-300">
-                Choose your preferred color scheme
-              </p>
-            </div>
-            <Select defaultValue="wax-flower">
-              <SelectTrigger className="w-[180px] border-wax-flower-200/20 dark:border-wax-flower-100/20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="wax-flower">Wax Flower</SelectItem>
-                <SelectItem value="sakura">Sakura</SelectItem>
-                <SelectItem value="lotus">Lotus</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <Button
+              type="submit"
+              className="bg-wax-flower-500 hover:bg-wax-flower-600 text-white"
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 

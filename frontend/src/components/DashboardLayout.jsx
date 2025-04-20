@@ -3,8 +3,9 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationsMenu } from "@/components/ui/notifications";
+import { Chatbot } from "@/pages/dashboard/Chatbot";
 import { 
-  Bell, 
   Settings, 
   LogOut, 
   Menu, 
@@ -13,7 +14,8 @@ import {
   Flower2, 
   Calendar, 
   ListTodo, 
-  HelpCircle
+  HelpCircle,
+  Timer
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import "@/styles/dashboard.css";
@@ -27,6 +29,7 @@ const DashboardLayout = () => {
     { name: "Garden", icon: <Flower2 className="h-4 w-4" />, path: "/dashboard/garden" },
     { name: "Habits", icon: <ListTodo className="h-4 w-4" />, path: "/dashboard/habits" },
     { name: "Analytics", icon: <LineChart className="h-4 w-4" />, path: "/dashboard/analytics" },
+    { name: "Pomodoro", icon: <Timer className="h-4 w-4" />, path: "/dashboard/pomodoro" },
   ];
 
   const bottomLinks = [
@@ -138,14 +141,7 @@ const DashboardLayout = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="relative text-wax-flower-300 hover:bg-wax-flower-900/50 hover:text-wax-flower-300"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-wax-flower-500 rounded-full ring-2 ring-white dark:ring-wax-flower-950" />
-              </Button>
+              <NotificationsMenu />
               <Avatar className="border-2 border-wax-flower-200/50 dark:border-wax-flower-700/30 hover:border-wax-flower-300 dark:hover:border-wax-flower-600 transition-colors">
                 <AvatarImage src="" /> 
                 <AvatarFallback className="bg-wax-flower-100 dark:bg-wax-flower-800 text-wax-flower-700 dark:text-wax-flower-200">Cn</AvatarFallback>
@@ -154,6 +150,10 @@ const DashboardLayout = () => {
                 variant="ghost" 
                 size="icon"
                 className="relative text-wax-flower-300 hover:bg-wax-flower-900/50 hover:text-wax-flower-300"
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  window.location.href = '/login';
+                }}
               >
                 <LogOut className="h-5 w-5" />
               </Button>
@@ -167,6 +167,9 @@ const DashboardLayout = () => {
             <Outlet />
           </div>
         </main>
+
+        {/* Chatbot */}
+        <Chatbot />
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import HeaderIcons from "../components/HeaderIcons";
 import PasswordInput from "../components/PasswordInput";
 import AnimatedBackground from "../components/AnimatedBackground";
+import { toast } from 'sonner';
 
 // Frequently used class name variables
 const inputClass =
@@ -33,6 +34,7 @@ export default function Login() {
     password: "",
   });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Refs for border glow and overlay effects
   const gradientOverlayRef = useRef(null);
@@ -89,27 +91,35 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     setError("");
-
+    
     // Basic validation
     if (!formData.email || !formData.password) {
       setError("Please fill in both email and password!");
+      setIsLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", {
-        email: formData.email,
-        password: formData.password,
-      });
-      console.log(response.data);
-      navigate("/dashboard");
-    } catch (error) {
-      console.error("Login error:", error.response?.data);
-      setError(
-        error.response?.data?.error ||
-          "Unexpected error occurred during login"
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        formData
       );
+
+      // Store the token in localStorage
+      localStorage.setItem('token', response.data.token);
+      
+      // Show success message
+      toast.success('Login successful');
+      
+      // Redirect to dashboard page
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.response?.data?.error || 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -187,8 +197,9 @@ export default function Login() {
             <Button
               type="submit"
               className={buttonClass}
+              disabled={isLoading}
             >
-              Login
+              {isLoading ? 'Signing in...' : 'Login'}
             </Button>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
