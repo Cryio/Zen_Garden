@@ -1,9 +1,5 @@
 # Zen_Garden
 
-A Gamified AI-Powered Habit Tracker
-
-## Description
-
 Zen_Garden is a web application designed to make habit tracking engaging and interactive. It features a gamified experience where users can visualize their progress through a virtual 3D garden that grows as they complete their habits. The application likely incorporates AI to provide personalized insights and recommendations, enhancing the user experience. With a user-friendly dashboard, Zen_Garden aims to help users build and maintain positive habits in a fun and motivating way.
 
 ## Features
