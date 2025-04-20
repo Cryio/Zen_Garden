@@ -164,12 +164,7 @@ export function Environment3D() {
   const grassParams = useMemo(() => {
     const collisionElements = [
       ...elements,
-      ...getPatchCollisionData(),
-      {
-        type: 'frogArea',
-        position: [0, 0, 0],
-        radius: 4.0
-      }
+      ...getPatchCollisionData()
     ];
 
     return {

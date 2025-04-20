@@ -13,6 +13,70 @@ import * as THREE from 'three';
 const GRID_SIZE = 8; // 8x8 grid
 const PATCH_SIZE = 4; // Size of each patch
 
+// Mock goals data for development
+const mockGoals = [
+  {
+    id: '1',
+    name: 'Exercise More',
+    habits: [
+      {
+        id: '1-1',
+        name: 'Morning Yoga',
+        frequency: 'daily',
+        lastCompleted: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+      },
+      {
+        id: '1-2',
+        name: 'Evening Walk',
+        frequency: 'daily',
+        lastCompleted: new Date(), // Today
+      }
+    ]
+  },
+  {
+    id: '2',
+    name: 'Healthy Eating',
+    habits: [
+      {
+        id: '2-1',
+        name: 'Eat Vegetables',
+        frequency: 'daily',
+        lastCompleted: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
+      },
+      {
+        id: '2-2',
+        name: 'No Snacks',
+        frequency: 'daily',
+        lastCompleted: new Date(Date.now() - 1000 * 60 * 60 * 72), // 3 days ago
+      },
+      {
+        id: '2-3',
+        name: 'Drink Water',
+        frequency: 'daily',
+        lastCompleted: new Date(), // Today
+      }
+    ]
+  },
+  {
+    id: '3',
+    name: 'Learning',
+    habits: [
+      {
+        id: '3-1',
+        name: 'Read Books',
+        frequency: 'daily',
+        lastCompleted: new Date(), // Today
+      },
+      {
+        id: '3-2',
+        name: 'Study Math',
+        frequency: 'weekly',
+        lastCompleted: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
+      }
+    ]
+  }
+];
+
 function LoadingFallback() {
   return (
     <div className="w-full h-[600px] flex items-center justify-center bg-gradient-to-b from-wax-flower-900/50 to-wax-flower-950/50 rounded-lg">
@@ -120,7 +184,7 @@ function GardenScene({ params }) {
         <Environment3D />
 
         {/* Garden Patches */}
-        <Patches />
+        <Patches goals={mockGoals} />
 
         {/* Lighting */}
         <ambientLight intensity={params.ambientIntensity} />
