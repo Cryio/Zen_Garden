@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Play, Pause, Volume2, VolumeX, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, RotateCcw, SkipBack, SkipForward, Plus, Minus } from 'lucide-react';
+import PomodoroLogs from '@/components/PomodoroLogs';
+import CircularTimer from '@/components/CircularTimer';
 
 const musicTracks = [
   {
@@ -58,7 +60,7 @@ const shuffleArray = (array) => {
 };
 
 export default function Pomodoro() {
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(5 * 60); // 5 minutes in seconds
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [volume, setVolume] = useState(0.5);
@@ -66,10 +68,12 @@ export default function Pomodoro() {
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [shuffledTracks, setShuffledTracks] = useState(shuffleArray(musicTracks));
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [sessionLogs, setSessionLogs] = useState([]);
+  const [sessionStartTime, setSessionStartTime] = useState(null);
   const audioRef = useRef(null);
 
-  const focusTime = 25 * 60; // 25 minutes
-  const breakTime = 5 * 60; // 5 minutes
+  const focusTime = 5 * 60; // 5 minutes
+  const breakTime = 1 * 60; // 1 minutes
 
   useEffect(() => {
     let timer;
@@ -92,6 +96,23 @@ export default function Pomodoro() {
     const newIsRunning = !isRunning;
     setIsRunning(newIsRunning);
     
+    if (newIsRunning) {
+      // Start new session
+      setSessionStartTime(Date.now());
+    } else {
+      // End current session
+      if (sessionStartTime) {
+        const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+        const newLog = {
+          startTime: sessionStartTime,
+          duration,
+          type: isBreak ? 'Break' : 'Focus'
+        };
+        setSessionLogs(prevLogs => [newLog, ...prevLogs]);
+        setSessionStartTime(null);
+      }
+    }
+    
     // Start/stop music with timer
     if (audioRef.current) {
       if (newIsRunning) {
@@ -111,6 +132,18 @@ export default function Pomodoro() {
     if (audioRef.current) {
       audioRef.current.pause();
       setIsMusicPlaying(false);
+    }
+    
+    // Log the current session if it was running
+    if (sessionStartTime) {
+      const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+      const newLog = {
+        startTime: sessionStartTime,
+        duration,
+        type: isBreak ? 'Break' : 'Focus'
+      };
+      setSessionLogs(prevLogs => [newLog, ...prevLogs]);
+      setSessionStartTime(null);
     }
   };
 
@@ -172,6 +205,13 @@ export default function Pomodoro() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const adjustTime = (minutes) => {
+    if (isRunning) return; // Don't adjust time while timer is running
+    
+    const newTime = Math.max(1, timeLeft + (minutes * 60)); // Minimum 1 minute
+    setTimeLeft(newTime);
+  };
+
   return (
     <div className="space-y-8 animate-slide-in">
       <div className="flex items-center justify-between">
@@ -188,8 +228,14 @@ export default function Pomodoro() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8">
-          <div className="text-8xl font-bold text-center text-wax-flower-200 dark:text-wax-flower-100">
-            {formatTime(timeLeft)}
+          <div className="flex justify-center">
+            <CircularTimer
+              timeLeft={timeLeft}
+              totalTime={isBreak ? breakTime : focusTime}
+              onAdjustTime={adjustTime}
+              isRunning={isRunning}
+              isBreak={isBreak}
+            />
           </div>
 
           <div className="flex justify-center space-x-6">
@@ -276,6 +322,8 @@ export default function Pomodoro() {
           </div>
         </CardContent>
       </Card>
+
+      <PomodoroLogs logs={sessionLogs} />
 
       <audio
         ref={audioRef}
