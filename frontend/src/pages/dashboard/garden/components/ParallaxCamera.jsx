@@ -3,61 +3,47 @@ import { PerspectiveCamera } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
+// Smooth easing function
+const smoothStep = (t) => t * t * (3 - 2 * t);
+
 export function ParallaxCamera() {
   const cameraRef = useRef();
-  const mousePosition = useRef({ x: 0.5, y: 0.5 });
-  const targetCameraPosition = useRef(new THREE.Vector3(5, 5, 5));
-  const currentCameraPosition = useRef(new THREE.Vector3(5, 5, 5));
-
-  useEffect(() => {
-    const handleMouseMove = (event) => {
-      const rect = event.target.getBoundingClientRect();
-      mousePosition.current = {
-        x: (event.clientX - rect.left) / rect.width,
-        y: (event.clientY - rect.top) / rect.height
-      };
-    };
-
-    const handleMouseLeave = () => {
-      mousePosition.current = null;
-    };
-
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-      canvas.addEventListener('mousemove', handleMouseMove);
-      canvas.addEventListener('mouseleave', handleMouseLeave);
-    }
-
-    return () => {
-      if (canvas) {
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('mouseleave', handleMouseLeave);
-      }
-    };
-  }, []);
+  const targetRef = useRef(new THREE.Vector3(0, 0, 0));
+  const currentRef = useRef(new THREE.Vector3(0, 0, 0));
+  const lastTimeRef = useRef(0);
+  const movementSpeed = 0.5; // Slower movement speed
 
   useFrame((state, delta) => {
-    if (mousePosition.current) {
-      const x = (mousePosition.current.x - 0.5) * 20; // -5 to 5
-      const y = (mousePosition.current.y - 0.5) * 20; // -5 to 5
-      
-      // Calculate camera movement (opposite direction for parallax)
-      targetCameraPosition.current.set(
-        5 - x * 0.6, // Subtle parallax effect
-        5 - y * 0.2, // Subtle parallax effect
-        5           // Keep camera at same distance
-      );
-    } else {
-      // Reset to default position when mouse is not available
-      targetCameraPosition.current.set(5, 5, 5);
-    }
+    const time = state.clock.getElapsedTime();
+    const timeDelta = time - lastTimeRef.current;
+    lastTimeRef.current = time;
 
-    // Smooth interpolation for camera
-    currentCameraPosition.current.lerp(targetCameraPosition.current, delta * 1.5);
-    if (cameraRef.current) {
-      cameraRef.current.position.copy(currentCameraPosition.current);
-    }
+    // Calculate target position to focus on patches
+    const patchesCenter = new THREE.Vector3(0, 0, 0);
+    targetRef.current.copy(patchesCenter);
+
+    // Smooth interpolation with easing
+    const t = smoothStep(Math.min(1, delta * movementSpeed));
+    currentRef.current.lerp(targetRef.current, t);
+    
+    // Smooth camera lookAt
+    const lookAtTarget = new THREE.Vector3();
+    lookAtTarget.copy(currentRef.current);
+    lookAtTarget.y += 0.5; // Slightly above the center for better view
+    state.camera.lookAt(lookAtTarget);
+
+    // Smoother camera movement
+    const offset = new THREE.Vector3(
+      Math.sin(time * 0.05) * 0.3, // Slower, smaller movement
+      Math.sin(time * 0.025) * 0.1, // Slower, smaller movement
+      Math.cos(time * 0.05) * 0.3  // Slower, smaller movement
+    );
+    
+    // Apply movement with smooth interpolation
+    const currentPosition = state.camera.position.clone();
+    const targetPosition = currentPosition.clone().add(offset.multiplyScalar(delta));
+    state.camera.position.lerp(targetPosition, smoothStep(Math.min(1, delta * 0.5)));
   });
 
-  return <PerspectiveCamera ref={cameraRef} makeDefault position={[5, 5, 5]} fov={75} />;
+  return null;
 } 

@@ -15,22 +15,86 @@ import NewHabitDialog from '@/components/NewHabitDialog';
 import { habitApi } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export default function Habits() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newGoalOpen, setNewGoalOpen] = useState(false);
   const [newHabitOpen, setNewHabitOpen] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchGoals();
+  const calculateGoalProgress = useCallback((goal) => {
+    if (!goal.habits || goal.habits.length === 0) return 0;
+    const completedHabits = goal.habits.filter(habit => habit.completed).length;
+    return Math.round((completedHabits / goal.habits.length) * 100);
+  }, []);
+
+  const updateGoalProgress = useCallback((goals) => {
+    return goals.map(goal => ({
+      ...goal,
+      progress: calculateGoalProgress(goal)
+    }));
+  }, [calculateGoalProgress]);
+
+  const updateHabitStatuses = useCallback(async () => {
+    if (!user?._id || !goals.length) return;
+    
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const updatedGoals = await Promise.all(goals.map(async (goal) => {
+        const updatedHabits = await Promise.all(goal.habits.map(async (habit) => {
+          // Check if habit was completed yesterday but not today
+          const lastCompletedDate = habit.lastCompleted?.split('T')[0];
+          if (lastCompletedDate && lastCompletedDate !== today) {
+            // Reset completion status for the new day
+            const response = await habitApi.updateHabitCompletion(user._id, goal._id, habit._id, false);
+            if (response?.data) {
+              return {
+                ...habit,
+                completed: false,
+                lastCompleted: null
+              };
+            }
+          }
+          return habit;
+        }));
+
+        return {
+          ...goal,
+          habits: updatedHabits
+        };
+      }));
+
+      // Only update if there are actual changes
+      const hasChanges = JSON.stringify(updatedGoals) !== JSON.stringify(goals);
+      if (hasChanges) {
+        setGoals(prevGoals => updateGoalProgress(updatedGoals));
+      }
+    } catch (error) {
+      console.error('Error updating habit statuses:', error);
     }
-  }, [user]);
+  }, [user?._id, goals, updateGoalProgress]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    fetchGoals();
+  }, [user, navigate]);
+
+  useEffect(() => {
+    if (goals.length > 0) {
+      updateHabitStatuses();
+    }
+  }, [goals, updateHabitStatuses]);
 
   const fetchGoals = async () => {
+    if (!user?._id) return;
+    
     try {
       setLoading(true);
       const response = await habitApi.getGoals(user._id);
@@ -47,6 +111,8 @@ export default function Habits() {
   };
 
   const handleNewGoal = useCallback(async (goalData) => {
+    if (!user?._id) return;
+    
     try {
       const response = await habitApi.createGoal(user._id, {
         ...goalData,
@@ -61,9 +127,11 @@ export default function Habits() {
       toast.error('Failed to create goal');
       console.error('Error creating goal:', error);
     }
-  }, [user._id]);
+  }, [user?._id]);
 
   const handleNewHabit = useCallback(async (habitData) => {
+    if (!user?._id || !selectedGoalId) return;
+    
     try {
       const response = await habitApi.createHabit(user._id, selectedGoalId, {
         ...habitData,
@@ -84,9 +152,11 @@ export default function Habits() {
       toast.error('Failed to create habit');
       console.error('Error creating habit:', error);
     }
-  }, [user._id, selectedGoalId]);
+  }, [user?._id, selectedGoalId]);
 
   const handleDeleteGoal = useCallback(async (goalId) => {
+    if (!user?._id) return;
+    
     try {
       const response = await habitApi.deleteGoal(user._id, goalId);
       if (response?.data) {
@@ -97,9 +167,11 @@ export default function Habits() {
       toast.error('Failed to delete goal');
       console.error('Error deleting goal:', error);
     }
-  }, [user._id]);
+  }, [user?._id]);
 
   const handleDeleteHabit = useCallback(async (goalId, habitId) => {
+    if (!user?._id) return;
+    
     try {
       await habitApi.deleteHabit(user._id, goalId, habitId);
       setGoals(prevGoals => 
@@ -114,7 +186,7 @@ export default function Habits() {
       toast.error('Failed to delete habit');
       console.error('Error deleting habit:', error);
     }
-  }, [user._id]);
+  }, [user?._id]);
 
   const toggleGoalExpansion = useCallback((goalId) => {
     setGoals(prevGoals => {
@@ -145,20 +217,9 @@ export default function Habits() {
     return currentStreak;
   }, []);
 
-  const calculateGoalProgress = useCallback((goal) => {
-    if (!goal.habits || goal.habits.length === 0) return 0;
-    const completedHabits = goal.habits.filter(habit => habit.completed).length;
-    return Math.round((completedHabits / goal.habits.length) * 100);
-  }, []);
-
-  const updateGoalProgress = useCallback((goals) => {
-    return goals.map(goal => ({
-      ...goal,
-      progress: calculateGoalProgress(goal)
-    }));
-  }, [calculateGoalProgress]);
-
   const toggleHabitCompletion = useCallback(async (goalId, habitId, completed) => {
+    if (!user?._id) return;
+    
     try {
       const today = new Date().toISOString();
       const response = await habitApi.updateHabitCompletion(user._id, goalId, habitId, !completed);
@@ -198,7 +259,6 @@ export default function Habits() {
             return goal;
           });
 
-          // Update progress for all goals
           return updateGoalProgress(newGoals);
         });
         
@@ -208,11 +268,13 @@ export default function Habits() {
       toast.error('Failed to update habit status');
       console.error('Error updating habit:', error);
     }
-  }, [user._id, calculateStreak, updateGoalProgress]);
+  }, [user?._id, calculateStreak, updateGoalProgress]);
 
   // Update progress whenever habits change
   useEffect(() => {
-    setGoals(prevGoals => updateGoalProgress(prevGoals));
+    if (goals.length > 0) {
+      setGoals(prevGoals => updateGoalProgress(prevGoals));
+    }
   }, [updateGoalProgress]);
 
   const renderCompletionHistory = (history, streak) => {
@@ -248,6 +310,10 @@ export default function Habits() {
     setSelectedGoalId(goal._id);
     setNewHabitOpen(true);
   }, []);
+
+  if (!user) {
+    return null;
+  }
 
   if (loading) {
     return (

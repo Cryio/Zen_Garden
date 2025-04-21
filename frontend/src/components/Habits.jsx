@@ -218,17 +218,22 @@ export default function Habits() {
       }
 
       await habitApi.deleteHabit(user._id, goalId, habitId);
-      setGoals(prevGoals => 
-        prevGoals.map(goal => 
+      
+      // Update goals state
+      setGoals(prevGoals => {
+        const updatedGoals = prevGoals.map(goal => 
           goal._id === goalId
             ? {
                 ...goal,
                 habits: goal.habits.filter(habit => habit._id !== habitId)
               }
             : goal
-        )
-      );
-      calculateStats(goals);
+        );
+        
+        // Calculate stats with the updated goals
+        calculateStats(updatedGoals);
+        return updatedGoals;
+      });
     } catch (error) {
       console.error('Error deleting habit:', error);
     }
@@ -243,8 +248,8 @@ export default function Habits() {
 
       const response = await habitApi.updateHabitCompletion(user._id, goalId, habitId, completed);
       if (response?.data) {
-        setGoals(prevGoals => 
-          prevGoals.map(goal => 
+        setGoals(prevGoals => {
+          const updatedGoals = prevGoals.map(goal => 
             goal._id === goalId
               ? {
                   ...goal,
@@ -253,14 +258,30 @@ export default function Habits() {
                   )
                 }
               : goal
-          )
-        );
-        calculateStats(goals);
+          );
+          
+          // Calculate stats with the updated goals
+          calculateStats(updatedGoals);
+          return updatedGoals;
+        });
       }
     } catch (error) {
       console.error('Error updating habit completion:', error);
     }
   };
+
+  const handleEditGoalClick = React.useCallback((goal) => {
+    setSelectedGoal(goal);
+    setIsEditGoalDialogOpen(true);
+  }, []);
+
+  const handleDeleteGoalClick = React.useCallback((goalId) => {
+    if (!goalId) {
+      console.error('No goal ID available');
+      return;
+    }
+    handleDeleteGoal(goalId);
+  }, [handleDeleteGoal]);
 
   if (authLoading || isLoading) {
     return (
@@ -338,10 +359,7 @@ export default function Habits() {
                   <DropdownMenuItem
                     key="edit-goal"
                     className="text-wax-flower-200 hover:bg-wax-flower-500/20"
-                    onClick={() => {
-                      setSelectedGoal(goal);
-                      setIsEditGoalDialogOpen(true);
-                    }}
+                    onClick={() => handleEditGoalClick(goal)}
                   >
                     <Edit2 className="mr-2 h-4 w-4" />
                     Edit Goal
@@ -349,13 +367,7 @@ export default function Habits() {
                   <DropdownMenuItem
                     key="delete-goal"
                     className="text-wax-flower-200 hover:bg-wax-flower-500/20"
-                    onClick={() => {
-                      if (!goal._id) {
-                        console.error('No goal ID available');
-                        return;
-                      }
-                      handleDeleteGoal(goal._id);
-                    }}
+                    onClick={() => handleDeleteGoalClick(goal._id)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Goal

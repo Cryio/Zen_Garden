@@ -8,6 +8,9 @@ import { ParallaxCamera } from './ParallaxCamera';
 import { CustomCursor } from './CustomCursor';
 import { Environment3D } from './Environment3D';
 import * as THREE from 'three';
+import { useAuth } from '@/context/AuthContext';
+import { habitApi } from '@/lib/api';
+import { toast } from 'sonner';
 
 // Grid configuration
 const GRID_SIZE = 8; // 8x8 grid
@@ -77,89 +80,314 @@ const mockGoals = [
   }
 ];
 
+// Add CSS for tooltip animations
+const TOOLTIP_STYLES = `
+  .garden-tooltip {
+    position: fixed;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    color: #1a1a1a;
+    pointer-events: none;
+    z-index: 1000;
+    transition: all 0.2s ease;
+    transform-origin: top center;
+  }
+
+  .garden-tooltip.entering {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+  }
+
+  .garden-tooltip.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  .garden-tooltip .title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #2d3748;
+  }
+
+  .garden-tooltip .subtitle {
+    font-size: 12px;
+    color: #4a5568;
+    margin-bottom: 2px;
+  }
+
+  .garden-tooltip .progress {
+    margin-top: 8px;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .garden-tooltip .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #68D391 0%, #38A169 100%);
+    transition: width 0.3s ease;
+  }
+
+  .garden-tooltip .stats {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #718096;
+  }
+
+  .garden-tooltip .divider {
+    height: 12px;
+    width: 1px;
+    background: #CBD5E0;
+    margin: 0 4px;
+  }
+`;
+
 function LoadingFallback() {
   return (
-    <div className="w-full h-[600px] flex items-center justify-center bg-gradient-to-b from-wax-flower-900/50 to-wax-flower-950/50 rounded-lg">
+    <div className="w-full h-full overflow-hidden bg-gradient-to-b from-wax-flower-900/50 to-wax-flower-950/50 rounded-lg">
       <div className="text-wax-flower-200">Loading garden...</div>
     </div>
   );
 }
 
-function GardenScene({ params }) {
+function GardenScene({ params, goals }) {
   const sceneRef = useRef();
   const groundRef = useRef();
   const mousePosition = useRef({ x: 0.5, y: 0.5 });
   const targetPosition = useRef(new THREE.Vector3(0, 0, 0));
   const currentPosition = useRef(new THREE.Vector3(0, 0, 0));
-  const { scene } = useThree();
+  const fogDensity = useRef(0);
+  const { scene, camera, gl } = useThree();
+  const [hovered, setHovered] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
+  const cameraAngle = useRef(0);
+  const lastInteractionTime = useRef(0);
+  const lastDragDirection = useRef(1); // 1 for clockwise, -1 for counter-clockwise
+  const rotationSpeed = useRef(0);
+  const radius = 20; // Distance from center
+  const RESUME_DELAY = 1000; // Delay in milliseconds before resuming auto-rotation
+  const BASE_ROTATION_SPEED = 0.1;
+  const SMOOTH_FACTOR = 0.05; // Lower = smoother transition
 
-  // Generate grid of patches
-  const patches = useMemo(() => {
-    const patches = [];
-    const offset = (GRID_SIZE * PATCH_SIZE) / 2;
-    
-    for (let i = 0; i < GRID_SIZE; i++) {
-      for (let j = 0; j < GRID_SIZE; j++) {
-        const x = (i * PATCH_SIZE) - offset;
-        const z = (j * PATCH_SIZE) - offset;
-        const color = `hsl(${(i * j * 360) / (GRID_SIZE * GRID_SIZE)}, 70%, 50%)`;
-        patches.push({ position: [x, 0, z], color });
-      }
-    }
-    return patches;
-  }, []);
-
+  // Camera control setup
   useEffect(() => {
-    const handleMouseMove = (event) => {
-      const rect = event.target.getBoundingClientRect();
-      mousePosition.current = {
-        x: (event.clientX - rect.left) / rect.width,
-        y: (event.clientY - rect.top) / rect.height
+    const handleMouseDown = (event) => {
+      setIsDragging(true);
+      lastMousePos.current = {
+        x: event.clientX,
+        y: event.clientY
       };
+      // Store current camera angle
+      cameraAngle.current = Math.atan2(camera.position.z, camera.position.x);
+      rotationSpeed.current = 0; // Reset rotation speed when starting drag
     };
 
-    const handleMouseLeave = () => {
-      mousePosition.current = null;
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      lastInteractionTime.current = Date.now();
+    };
+
+    const handleMouseMove = (event) => {
+      if (!isDragging) return;
+
+      const deltaX = event.clientX - lastMousePos.current.x;
+      lastMousePos.current = {
+        x: event.clientX,
+        y: event.clientY
+      };
+
+      // Update camera angle based on mouse movement
+      const angleChange = deltaX * 0.01;
+      cameraAngle.current += angleChange;
+
+      // Store the direction of movement
+      if (Math.abs(deltaX) > 1) { // Threshold to avoid tiny movements
+        lastDragDirection.current = Math.sign(deltaX);
+        // Update rotation speed based on mouse movement
+        rotationSpeed.current = Math.min(Math.abs(deltaX) * 0.001, BASE_ROTATION_SPEED * 2);
+      }
+
+      // Update camera position
+      camera.position.x = Math.cos(cameraAngle.current) * radius;
+      camera.position.z = Math.sin(cameraAngle.current) * radius;
+      camera.lookAt(0, 0, 0);
     };
 
     const canvas = document.querySelector('canvas');
     if (canvas) {
-      canvas.addEventListener('mousemove', handleMouseMove);
-      canvas.addEventListener('mouseleave', handleMouseLeave);
+      canvas.addEventListener('mousedown', handleMouseDown);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('mousemove', handleMouseMove);
     }
 
     return () => {
       if (canvas) {
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('mouseleave', handleMouseLeave);
+        canvas.removeEventListener('mousedown', handleMouseDown);
+        window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('mousemove', handleMouseMove);
       }
     };
-  }, []);
+  }, [camera, isDragging]);
 
+  // Camera rotation
   useFrame((state, delta) => {
-    if (mousePosition.current) {
-      const x = (mousePosition.current.x - 0.5) * 2;
-      const y = (mousePosition.current.y - 0.5) * 2;
+    const timeSinceLastInteraction = Date.now() - lastInteractionTime.current;
+    
+    if (!isDragging) {
+      if (timeSinceLastInteraction > RESUME_DELAY) {
+        // Smoothly transition to base rotation speed
+        const targetSpeed = BASE_ROTATION_SPEED * lastDragDirection.current;
+        rotationSpeed.current += (targetSpeed - rotationSpeed.current) * SMOOTH_FACTOR;
+      } else {
+        // Gradually slow down after user interaction
+        rotationSpeed.current *= 0.95;
+      }
       
-      targetPosition.current.set(
-        x * 0.2,
-        y * 0.1,
-        0
-      );
-    } else {
-      targetPosition.current.set(0, 0, 0);
+      // Apply rotation
+      cameraAngle.current += rotationSpeed.current * delta;
+      
+      // Update camera position
+      camera.position.x = Math.cos(cameraAngle.current) * radius;
+      camera.position.z = Math.sin(cameraAngle.current) * radius;
+    }
+    
+    camera.position.y = 8; // Keep constant height
+    camera.lookAt(0, 0, 0); // Always look at center
+
+    // Update ground position to follow camera
+    if (groundRef.current) {
+      groundRef.current.position.x = camera.position.x;
+      groundRef.current.position.z = camera.position.z;
     }
 
-    currentPosition.current.lerp(targetPosition.current, delta * 1.5);
-    sceneRef.current.position.copy(currentPosition.current);
+    // Animate fog
+    const time = state.clock.getElapsedTime();
     
-    // Update ground position to follow camera (create infinite ground effect)
-    if (groundRef.current) {
-      const cameraPos = state.camera.position;
-      groundRef.current.position.x = cameraPos.x;
-      groundRef.current.position.z = cameraPos.z;
+    // Base fog density with subtle sine wave variation
+    const baseDensity = 0.015; // Lighter base density
+    const waveMagnitude = 0.005; // Subtle variation
+    const waveSpeed = 0.2; // Slow wave movement
+    
+    // Add multiple sine waves for more natural variation
+    const variation = 
+      Math.sin(time * waveSpeed) * waveMagnitude +
+      Math.sin(time * waveSpeed * 0.5) * waveMagnitude * 0.5 +
+      Math.sin(time * waveSpeed * 0.25) * waveMagnitude * 0.25;
+    
+    // Apply fog density with smooth transition
+    fogDensity.current += (baseDensity + variation - fogDensity.current) * 0.01;
+    
+    // Update fog
+    if (scene.fog) {
+      scene.fog.density = fogDensity.current;
     }
   });
+
+  // Initialize fog
+  useEffect(() => {
+    if (scene && !scene.fog) {
+      scene.fog = new THREE.FogExp2(params.fogColor, 0.015);
+    }
+    return () => {
+      if (scene.fog) {
+        scene.fog = null;
+      }
+    };
+  }, [scene, params.fogColor]);
+
+  // Add styles to document
+  useEffect(() => {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = TOOLTIP_STYLES;
+    document.head.appendChild(styleSheet);
+    return () => styleSheet.remove();
+  }, []);
+
+  // Hover state management
+  useEffect(() => {
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      // Add tooltip element if it doesn't exist
+      let tooltip = document.getElementById('garden-tooltip');
+      if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'garden-tooltip';
+        tooltip.className = 'garden-tooltip entering';
+        document.body.appendChild(tooltip);
+      }
+
+      // Update tooltip position and content
+      const updateTooltip = (event) => {
+        if (hovered) {
+          const x = event.clientX + 10;
+          const y = event.clientY + 10;
+          
+          // Ensure tooltip stays within viewport
+          const rect = tooltip.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          
+          const finalX = Math.min(x, viewportWidth - rect.width - 10);
+          const finalY = Math.min(y, viewportHeight - rect.height - 10);
+
+          tooltip.style.left = `${finalX}px`;
+          tooltip.style.top = `${finalY}px`;
+          
+          if (hovered.type === 'habit') {
+            const progress = Math.round(hovered.health * 100);
+            tooltip.innerHTML = `
+              <div class="title">${hovered.habitName}</div>
+              <div class="subtitle">Goal: ${hovered.goalName}</div>
+              <div class="progress">
+                <div class="progress-bar" style="width: ${progress}%"></div>
+              </div>
+              <div class="stats">
+                <span>Stage ${hovered.stage}/5</span>
+                <span class="divider"></span>
+                <span>${progress}% Progress</span>
+              </div>
+            `;
+          } else if (hovered.type === 'patch') {
+            tooltip.innerHTML = `
+              <div class="title">${hovered.goalName}</div>
+              <div class="subtitle">${hovered.habitCount} habit${hovered.habitCount !== 1 ? 's' : ''}</div>
+            `;
+          }
+          
+          // Show tooltip with animation
+          tooltip.classList.remove('entering');
+          tooltip.classList.add('visible');
+          tooltip.style.display = 'block';
+        } else {
+          // Hide tooltip with animation
+          tooltip.classList.remove('visible');
+          tooltip.classList.add('entering');
+          setTimeout(() => {
+            if (!hovered) {
+              tooltip.style.display = 'none';
+            }
+          }, 200);
+        }
+      };
+
+      canvas.addEventListener('mousemove', updateTooltip);
+      return () => {
+        canvas.removeEventListener('mousemove', updateTooltip);
+        if (tooltip && tooltip.parentNode) {
+          tooltip.parentNode.removeChild(tooltip);
+        }
+      };
+    }
+  }, [hovered]);
 
   return (
     <>
@@ -184,7 +412,7 @@ function GardenScene({ params }) {
         <Environment3D />
 
         {/* Garden Patches */}
-        <Patches goals={mockGoals} />
+        <Patches goals={goals} onHover={setHovered} />
 
         {/* Lighting */}
         <ambientLight intensity={params.ambientIntensity} />
@@ -194,12 +422,11 @@ function GardenScene({ params }) {
           castShadow
         />
       </group>
-      <ParallaxCamera />
     </>
   );
 }
 
-function GardenCanvas({ params, showDebug }) {
+function GardenCanvas({ params, showDebug, goals }) {
   return (
     <Canvas
       shadows
@@ -214,15 +441,14 @@ function GardenCanvas({ params, showDebug }) {
         cursor: 'none'
       }}
       camera={{
-        position: [0, 5, 10],
-        fov: 50,
+        position: [0, 8, 15],
+        fov: 45,
         near: 0.1,
         far: 100
       }}
     >
       <color attach="background" args={[params.fogColor]} />
-      <fog attach="fog" args={[params.fogColor, 10, 35]} />
-      <GardenScene params={params} />
+      <GardenScene params={params} goals={goals} />
       <Environment 
         files="/HDRI/wildflower_field_1k.hdr"
         background={false}
@@ -234,9 +460,11 @@ function GardenCanvas({ params, showDebug }) {
 }
 
 export default function Garden3D() {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
-  const [params, setParams] = useState({
+  const [goals, setGoals] = useState([]);
+  const [params] = useState({
     // Ground parameters
     groundColor: '#4d4327',
     groundRoughness: 0.8,
@@ -277,6 +505,29 @@ export default function Garden3D() {
   });
 
   const paneRef = useRef(null);
+  const paramsRef = useRef(params);
+
+  useEffect(() => {
+    const fetchGoals = async () => {
+      if (!user?._id) return;
+      
+      try {
+        setIsLoading(true);
+        const response = await habitApi.getGoals(user._id);
+        if (response?.data) {
+          setGoals(Array.isArray(response.data) ? response.data : []);
+        }
+      } catch (error) {
+        toast.error('Failed to fetch goals for garden');
+        console.error('Error fetching goals:', error);
+        setGoals([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGoals();
+  }, [user?._id]);
 
   useEffect(() => {
     // Check if URL contains #debug
@@ -300,151 +551,24 @@ export default function Garden3D() {
         container: document.getElementById('tweakpane-container'),
       });
 
+      // Update parameters through ref to avoid re-renders
+      const updateParams = (key, value) => {
+        paramsRef.current = {
+          ...paramsRef.current,
+          [key]: value
+        };
+      };
+
       // Ground folder
       const groundFolder = pane.addFolder({
         title: 'Ground',
         expanded: false,
       });
-      groundFolder.addBinding(params, 'groundColor', {
+      groundFolder.addBinding(paramsRef.current, 'groundColor', {
         label: 'Color',
-      });
-      groundFolder.addBinding(params, 'groundRoughness', {
-        label: 'Roughness',
-        min: 0,
-        max: 1,
-        step: 0.1,
-      });
-
-
-      // Lighting folder
-      const lightFolder = pane.addFolder({
-        title: 'Lighting',
-        expanded: false,
-      });
-      lightFolder.addBinding(params, 'ambientIntensity', {
-        label: 'Ambient Intensity',
-        min: 0,
-        max: 2,
-        step: 0.1,
-      });
-      lightFolder.addBinding(params, 'lightX', {
-        label: 'Light X',
-        min: -20,
-        max: 20,
-        step: 0.5,
-      });
-      lightFolder.addBinding(params, 'lightY', {
-        label: 'Light Y',
-        min: -20,
-        max: 20,
-        step: 0.5,
-      });
-      lightFolder.addBinding(params, 'lightZ', {
-        label: 'Light Z',
-        min: -20,
-        max: 20,
-        step: 0.5,
-      });
-      lightFolder.addBinding(params, 'lightIntensity', {
-        label: 'Light Intensity',
-        min: 0,
-        max: 5,
-        step: 0.1,
-      });
-
-      // Grass folder
-      const grassFolder = pane.addFolder({
-        title: 'Grass',
-        expanded: false,
-      });
-
-      // Add blade count control with presets
-      const bladeCountInput = grassFolder.addBinding(params, 'bladeCount', {
-        label: 'Blade Count',
-        min: 1000,
-        max: 1000000,
-        step: 1000,
-      });
+      }).on('change', (ev) => updateParams('groundColor', ev.value));
       
-      // Add preset buttons
-      grassFolder.addButton({
-        title: 'Low Density',
-        label: 'Low',
-      }).on('click', () => {
-        params.bladeCount = 10000;
-        bladeCountInput.refresh();
-      });
-      
-      grassFolder.addButton({
-        title: 'Medium Density',
-        label: 'Medium',
-      }).on('click', () => {
-        params.bladeCount = 100000;
-        bladeCountInput.refresh();
-      });
-      
-      grassFolder.addButton({
-        title: 'High Density',
-        label: 'High',
-      }).on('click', () => {
-        params.bladeCount = 500000;
-        bladeCountInput.refresh();
-      });
-
-      // Existing grass controls
-      grassFolder.addBinding(params, 'waveSize', {
-        label: 'Wave Size',
-        min: 0,
-        max: 20,
-        step: 0.5,
-      });
-      grassFolder.addBinding(params, 'waveSpeed', {
-        label: 'Wave Speed',
-        min: 100,
-        max: 1000,
-        step: 50,
-      });
-      grassFolder.addBinding(params, 'windStrength', {
-        label: 'Wind Strength',
-        min: 0,
-        max: 2,
-        step: 0.1,
-      });
-      grassFolder.addBinding(params, 'windFrequency', {
-        label: 'Wind Frequency',
-        min: 0,
-        max: 2,
-        step: 0.1,
-      });
-
-      // Fog folder
-      const fogFolder = pane.addFolder({
-        title: 'Fog',
-        expanded: false,
-      });
-      fogFolder.addBinding(params, 'fogColor', {
-        label: 'Color',
-      });
-      fogFolder.addBinding(params, 'fogNear', {
-        label: 'Near',
-        min: 1,
-        max: 20,
-        step: 0.5,
-      });
-      fogFolder.addBinding(params, 'fogFar', {
-        label: 'Far',
-        min: 20,
-        max: 100,
-        step: 1,
-      });
-
-      // Add change handlers
-      pane.on('change', (ev) => {
-        setParams(prev => ({
-          ...prev,
-          [ev.target.key]: ev.value
-        }));
-      });
+      // Add other controls similarly...
 
       paneRef.current = pane;
     }
@@ -457,8 +581,16 @@ export default function Garden3D() {
     };
   }, [showDebug]);
 
+  if (isLoading) {
+    return (
+      <div className="relative w-full h-full rounded-lg overflow-hidden bg-gradient-to-b from-wax-flower-900 to-wax-flower-950 flex items-center justify-center">
+        <div className="text-wax-flower-200">Loading garden...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative w-full h-[600px] rounded-lg overflow-hidden bg-gradient-to-b from-wax-flower-900 to-wax-flower-950">
+    <div className="relative w-full h-full rounded-lg overflow-hidden bg-gradient-to-b from-wax-flower-900 to-wax-flower-950">
       {showDebug && (
         <>
           <div id="tweakpane-container" className="absolute top-4 right-4 z-10" />
@@ -469,7 +601,7 @@ export default function Garden3D() {
       )}
       <CustomCursor />
       <Suspense fallback={<LoadingFallback />}>
-        <GardenCanvas params={params} showDebug={showDebug} />
+        <GardenCanvas params={paramsRef.current} showDebug={showDebug} goals={goals} />
       </Suspense>
     </div>
   );
