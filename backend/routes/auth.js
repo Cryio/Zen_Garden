@@ -177,4 +177,22 @@ router.put('/profile', verifyToken, async (req, res) => {
   }
 });
 
+// Delete user account
+router.delete("/delete-account", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Delete user and all associated data
+    await User.findByIdAndDelete(userId);
+    
+    // Clear any user-related data from the session
+    res.clearCookie('token');
+    
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
 module.exports = { router, verifyToken };
