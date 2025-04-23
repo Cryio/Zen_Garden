@@ -1,14 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const toastShown = useRef(false);
 
   useEffect(() => {
     const token = searchParams.get('token');
     const error = searchParams.get('error');
+    const wasExistingAccount = searchParams.get('wasExistingAccount') === 'true';
 
     if (error) {
       toast.error('Authentication failed. Please try again.');
@@ -18,7 +20,10 @@ export default function AuthCallback() {
 
     if (token) {
       localStorage.setItem('token', token);
-      toast.success('Login successful');
+      if (wasExistingAccount && !toastShown.current) {
+        toast.success('Your Google account has been linked to your existing account');
+        toastShown.current = true;
+      }
       navigate('/dashboard');
     } else {
       toast.error('No token received');
