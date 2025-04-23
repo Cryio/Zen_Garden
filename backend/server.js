@@ -8,6 +8,7 @@ const { router: authRoutes } = require('./routes/auth');
 const chatbotRoutes = require("./routes/chatbot");
 const focusModeRoutes = require('./routes/focusMode');
 const seedRoutes = require('./routes/seed');
+require('./config/passport'); // Import passport configuration
 
 const app = express();
 
