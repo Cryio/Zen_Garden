@@ -197,29 +197,28 @@ router.delete("/delete-account", verifyToken, async (req, res) => {
 });
 
 // Google OAuth routes
-router.get('/google',
-  passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    prompt: 'select_account' // Force account selection
-  })
-);
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/google/callback',
+router.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: '/login' }),
   async (req, res) => {
     try {
-      // Generate JWT token
       const token = jwt.sign(
         { userId: req.user._id },
         process.env.JWT_SECRET,
-        { expiresIn: '1d' }
+        { expiresIn: '24h' }
       );
 
-      // Redirect to frontend with token
-      res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+      // Check if this was a linking of an existing account
+      // A user is considered existing if they had a password before this OAuth attempt
+      const wasExistingAccount = req.user.password && req.user.password !== 'google-auth';
+      
+      res.redirect(
+        `${process.env.FRONTEND_URL}/auth/callback?token=${token}&wasExistingAccount=${wasExistingAccount}`
+      );
     } catch (error) {
-      console.error('Google OAuth callback error:', error);
-      res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
+      console.error('Google callback error:', error);
+      res.redirect(`${process.env.FRONTEND_URL}/auth/callback?error=authentication_failed`);
     }
   }
 );
