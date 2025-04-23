@@ -92,36 +92,54 @@ router.put("/:userId/habits/:habitId", verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'Habit not found' });
     }
 
-    // Update completion history
-    const newHistory = [...habit.completionHistory];
-    newHistory.unshift(req.body.completed);
-    newHistory.pop();
+    const isCompleted = req.body.completed; // Get boolean completion status
 
-    // Calculate streak
-    let streak = 0;
-    if (req.body.completed) {
-      streak = 1; // Start with 1 for today
-      for (let i = 1; i < newHistory.length; i++) {
-        if (!newHistory[i]) break;
-        streak++;
+    // Update completion history
+    const newHistory = [...(habit.completionHistory || Array(7).fill(false))]; // Ensure history exists
+    newHistory.unshift(isCompleted);
+    if (newHistory.length > 7) { // Keep history length at 7
+      newHistory.pop();
+    }
+
+    // Calculate streak: Increment if completed, reset if not
+    let streak = habit.streak || 0; // Start with current streak
+    if (isCompleted) {
+        // Check if already marked complete today to prevent double increment (optional)
+        const today = new Date().setHours(0, 0, 0, 0);
+        const lastCompletedDate = habit.lastCompleted ? new Date(habit.lastCompleted).setHours(0, 0, 0, 0) : null;
+        if (lastCompletedDate !== today) {
+             streak = streak + 1;
+        }
+    } else {
+      // If marking as incomplete, check if it *was* the last completed today
+      const today = new Date().setHours(0, 0, 0, 0);
+      const lastCompletedDate = habit.lastCompleted ? new Date(habit.lastCompleted).setHours(0, 0, 0, 0) : null;
+      if (lastCompletedDate === today) {
+          // It was completed today, now being marked incomplete, reset streak
+          // More accurately, we might need to recalculate based on history before today
+          // Simple approach: Decrement streak if > 0 when unchecking today's completion
+          streak = Math.max(0, streak - 1);
+      } else {
+         // If it wasn't completed today anyway, unchecking doesn't affect streak
+         // Or should reset? Let's reset for simplicity if unmarked and not completed today.
+         // Resetting might be too aggressive. Let's keep current streak if unchecking a non-completed day.
+         // streak = 0; // Reset if not completed (safer default)
       }
     }
 
     const updatedHabit = await Habit.findByIdAndUpdate(
       req.params.habitId,
       { 
-        completed: req.body.completed,
-        lastCompleted: req.body.completed ? new Date() : null,
+        completed: isCompleted,
+        lastCompleted: isCompleted ? new Date() : habit.lastCompleted, // Update date only if completed
         completionHistory: newHistory,
         streak: streak
       },
-      { new: true }
+      { new: true } // Return the updated document
     );
 
-    // Get the updated goal to return the complete state
-    const goal = await Goal.findById(req.body.goalId).populate('habits');
-    
-    res.json(updatedHabit);
+    res.json(updatedHabit); // Return the updated habit object
+
   } catch (error) {
     console.error('Error updating habit:', error);
     res.status(400).json({ message: 'Error updating habit' });

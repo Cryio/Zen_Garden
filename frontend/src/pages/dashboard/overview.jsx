@@ -68,7 +68,6 @@ const allHabits = [
 
 export default function Overview() {
   const { user } = useAuth();
-  const [habits, setHabits] = useState(todaysHabits);
   const [selectedHabit, setSelectedHabit] = useState(null);
   const [habitFilter, setHabitFilter] = useState('newest');
   const [loadingAll, setLoadingAll] = useState(true);
@@ -83,50 +82,50 @@ export default function Overview() {
   const [loadingStreaks, setLoadingStreaks] = useState(true);
   const [error, setError] = useState(null);
   
-  const completedHabits = habits.filter(h => h.status === 'completed').length;
-  const totalHabits = habits.length;
+  const completedHabits = fetchedTodaysHabits.filter(h => h.completed).length;
+  const totalHabits = fetchedTodaysHabits.length;
 
-  const handleHabitStatus = async (id, status) => {
+  const handleHabitStatus = async (id, newStatus) => {
     const originalHabits = [...fetchedTodaysHabits];
     
     try {
-      // Find the habit in our fetched habits
-      const habit = fetchedAllHabits.find(h => h._id === id);
+      const habit = fetchedTodaysHabits.find(h => h._id === id);
       if (!habit) {
-        console.error(`Habit with ID ${id} not found in fetchedAllHabits:`, fetchedAllHabits);
+        console.error(`Habit with ID ${id} not found in fetchedTodaysHabits:`, fetchedTodaysHabits);
         throw new Error('Habit not found in local state');
       }
 
-      // Optimistically update UI
       const updatedHabits = fetchedTodaysHabits.map(h => {
-        if (h.id === id) {
-          return { ...h, status };
+        if (h._id === id) {
+          const isCompleted = newStatus === 'completed';
+          return { ...h, completed: isCompleted, status: newStatus };
         }
         return h;
       }).sort((a, b) => {
-        if (a.status === 'completed' && b.status !== 'completed') return 1;
-        if (a.status !== 'completed' && b.status === 'completed') return -1;
+        const statusA = a.status || (a.completed ? 'completed' : null);
+        const statusB = b.status || (b.completed ? 'completed' : null);
+        if (statusA === 'completed' && statusB !== 'completed') return 1;
+        if (statusA !== 'completed' && statusB === 'completed') return -1;
         return 0;
       });
       
       setFetchedTodaysHabits(updatedHabits);
 
-      // Make API call
       console.log('Updating habit status:', {
         habitId: id,
         userId: user._id,
-        status,
+        completed: newStatus === 'completed',
         goalId: habit.goalId
       });
 
       const response = await api.put(`/api/habits/${user._id}/habits/${id}`, { 
-        completed: status === 'completed',
+        completed: newStatus === 'completed',
         goalId: habit.goalId
       });
 
       console.log('Habit status update response:', response);
       
-      toast.success(`Habit marked as ${status}!`, {
+      toast.success(`Habit marked as ${newStatus}!`, {
         style: {
           background: '#363636',
           color: '#fff',
@@ -134,13 +133,11 @@ export default function Overview() {
         duration: 3000,
       });
       
-      // Refresh data to ensure everything is in sync
       await fetchData();
     } catch (err) {
       console.error("Failed to update habit status:", err);
       console.error("Error details:", err.response?.data || err.message);
       
-      // Revert to original state
       setFetchedTodaysHabits(originalHabits);
       
       toast.error(err.message || "Failed to update habit status", {
@@ -168,55 +165,74 @@ export default function Overview() {
           <div className="flex gap-6 h-[300px]">
             <div className="flex-grow max-h-full overflow-y-auto pr-4 custom-scrollbar">
               <AnimatePresence>
-                {habits.map((habit) => (
-                  <motion.div
-                    key={habit.id}
-                    layout
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex items-center justify-between border-b border-wax-flower-700/30 py-3 group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        habit.category === 'health' ? 'bg-green-500' :
-                        habit.category === 'learning' ? 'bg-blue-500' :
-                        habit.category === 'mindfulness' ? 'bg-purple-500' :
-                        'bg-yellow-500'
-                      }`} />
-                      <div className="text-base font-medium text-wax-flower-200 group-hover:text-[#FD6A3A] transition-colors">
-                        {habit.name}
+                {loadingToday ? (
+                  <div className="flex justify-center items-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-wax-flower-500" />
+                  </div>
+                ) : fetchedTodaysHabits.length > 0 ? (
+                  fetchedTodaysHabits.map((habit) => (
+                    <motion.div
+                      key={habit._id}
+                      layout
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex items-center justify-between border-b border-wax-flower-700/30 py-3 group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-2 h-2 rounded-full",
+                          habit.category === 'health' ? 'bg-green-500' :
+                          habit.category === 'learning' ? 'bg-blue-500' :
+                          habit.category === 'mindfulness' ? 'bg-purple-500' :
+                          habit.category === 'productivity' ? 'bg-yellow-500' :
+                          habit.category === 'self-care' ? 'bg-pink-500' :
+                          habit.category === 'finance' ? 'bg-teal-500' :
+                          habit.category === 'social' ? 'bg-indigo-500' :
+                          habit.category === 'organization' ? 'bg-gray-500' :
+                          habit.category === 'hobby' ? 'bg-orange-500' :
+                          'bg-gray-400'
+                        )} />
+                        <div className="text-base font-medium text-wax-flower-200 group-hover:text-[#FD6A3A] transition-colors">
+                          {habit.name}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => handleHabitStatus(habit.id, 'skipped')}
-                        className={cn(
-                          "p-1 rounded transition-colors",
-                          habit.status === 'skipped' ? "bg-red-500/20" : "hover:bg-red-500/10"
-                        )}
-                      >
-                        <X className={cn(
-                          "h-5 w-5",
-                          habit.status === 'skipped' ? "text-red-500" : "text-wax-flower-400"
-                        )} />
-                      </button>
-                      <button
-                        onClick={() => handleHabitStatus(habit.id, 'completed')}
-                        className={cn(
-                          "p-1 rounded transition-colors",
-                          habit.status === 'completed' ? "bg-[#FD6A3A]/20" : "hover:bg-[#FD6A3A]/10"
-                        )}
-                      >
-                        <Check className={cn(
-                          "h-5 w-5",
-                          habit.status === 'completed' ? "text-[#FD6A3A]" : "text-wax-flower-400"
-                        )} />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => handleHabitStatus(habit._id, 'skipped')}
+                          className={cn(
+                            "p-1 rounded transition-colors",
+                            habit.status === 'skipped' ? "bg-red-500/20" : "hover:bg-red-500/10"
+                          )}
+                          title="Mark as skipped"
+                        >
+                          <X className={cn(
+                            "h-5 w-5",
+                            habit.status === 'skipped' ? "text-red-500" : "text-wax-flower-400"
+                          )} />
+                        </button>
+                        <button
+                          onClick={() => handleHabitStatus(habit._id, 'completed')}
+                          className={cn(
+                            "p-1 rounded transition-colors",
+                            habit.completed ? "bg-[#FD6A3A]/20" : "hover:bg-[#FD6A3A]/10"
+                          )}
+                          title="Mark as completed"
+                        >
+                          <Check className={cn(
+                            "h-5 w-5",
+                            habit.completed ? "text-[#FD6A3A]" : "text-wax-flower-400"
+                          )} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="flex justify-center items-center h-full text-wax-flower-400">
+                    No habits scheduled for today.
+                  </div>
+                )}
               </AnimatePresence>
             </div>
             
@@ -586,114 +602,181 @@ export default function Overview() {
   const fetchData = async () => {
     setError(null);
     try {
-      // Fetch all habits
+      // Fetch goals with populated habits
       setLoadingAll(true);
-      const allRes = await api.get(`/api/habits/${user._id}/habits?filter=${habitFilter}`);
-      let allHabits = allRes.data || [];
+      const goalsRes = await api.get(`/api/habits/${user._id}/habits?filter=${habitFilter}`);
+      const goalsData = goalsRes.data || []; // This is an array of Goal objects
+
+      // Extract all habits into a flat list
+      let allActualHabits = goalsData.reduce((acc, goal) => {
+        if (goal.habits && Array.isArray(goal.habits)) {
+          // Add goalName to each habit for potential use later
+          const habitsWithGoalName = goal.habits.map(habit => ({ 
+            ...habit, 
+            goalName: goal.name 
+          }));
+          return acc.concat(habitsWithGoalName);
+        }
+        return acc;
+      }, []);
       
-      // Ensure each habit has a completionHistory array
-      allHabits = allHabits.map(habit => {
+      // Ensure each habit has necessary fields (like completionHistory)
+      allActualHabits = allActualHabits.map(habit => {
+        if (!habit) return null; // Handle potential null/undefined habits from population issues
         if (!habit.completionHistory) {
-          console.log(`Habit "${habit.name}" is missing completionHistory, adding empty array`);
-          return {
-            ...habit,
-            completionHistory: Array(7).fill(false)
-          };
+          console.warn(`Habit "${habit.name}" (ID: ${habit._id}) is missing completionHistory, initializing.`);
+          habit.completionHistory = Array(7).fill(false);
+        }
+        // Ensure streak exists
+        if (habit.streak === undefined || habit.streak === null) {
+           habit.streak = 0;
+        }
+        // Ensure lastCompleted exists
+        if (habit.lastCompleted === undefined) {
+          habit.lastCompleted = null;
+        }
+         // Ensure completed exists
+        if (habit.completed === undefined) {
+          habit.completed = false;
         }
         return habit;
-      });
+      }).filter(habit => habit !== null); // Remove any null habits
       
-      setFetchedAllHabits(allHabits);
+      // Apply sorting based on filter (if needed, e.g., filter by streak)
+      // Example: Sort by streak if filter is longest/shortest
+      if (habitFilter === 'longest') {
+        allActualHabits.sort((a, b) => (b.streak || 0) - (a.streak || 0));
+      } else if (habitFilter === 'shortest') {
+        allActualHabits.sort((a, b) => (a.streak || 0) - (b.streak || 0));
+      } else if (habitFilter === 'oldest') {
+         allActualHabits.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      } else { // newest (default)
+         allActualHabits.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
+
+      setFetchedAllHabits(allActualHabits); // Store the flat list of actual habits
       setLoadingAll(false);
 
-      // Process today's habits
+      // Process today's habits from the flat list of actual habits
       setLoadingToday(true);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todaysHabits = allHabits.map(habit => ({
-        id: habit._id,
-        _id: habit._id,
-        name: habit.name,
-        status: habit.completed ? 'completed' : 
-               (habit.lastCompleted && new Date(habit.lastCompleted) >= today) ? 'completed' : 'pending',
-        category: habit.category || 'other',
-        goalName: habit.goalId?.name
-      }));
-      setFetchedTodaysHabits(todaysHabits);
+
+      // Map the actual habits to the format needed for the today's list
+      const todaysHabitsForDisplay = allActualHabits.map(habit => ({
+        _id: habit._id, // Use habit's _id
+        name: habit.name, // Use habit's name
+        completed: habit.completed || false, // Use habit's completed status
+        status: habit.completed ? 'completed' : 'pending', // Derive visual status
+        category: habit.category || 'other', // Use habit's category
+        goalName: habit.goalName // Use goalName added earlier
+        // Removed 'id' field as it was redundant with _id
+      })).sort((a, b) => { // Optional: sort pending first
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+        return 0;
+      });
+
+      setFetchedTodaysHabits(todaysHabitsForDisplay);
       setLoadingToday(false);
 
-      // Process weekly data
+      // --- Process weekly data using allActualHabits ---
       setLoadingWeek(true);
-      const weeklyData = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dayData = {
-          day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-          date: date.toISOString(),
-          completed: 0,
-          total: allHabits.length,
-          color: '#FD6A3A'
-        };
-        allHabits.forEach(habit => {
-          if (habit.completionHistory && habit.completionHistory[i]) {
-            dayData.completed++;
-          }
-        });
-        weeklyData.push(dayData);
-      }
-      setFetchedWeeklyData(weeklyData);
-      setLoadingWeek(false);
+      const weeklyCompletionData = Array(7).fill(0);
+      const totalHabitsCount = allActualHabits.length;
 
-      // Process monthly data
-      setLoadingMonth(true);
-      const monthlyData = [];
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      
-      for (let date = new Date(startOfMonth); date <= endOfMonth; date.setDate(date.getDate() + 1)) {
-        const dayData = {
-          date: new Date(date).toISOString(),
-          completed: 0,
-          total: allHabits.length,
-          isFuture: date > today
-        };
-
-        if (!dayData.isFuture) {
-          allHabits.forEach(habit => {
-            const dayIndex = Math.floor((today - date) / (1000 * 60 * 60 * 24));
-            if (dayIndex < 7 && habit.completionHistory && habit.completionHistory[dayIndex]) {
-              dayData.completed++;
+      allActualHabits.forEach(habit => {
+        if (habit.completionHistory && Array.isArray(habit.completionHistory)) {
+          for (let i = 0; i < 7; i++) {
+            if (habit.completionHistory[i]) {
+              weeklyCompletionData[i]++;
             }
-          });
-        }
-        monthlyData.push(dayData);
-      }
-      setFetchedMonthlyData(monthlyData);
-      setLoadingMonth(false);
-
-      // Calculate streaks
-      setLoadingStreaks(true);
-      let maxStreak = 0;
-      let totalStreaks = 0;
-      let streakCount = 0;
-
-      allHabits.forEach(habit => {
-        maxStreak = Math.max(maxStreak, habit.streak || 0);
-        if (habit.streak > 0) {
-          totalStreaks += habit.streak;
-          streakCount++;
+          }
         }
       });
 
-      const avgStreak = streakCount > 0 ? Math.round(totalStreaks / streakCount) : 0;
-      const currentStreak = allHabits.reduce((max, habit) => Math.max(max, habit.streak || 0), 0);
+      const weeklyDisplayData = [];
+      for (let i = 6; i >= 0; i--) {
+         const date = new Date();
+         date.setDate(date.getDate() - i);
+         weeklyDisplayData.push({
+           day: date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0), // Just first letter
+           date: date.toISOString(),
+           completed: weeklyCompletionData[i] || 0,
+           total: totalHabitsCount,
+           color: '#FD6A3A'
+         });
+      }
+      setFetchedWeeklyData(weeklyDisplayData);
+      setLoadingWeek(false);
+
+      // --- Process monthly data using allActualHabits ---
+      setLoadingMonth(true);
+      const monthlyCompletionMap = new Map(); // Store completions per day
+      allActualHabits.forEach(habit => {
+          // This needs backend support or a more complex history tracking
+          // For now, let's just use the weekly history for recent days for demo
+          if (habit.completionHistory && Array.isArray(habit.completionHistory)) {
+              for (let i = 0; i < 7; i++) {
+                  if(habit.completionHistory[i]) {
+                      const date = new Date();
+                      date.setDate(date.getDate() - i);
+                      const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
+                      monthlyCompletionMap.set(dateString, (monthlyCompletionMap.get(dateString) || 0) + 1);
+                  }
+              }
+          }
+      });
+      
+      const monthlyDisplayData = [];
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const daysInMonth = endOfMonth.getDate();
+      const firstDayOfMonthWeekday = (startOfMonth.getDay() + 6) % 7; // 0=Mon, 6=Sun
+
+      // Add leading empty cells
+      for (let i = 0; i < firstDayOfMonthWeekday; i++) {
+        monthlyDisplayData.push({ key: `empty-start-${i}`, isEmpty: true });
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(today.getFullYear(), today.getMonth(), day);
+        const dateString = date.toISOString().split('T')[0];
+        const completedCount = monthlyCompletionMap.get(dateString) || 0;
+        monthlyDisplayData.push({
+          key: dateString,
+          date: date,
+          completed: completedCount,
+          total: totalHabitsCount,
+          isFuture: date > today,
+          isToday: date.toDateString() === today.toDateString(),
+        });
+      }
+      setFetchedMonthlyData(monthlyDisplayData);
+      setLoadingMonth(false);
+
+      // --- Calculate streaks using allActualHabits ---
+      setLoadingStreaks(true);
+      let maxStreak = 0;
+      let totalStreaksValue = 0;
+      let activeHabitCount = 0;
+
+      allActualHabits.forEach(habit => {
+        maxStreak = Math.max(maxStreak, habit.streak || 0);
+        if ((habit.streak || 0) > 0) {
+          totalStreaksValue += habit.streak;
+          activeHabitCount++;
+        }
+      });
+
+      const avgStreak = activeHabitCount > 0 ? Math.round(totalStreaksValue / activeHabitCount) : 0;
+      const currentLongestStreak = allActualHabits.reduce((max, habit) => Math.max(max, habit.streak || 0), 0); // Simplification: current longest active streak
 
       setFocusStreaks({
-        max: maxStreak,
-        avg: avgStreak,
-        last: currentStreak,
-        streak: currentStreak
+        max: maxStreak,          // Longest streak ever recorded for any habit
+        avg: avgStreak,          // Average streak length among habits with streaks > 0
+        last: currentLongestStreak, // Current longest streak among all habits
+        streak: currentLongestStreak // Alias for consistency
       });
       setLoadingStreaks(false);
 
@@ -701,12 +784,10 @@ export default function Overview() {
       console.error("Failed to fetch overview data:", err);
       setError("Failed to load dashboard data. Please try again later.");
       toast.error("Failed to load dashboard data", {
-        style: {
-          background: '#363636',
-          color: '#fff',
-        },
+        style: { background: '#363636', color: '#fff' },
         duration: 5000,
       });
+      // Reset loading states on error
       setLoadingToday(false);
       setLoadingWeek(false);
       setLoadingMonth(false);
