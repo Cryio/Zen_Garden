@@ -2,7 +2,6 @@
 
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -11,6 +10,7 @@ import HeaderIcons from "../components/HeaderIcons";
 import PasswordInput from "../components/PasswordInput";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 
 // Frequently used class name variables
 const inputClass =
@@ -27,6 +27,7 @@ const actionLinkClass = "text-wax-flower-500 hover:text-wax-flower-400 hover:und
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // Login only requires email and password
   const [formData, setFormData] = useState({
@@ -102,22 +103,20 @@ export default function Login() {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
-        formData
-      );
-
-      // Store the token in localStorage
-      localStorage.setItem('token', response.data.token);
+      const result = await login(formData.email, formData.password);
       
-      // Show success message
-      toast.success('Login successful');
-      
-      // Redirect to dashboard page
-      navigate('/dashboard');
+      if (result.success) {
+        // Show success message
+        toast.success('Login successful');
+        
+        // Redirect to dashboard page
+        navigate('/dashboard');
+      } else {
+        setError(result.error || 'Login failed');
+      }
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.response?.data?.error || 'Login failed');
+      setError(error.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }

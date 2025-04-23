@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import Login from './pages/login';
 import Signup from './pages/signup';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
 import LandingPage from './components/LandingPage';
 import DashboardRoutes from './routes/dashboard';
@@ -32,18 +33,14 @@ export default function AppRoutes() {
           <ForgotPassword />
         </PublicRoute>
       } />
+      <Route path="/reset-password/:token" element={
+        <PublicRoute>
+          <ResetPassword />
+        </PublicRoute>
+      } />
       
       {/* Dashboard Routes */}
       <Route path="/dashboard/*" element={<DashboardRoutes />} />
-      
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
       
       <Route path="*" element={<NotFound />} />
     </Routes>

@@ -13,7 +13,7 @@ export default function DashboardRoutes() {
   return (
     <ProtectedRoute>
       <Routes>
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route path="/" element={<DashboardLayout />}>
           <Route index element={<Overview />} />
           <Route path="garden" element={<Garden />} />
           <Route path="habits" element={<Habits />} />

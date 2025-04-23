@@ -19,10 +19,12 @@ import {
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import "@/styles/dashboard.css";
+import { useAuth } from '@/context/AuthContext';
 
 const DashboardLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const navigationLinks = [
     { name: "Overview", icon: <LayoutDashboard className="h-4 w-4" />, path: "/dashboard" },
@@ -36,6 +38,12 @@ const DashboardLayout = () => {
     { name: "Settings", icon: <Settings className="h-4 w-4" />, path: "/dashboard/settings" },
     { name: "Help & Support", icon: <HelpCircle className="h-4 w-4" />, path: "/dashboard/help" },
   ];
+
+  if (!user) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-wax-flower-500"></div>
+    </div>;
+  }
 
   return (
     <div className="flex content-start min-h-screen">
@@ -52,16 +60,17 @@ const DashboardLayout = () => {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="md:hidden text-wax-flower-700 dark:text-wax-flower-300 hover:bg-wax-flower-100 dark:hover:bg-wax-flower-900/50"
-              onClick={() => setIsSidebarOpen(false)}
             >
               <Menu className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Main Navigation */}
+          {/* Navigation Links */}
           <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
             <div className="text-xs uppercase font-semibold text-wax-flower-500 dark:text-wax-flower-400 tracking-wider mb-2 px-3">
+              Main Navigation
             </div>
             {navigationLinks.map((link) => (
               <Link
@@ -114,6 +123,14 @@ const DashboardLayout = () => {
                 <span>{link.name}</span>
               </Link>
             ))}
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-sm font-medium text-wax-flower-600 hover:bg-wax-flower-50 hover:text-wax-flower-900 dark:text-wax-flower-400 dark:hover:bg-wax-flower-900/50 dark:hover:text-wax-flower-50"
+              onClick={logout}
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
           </div>
         </div>
       </aside>
@@ -144,19 +161,10 @@ const DashboardLayout = () => {
               <NotificationsMenu />
               <Avatar className="border-2 border-wax-flower-200/50 dark:border-wax-flower-700/30 hover:border-wax-flower-300 dark:hover:border-wax-flower-600 transition-colors">
                 <AvatarImage src="" /> 
-                <AvatarFallback className="bg-wax-flower-100 dark:bg-wax-flower-800 text-wax-flower-700 dark:text-wax-flower-200">Cn</AvatarFallback>
+                <AvatarFallback className="bg-wax-flower-100 dark:bg-wax-flower-800 text-wax-flower-700 dark:text-wax-flower-200">
+                  {user.firstName?.[0]}{user.lastName?.[0]}
+                </AvatarFallback>
               </Avatar>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="relative text-wax-flower-300 hover:bg-wax-flower-900/50 hover:text-wax-flower-300"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/login';
-                }}
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
             </div>
           </div>
         </header>

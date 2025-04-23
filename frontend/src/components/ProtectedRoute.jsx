@@ -1,17 +1,24 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    if (!token) {
+    if (!loading && !isAuthenticated) {
       navigate('/login');
     }
-  }, [token, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
-  if (!token) {
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-wax-flower-500"></div>
+    </div>;
+  }
+
+  if (!isAuthenticated) {
     return null;
   }
 

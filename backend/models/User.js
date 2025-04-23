@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const validator = require('validator');
+const crypto = require('crypto');
 
 const UserSchema = new mongoose.Schema({
   firstName: { 
@@ -36,6 +37,8 @@ const UserSchema = new mongoose.Schema({
     minlength: [8, "Password must be at least 8 characters long"],
     select: false // Don't include password in query results
   },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
   bio: {
     type: String,
     default: '',
@@ -196,27 +199,17 @@ UserSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model("User", UserSchema);
-const HabitSchema = new mongoose.Schema({
-  habitName: String,
-  streak: Number,
-  progress: Number,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+// Method to generate password reset token
+UserSchema.methods.generatePasswordResetToken = function() {
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+  return resetToken;
+};
 
-const StatsSchema = new mongoose.Schema({
-  completionRate: Number,
-  currentStreak: Number,
-  bestStreak: Number,
-  focusTime: Number,
-  totalHabits: Number,
-  activeHabits: Number,
-  dailyProgress: Number,
-  weeklyOverview: Number,
-  monthlyAnalytics: Number,
-});
+const User = mongoose.model("User", UserSchema);
 
-module.exports = mongoose.model("User", UserSchema);
+module.exports = User;

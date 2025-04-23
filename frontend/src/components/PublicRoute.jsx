@@ -1,17 +1,19 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { useEffect, useCallback } from 'react';
 
 const PublicRoute = ({ children }) => {
-  const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const { isAuthenticated } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (token) {
-      navigate('/dashboard');
+  const redirectToDashboard = useCallback(() => {
+    if (isAuthenticated) {
+      return <Navigate to="/dashboard" state={{ from: location }} replace />;
     }
-  }, [token, navigate]);
+    return children;
+  }, [isAuthenticated, location, children]);
 
-  return !token ? children : null;
+  return redirectToDashboard();
 };
 
 export default PublicRoute; 
