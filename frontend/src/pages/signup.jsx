@@ -313,29 +313,25 @@ export default function Signup() {
   return (
     <div className="min-h-screen w-full grid grid-cols-6 gap-4 items-center px-4 relative overflow-hidden">
       <AnimatedBackground />
-      <style jsx>{`
-        a {
+      <style>{`
+        .signup-link {
           font-weight: 500;
           color: var(--wax-flower-500);
           text-decoration: inherit;
           transition: color 0.2s ease;
         }
-        a:hover {
+        .signup-link:hover {
           color: var(--wax-flower-600);
         }
-        button:focus,
-        button:focus-visible {
+        .signup-button:focus,
+        .signup-button:focus-visible {
           outline: none;
         }
-        select:focus {
-          outline: none;
-          box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
-        }
-        .datepicker-input:focus {
+        .signup-select:focus {
           outline: none;
           box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
         }
-        input:focus {
+        .signup-input:focus {
           outline: none;
           box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
         }
@@ -595,7 +591,7 @@ export default function Signup() {
           </form>
           <p className="text-wax-flower-400 mt-6 text-sm">
             Already have an account?{" "}
-            <a href="/login" className={actionLinkClass}>
+            <a href="/login" className={`${actionLinkClass} signup-link`}>
               Login
             </a>
           </p>

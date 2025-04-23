@@ -1,21 +1,17 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }) => {
+const PublicRoute = ({ children }) => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
   useEffect(() => {
-    if (!token) {
-      navigate('/login');
+    if (token) {
+      navigate('/dashboard');
     }
   }, [token, navigate]);
 
-  if (!token) {
-    return null;
-  }
-
-  return children;
+  return !token ? children : null;
 };
 
-export default ProtectedRoute;
+export default PublicRoute; 

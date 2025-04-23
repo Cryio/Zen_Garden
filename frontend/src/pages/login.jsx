@@ -126,25 +126,25 @@ export default function Login() {
   return (
     <div className="min-h-screen w-full grid grid-cols-6 gap-4 items-center px-4 relative overflow-hidden">
       <AnimatedBackground />
-      <style jsx>{`
-        a {
+      <style>{`
+        .login-link {
           font-weight: 500;
           color: var(--wax-flower-500);
           text-decoration: inherit;
           transition: color 0.2s ease;
         }
-        a:hover {
+        .login-link:hover {
           color: var(--wax-flower-600);
         }
-        button:focus,
-        button:focus-visible {
+        .login-button:focus,
+        .login-button:focus-visible {
           outline: none;
         }
-        select:focus {
+        .login-select:focus {
           outline: none;
           box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
         }
-        input:focus {
+        .login-input:focus {
           outline: none;
           box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
         }
@@ -240,13 +240,13 @@ export default function Login() {
           <div className="space-y-3 mt-6">
             <p className="text-wax-flower-400 text-sm">
               Create an account?{" "}
-              <a href="/signup" className={actionLinkClass}>
+              <a href="/signup" className={`${actionLinkClass} login-link`}>
                 Sign Up
               </a>
             </p>
             <p className="text-wax-flower-400 text-sm">
               Forgot your password?{" "}
-              <a href="/forgot-password" className={actionLinkClass}>
+              <a href="/forgot-password" className={`${actionLinkClass} login-link`}>
                 Reset it
               </a>
             </p>
