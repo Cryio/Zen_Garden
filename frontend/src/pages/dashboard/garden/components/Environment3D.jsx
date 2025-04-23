@@ -2,7 +2,7 @@ import React, { useMemo, Suspense } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF, Cloud } from '@react-three/drei';
-import { Grass } from './Grass';
+import { Grass } from './grass';
 import { getPatchCollisionData } from './Patches';
 
 function Tree({ position, scale = 1, rotation }) {
