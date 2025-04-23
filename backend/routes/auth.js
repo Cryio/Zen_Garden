@@ -208,7 +208,8 @@ router.get('/google/callback',
         email: req.user.email,
         hasPassword: !!req.user.password,
         password: req.user.password,
-        isGoogleUser: req.user.isGoogleUser
+        isGoogleUser: req.user.isGoogleUser,
+        wasLinking: req.user.wasLinking
       });
 
       const token = jwt.sign(
@@ -218,17 +219,7 @@ router.get('/google/callback',
       );
 
       // Check if this was a linking of an existing account
-      const hasPassword = !!req.user.password;
-      const isNotGoogleAuthPassword = req.user.password !== 'google-auth';
-      const wasNotGoogleUser = !req.user.isGoogleUser;
-      
-      console.log('Account linking conditions:', {
-        hasPassword,
-        isNotGoogleAuthPassword,
-        wasNotGoogleUser
-      });
-
-      const wasExistingAccount = hasPassword && isNotGoogleAuthPassword && wasNotGoogleUser;
+      const wasExistingAccount = req.user.wasLinking;
       console.log('Final wasExistingAccount:', wasExistingAccount);
       
       res.redirect(
