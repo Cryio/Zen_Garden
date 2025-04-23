@@ -19,20 +19,25 @@ passport.use(new GoogleStrategy({
           googleId: profile.id,
           email: profile.emails[0].value,
           name: profile.displayName,
-          isGoogleUser: true
+          isGoogleUser: true,
+          // Set default values for required fields
+          firstName: profile.name?.givenName || 'Google',
+          lastName: profile.name?.familyName || 'User',
+          gender: 'other', // Default value
+          dob: new Date('2000-01-01'), // Default value
+          password: 'google-auth' // Dummy password for Google users
         });
       }
       
       return done(null, user);
     } catch (error) {
-      console.error('passport strategy error: ', error);  
+      console.error('passport strategy error: ', error);
       return done(error, null);
     }
   }
 ));
 
 passport.serializeUser((user, done) => {
-  console.log('serializeUser: ', user);
   done(null, user.id);
 });
 
