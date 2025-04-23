@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { validationResult } = require("express-validator");
 require("dotenv").config(); // Load .env variables
+const passport = require("passport");
 
 const router = express.Router();
 
@@ -194,5 +195,23 @@ router.delete("/delete-account", verifyToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to delete account' });
   }
 });
+
+// Google OAuth routes
+router.get('/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get('/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    // Successful authentication, redirect to frontend with token
+    const token = jwt.sign(
+      { id: req.user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
+  }
+);
 
 module.exports = { router, verifyToken };
