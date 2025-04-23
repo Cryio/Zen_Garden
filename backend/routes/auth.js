@@ -203,6 +203,14 @@ router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
   async (req, res) => {
     try {
+      console.log('User in callback:', {
+        id: req.user._id,
+        email: req.user.email,
+        hasPassword: !!req.user.password,
+        password: req.user.password,
+        isGoogleUser: req.user.isGoogleUser
+      });
+
       const token = jwt.sign(
         { userId: req.user._id },
         process.env.JWT_SECRET,
@@ -210,8 +218,18 @@ router.get('/google/callback',
       );
 
       // Check if this was a linking of an existing account
-      // A user is considered existing if they had a password before this OAuth attempt
-      const wasExistingAccount = req.user.password && req.user.password !== 'google-auth';
+      const hasPassword = !!req.user.password;
+      const isNotGoogleAuthPassword = req.user.password !== 'google-auth';
+      const wasNotGoogleUser = !req.user.isGoogleUser;
+      
+      console.log('Account linking conditions:', {
+        hasPassword,
+        isNotGoogleAuthPassword,
+        wasNotGoogleUser
+      });
+
+      const wasExistingAccount = hasPassword && isNotGoogleAuthPassword && wasNotGoogleUser;
+      console.log('Final wasExistingAccount:', wasExistingAccount);
       
       res.redirect(
         `${process.env.FRONTEND_URL}/auth/callback?token=${token}&wasExistingAccount=${wasExistingAccount}`
