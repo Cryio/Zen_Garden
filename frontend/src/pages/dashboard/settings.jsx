@@ -10,9 +10,21 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Camera, Globe, Moon, Sun, User } from 'lucide-react';
+import { Calendar, Camera, Globe, Moon, Sun, User, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -94,6 +106,33 @@ export default function Settings() {
       toast.error('Failed to update profile');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/auth/delete-account`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      // Clear local storage and redirect to login
+      localStorage.removeItem('token');
+      toast.success('Account deleted successfully');
+      navigate('/login');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error(error.response?.data?.error || 'Failed to delete account');
     }
   };
 
@@ -203,21 +242,38 @@ export default function Settings() {
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border-red-200/20">
+      <Card className="border-red-500">
         <CardHeader>
-          <CardTitle className="text-red-400">Danger Zone</CardTitle>
-          <CardDescription className="text-red-400/70">Irreversible actions</CardDescription>
+          <CardTitle className="text-red-500">Danger Zone</CardTitle>
+          <CardDescription>Permanently delete your account and all associated data</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-red-400">Delete Account</Label>
-            <p className="text-sm text-red-400/70">
-              Once you delete your account, there is no going back. Please be certain.
-            </p>
-            <Button variant="destructive" className="bg-red-500 hover:bg-red-600">
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full">
+                <Trash2 className="mr-2 h-4 w-4" />
               Delete Account
             </Button>
-          </div>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account
+                  and remove all associated data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  Delete Account
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     </div>

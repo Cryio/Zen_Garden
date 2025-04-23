@@ -1,13 +1,16 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
-const dotenv = require("dotenv");
-const authRoutes = require("./routes/auth");
+const connectDB = require('./config/database');
+const habitRoutes = require('./routes/habit');
+const { router: authRoutes } = require('./routes/auth');
 const chatbotRoutes = require("./routes/chatbot");
-
-dotenv.config();
+const focusModeRoutes = require('./routes/focusMode');
+const seedRoutes = require('./routes/seed');
 
 const app = express();
+
+// Connect to database
+connectDB();
 
 // CORS Configuration
 const corsOptions = {
@@ -26,28 +29,14 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// MongoDB Connection
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("Connected to MongoDB");
-  } catch (err) {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
-  }
-};
-
-connectDB();
-
 // Routes
-app.use("/api/auth", authRoutes);
+app.use('/api/habits', habitRoutes);
+app.use('/api/auth', authRoutes);
 app.use("/api/chatbot", chatbotRoutes);
-
-const habitRoutes = require("./routes/habit");
-app.use("/api/habits", habitRoutes)
+app.use('/api/focus', focusModeRoutes);
+app.use('/api/seed', seedRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
