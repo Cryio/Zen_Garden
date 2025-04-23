@@ -18,7 +18,7 @@ passport.use(new GoogleStrategy({
       });
       
       // First check if user exists with Google ID
-      let user = await User.findOne({ googleId: profile.id });
+      let user = await User.findOne({ googleId: profile.id }).select('+password');
       console.log('User with Google ID:', user ? {
         id: user._id,
         email: user.email,
@@ -26,9 +26,11 @@ passport.use(new GoogleStrategy({
         hasPassword: !!user.password
       } : 'Not found');
       
+      let wasLinking = false;
+      
       if (!user) {
         // If no user with Google ID, check if user exists with email
-        user = await User.findOne({ email: email });
+        user = await User.findOne({ email: email }).select('+password');
         console.log('User with email:', user ? {
           id: user._id,
           email: user.email,
@@ -39,10 +41,7 @@ passport.use(new GoogleStrategy({
         if (user) {
           // If user exists with email, link Google account to it
           console.log('Linking Google account to existing user');
-          // Only set isGoogleUser if it wasn't already a Google user
-          if (!user.isGoogleUser) {
-            user.isGoogleUser = true;
-          }
+          wasLinking = true;
           user.googleId = profile.id;
           await user.save();
           console.log('Updated user:', {
@@ -75,6 +74,8 @@ passport.use(new GoogleStrategy({
         }
       }
       
+      // Add wasLinking to the user object so it's available in the callback
+      user.wasLinking = wasLinking;
       return done(null, user);
     } catch (error) {
       console.error('passport strategy error: ', error);
@@ -90,7 +91,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(id).select('+password');
     done(null, user);
   } catch (error) {
     done(error, null);
