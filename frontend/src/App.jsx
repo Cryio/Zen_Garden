@@ -11,12 +11,12 @@ function App() {
     <AuthProvider>
       <SettingsProvider>
         <ToastProvider>
-          <BrowserRouter>
-            <AuthCheck>
-              <Toaster position="top-right" richColors />
-              <AppRoutes />
-            </AuthCheck>
-          </BrowserRouter>
+        <BrowserRouter>
+          <AuthCheck>
+            <Toaster position="top-right" richColors />
+            <AppRoutes />
+          </AuthCheck>
+        </BrowserRouter>
         </ToastProvider>
       </SettingsProvider>
     </AuthProvider>

@@ -83,7 +83,7 @@ export default function Habits() {
       navigate('/login');
       return;
     }
-    fetchGoals();
+      fetchGoals();
   }, [user, navigate]);
 
   useEffect(() => {
@@ -131,19 +131,29 @@ export default function Habits() {
 
   const handleNewHabit = useCallback(async (habitData) => {
     if (!user?._id || !selectedGoalId) return;
-    
+
     try {
       const response = await habitApi.createHabit(user._id, selectedGoalId, {
         ...habitData,
+        startDate: new Date(habitData.startDate),
+        endDate: new Date(habitData.endDate),
         completed: false
       });
+      
       if (response?.data) {
         setGoals(prevGoals => 
-          prevGoals.map(goal => 
-            goal._id === selectedGoalId
-              ? { ...goal, habits: [...(goal.habits || []), response.data] }
-              : goal
-          )
+          prevGoals.map(goal => {
+            if (goal._id === selectedGoalId) {
+              // Ensure habits array exists and add the new habit
+              const updatedHabits = [...(goal.habits || []), response.data];
+              return {
+                ...goal,
+                habits: updatedHabits,
+                progress: calculateGoalProgress({ ...goal, habits: updatedHabits })
+              };
+            }
+            return goal;
+          })
         );
         setNewHabitOpen(false);
         toast.success('Habit created successfully');
@@ -152,11 +162,11 @@ export default function Habits() {
       toast.error('Failed to create habit');
       console.error('Error creating habit:', error);
     }
-  }, [user?._id, selectedGoalId]);
+  }, [user?._id, selectedGoalId, calculateGoalProgress]);
 
   const handleDeleteGoal = useCallback(async (goalId) => {
     if (!user?._id) return;
-    
+
     try {
       const response = await habitApi.deleteGoal(user._id, goalId);
       if (response?.data) {
@@ -181,7 +191,7 @@ export default function Habits() {
             : goal
         )
       );
-      toast.success('Habit deleted successfully');
+        toast.success('Habit deleted successfully');
     } catch (error) {
       toast.error('Failed to delete habit');
       console.error('Error deleting habit:', error);
@@ -282,16 +292,16 @@ export default function Habits() {
     
     return (
       <div className="flex items-center space-x-2">
-        <div className="flex space-x-1">
-          {completionData.map((completed, index) => (
-            <div
-              key={index}
-              className={`h-2 w-2 rounded-full ${
-                completed ? 'bg-wax-flower-500' : 'bg-wax-flower-800'
-              }`}
+      <div className="flex space-x-1">
+        {completionData.map((completed, index) => (
+          <div
+            key={index}
+            className={`h-2 w-2 rounded-full ${
+              completed ? 'bg-wax-flower-500' : 'bg-wax-flower-800'
+            }`}
               title={`${index === 0 ? 'Today' : index === 1 ? 'Yesterday' : `${index} days ago`}`}
-            />
-          ))}
+          />
+        ))}
         </div>
         {streak > 0 && (
           <span className="text-xs text-wax-flower-400">
@@ -305,11 +315,106 @@ export default function Habits() {
   const handleAddHabit = useCallback((goal) => {
     if (!goal?._id) {
       console.error('No goal ID available');
+      toast.error('Unable to add habit: Goal ID not available');
       return;
     }
     setSelectedGoalId(goal._id);
+    console.log('Setting goal ID:', goal._id); // Log for debugging
     setNewHabitOpen(true);
   }, []);
+
+  const handleCloseHabitDialog = useCallback((open) => {
+    setNewHabitOpen(open);
+    if (!open) {
+      // Reset the selected goal ID when closing the dialog
+      console.log('Clearing selectedGoalId');
+      setSelectedGoalId(null);
+    }
+  }, []);
+
+  const handleHabitStatusUpdate = useCallback(async (goalId, habitId, completed) => {
+    if (!user?._id) return;
+    
+    try {
+      const response = await habitApi.updateHabitCompletion(user._id, goalId, habitId, completed);
+      
+      if (response?.data) {
+        setGoals(prevGoals => 
+          prevGoals.map(goal => {
+            if (goal._id === goalId) {
+              const updatedHabits = goal.habits.map(habit => 
+                habit._id === habitId ? { ...habit, completed, lastCompleted: completed ? new Date().toISOString() : null } : habit
+              );
+              return {
+                ...goal,
+                habits: updatedHabits,
+                progress: calculateGoalProgress({ ...goal, habits: updatedHabits })
+              };
+            }
+            return goal;
+          })
+        );
+      }
+    } catch (error) {
+      toast.error('Failed to update habit status');
+      console.error('Error updating habit status:', error);
+    }
+  }, [user?._id, calculateGoalProgress]);
+
+  const renderHabit = useCallback((goal, habit) => (
+    <div key={habit._id} className="flex flex-col p-3 hover:bg-wax-flower-800/10 rounded-lg border border-wax-flower-800/30">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Checkbox
+            checked={habit.completed}
+            onCheckedChange={(checked) => handleHabitStatusUpdate(goal._id, habit._id, checked)}
+            className="border-wax-flower-500"
+          />
+          <div>
+            <span className={`text-wax-flower-200 font-medium ${habit.completed ? 'line-through opacity-50' : ''}`}>
+              {habit.name}
+            </span>
+            {habit.description && (
+              <p className="text-xs text-wax-flower-400 mt-1">{habit.description}</p>
+            )}
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0 text-wax-flower-400 hover:text-wax-flower-200">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-black border-wax-flower-200/20">
+            <DropdownMenuItem
+              className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+              onClick={() => handleDeleteHabit(goal._id, habit._id)}
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              Delete Habit
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-wax-flower-400">
+        <div>
+          <span className="block">Start: {new Date(habit.startDate).toLocaleDateString()}</span>
+          <span className="block">End: {new Date(habit.endDate).toLocaleDateString()}</span>
+        </div>
+        <div className="flex items-center justify-end">
+          <span className={`px-2 py-1 rounded-full text-xs ${
+            habit.category === 'health' ? 'bg-green-500/20 text-green-400' :
+            habit.category === 'learning' ? 'bg-blue-500/20 text-blue-400' :
+            habit.category === 'mindfulness' ? 'bg-purple-500/20 text-purple-400' :
+            habit.category === 'productivity' ? 'bg-orange-500/20 text-orange-400' :
+            'bg-yellow-500/20 text-yellow-400'
+          }`}>
+            {habit.category}
+          </span>
+        </div>
+      </div>
+    </div>
+  ), [handleHabitStatusUpdate, handleDeleteHabit]);
 
   if (!user) {
     return null;
@@ -383,45 +488,7 @@ export default function Habits() {
             {goal.expanded && (
               <CardContent className="pt-0">
                 <div className="grid gap-4">
-                  {goal.habits?.map((habit) => (
-                    <div key={habit._id} className="flex items-center justify-between p-4 rounded-lg bg-black/20">
-                      <div className="flex items-center space-x-4">
-                        <Checkbox 
-                          id={habit._id}
-                          checked={habit.completed} 
-                          onCheckedChange={() => toggleHabitCompletion(goal._id, habit._id, habit.completed)}
-                          className="border-wax-flower-200/20"
-                        />
-                        <div className="space-y-1">
-                          <label
-                            htmlFor={habit._id}
-                            className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
-                              habit.completed ? 'text-wax-flower-400 line-through' : 'text-wax-flower-200'
-                            }`}
-                          >
-                            {habit.name}
-                          </label>
-                          {renderCompletionHistory(habit.completionHistory, habit.streak)}
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4 text-wax-flower-200" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-black border-wax-flower-200/20">
-                          <DropdownMenuItem
-                            className="text-wax-flower-200 hover:bg-wax-flower-500/20"
-                            onClick={() => handleDeleteHabit(goal._id, habit._id)}
-                          >
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete Habit
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  ))}
+                  {goal.habits?.map((habit) => renderHabit(goal, habit))}
                   <Button
                     onClick={() => handleAddHabit(goal)}
                     className="w-full bg-wax-flower-500 hover:bg-wax-flower-600 text-black"
@@ -442,12 +509,14 @@ export default function Habits() {
         onSubmit={handleNewGoal}
       />
 
+      {selectedGoalId && (
       <NewHabitDialog
         open={newHabitOpen}
-        onOpenChange={setNewHabitOpen}
+          onOpenChange={handleCloseHabitDialog}
         onSave={handleNewHabit}
-        goalId={selectedGoalId}
+          goalId={selectedGoalId}
       />
+      )}
     </div>
   );
 } 

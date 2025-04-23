@@ -5,6 +5,7 @@ const habitRoutes = require('./routes/habit');
 const { router: authRoutes } = require('./routes/auth');
 const chatbotRoutes = require("./routes/chatbot");
 const focusModeRoutes = require('./routes/focusMode');
+const seedRoutes = require('./routes/seed');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/habits', habitRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use('/api/focus', focusModeRoutes);
+app.use('/api/seed', seedRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

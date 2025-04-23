@@ -19,7 +19,7 @@ const calculateHabitHealth = (habit) => {
   
   // Get required completions based on frequency
   const getRequiredCompletions = () => {
-    switch (habit.frequency) {
+  switch (habit.frequency) {
       case 'daily': return 7; // Last 7 days
       case 'weekly': return 4; // Last 4 weeks
       case 'monthly': return 3; // Last 3 months
@@ -241,8 +241,8 @@ export function Patches({ goals = [], onHover }) {
       const col = index % GRID_SIZE;
       const x = (col * (PATCH_SIZE + PATCH_GAP)) - offset;
       const z = (row * (PATCH_SIZE + PATCH_GAP)) - offset;
-      
-      return {
+        
+        return {
         position: new THREE.Vector3(x, 0, z),
         goal
       };
@@ -257,9 +257,9 @@ export function Patches({ goals = [], onHover }) {
           goal={patch.goal}
           position={patch.position}
           onHover={onHover}
-        />
-      ))}
-    </group>
+              />
+          ))}
+        </group>
   );
 }
 

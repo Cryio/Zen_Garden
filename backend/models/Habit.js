@@ -9,11 +9,21 @@ const habitSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true,
+    default: ''
   },
-  frequency: {
+  startDate: {
+    type: Date,
+    default: Date.now,
+    required: [true, 'Please provide a start date']
+  },
+  endDate: {
+    type: Date,
+    required: [true, 'Please provide an end date']
+  },
+  category: {
     type: String,
-    enum: ['daily', 'weekly', 'monthly'],
-    default: 'daily'
+    enum: ['health', 'learning', 'mindfulness', 'productivity', 'self-care', 'finance', 'social', 'organization', 'hobby'],
+    default: 'health'
   },
   completed: {
     type: Boolean,
