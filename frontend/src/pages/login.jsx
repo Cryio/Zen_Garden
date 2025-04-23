@@ -93,6 +93,13 @@ export default function Login() {
   // Handle Google OAuth callback
   useEffect(() => {
     const token = searchParams.get('token');
+    const error = searchParams.get('error');
+
+    if (error) {
+      setError('Google authentication failed. Please try again.');
+      return;
+    }
+
     if (token) {
       localStorage.setItem('token', token);
       toast.success('Login successful');
@@ -102,6 +109,9 @@ export default function Login() {
 
   // Handle Google login
   const handleGoogleLogin = () => {
+    // Clear any existing errors
+    setError('');
+    // Redirect to Google OAuth endpoint
     window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
   };
 
