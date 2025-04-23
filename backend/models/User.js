@@ -36,6 +36,15 @@ const UserSchema = new mongoose.Schema({
     minlength: [8, "Password must be at least 8 characters long"],
     select: false // Don't include password in query results
   },
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
+  isGoogleUser: {
+    type: Boolean,
+    default: false
+  },
   bio: {
     type: String,
     default: '',
