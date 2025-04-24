@@ -48,8 +48,8 @@ const habitSchema = new mongoose.Schema({
     default: null
   },
   completionHistory: {
-    type: [Boolean],
-    default: Array(7).fill(false)
+    type: [Date],
+    default: []
   },
   createdAt: {
     type: Date,
