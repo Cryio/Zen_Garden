@@ -40,6 +40,9 @@ export default function AppRoutes() {
         </PublicRoute>
       } />
       
+      {/* Auth Callback Route */}
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      
       {/* Dashboard Routes */}
       <Route path="/dashboard/*" element={<DashboardRoutes />} />
       

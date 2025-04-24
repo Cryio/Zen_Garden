@@ -1,7 +1,5 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -94,29 +92,12 @@ export default function Login() {
     }
   };
 
-  // Handle Google OAuth callback
-  useEffect(() => {
-    const token = searchParams.get('token');
-    const error = searchParams.get('error');
-
-    if (error) {
-      setError('Google authentication failed. Please try again.');
-      return;
-    }
-
-    if (token) {
-      localStorage.setItem('token', token);
-      toast.success('Login successful');
-      navigate('/dashboard');
-    }
-  }, [searchParams, navigate]);
-
   // Handle Google login
   const handleGoogleLogin = () => {
     // Clear any existing errors
     setError('');
-    // Redirect to Google OAuth endpoint
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+    // Redirect to Google OAuth endpoint with callback URL
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google?redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback')}`;
   };
 
   const handleSubmit = async (e) => {
