@@ -7,6 +7,7 @@ import LandingPage from './components/LandingPage';
 import DashboardRoutes from './routes/dashboard';
 import Settings from './pages/dashboard/settings';
 import ProtectedRoute from './components/ProtectedRoute';
+import AuthCallback from './pages/AuthCallback';
 
 export default function AppRoutes() {
   return (
@@ -27,6 +28,8 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      
+      <Route path="/auth/callback" element={<AuthCallback />} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>

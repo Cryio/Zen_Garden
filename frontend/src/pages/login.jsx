@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ const actionLinkClass = "text-wax-flower-500 hover:text-wax-flower-400 hover:und
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Login only requires email and password
   const [formData, setFormData] = useState({
@@ -87,6 +88,31 @@ export default function Login() {
       gradientOverlayRef.current.style.background = "none";
       gradientOverlayRef.current.style.transition = "opacity 1s ease-in-out";
     }
+  };
+
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const error = searchParams.get('error');
+
+    if (error) {
+      setError('Google authentication failed. Please try again.');
+      return;
+    }
+
+    if (token) {
+      localStorage.setItem('token', token);
+      toast.success('Login successful');
+      navigate('/dashboard');
+    }
+  }, [searchParams, navigate]);
+
+  // Handle Google login
+  const handleGoogleLogin = () => {
+    // Clear any existing errors
+    setError('');
+    // Redirect to Google OAuth endpoint
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
   };
 
   const handleSubmit = async (e) => {
@@ -215,6 +241,7 @@ export default function Login() {
               type="button"
               variant="outline"
               className={googleButtonClass}
+              onClick={handleGoogleLogin}
             >
               <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                 <path

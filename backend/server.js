@@ -1,11 +1,14 @@
 const express = require("express");
 const cors = require("cors");
+const passport = require('passport');
+const session = require('express-session');
 const connectDB = require('./config/database');
 const habitRoutes = require('./routes/habit');
 const { router: authRoutes } = require('./routes/auth');
 const chatbotRoutes = require("./routes/chatbot");
 const focusModeRoutes = require('./routes/focusMode');
 const seedRoutes = require('./routes/seed');
+require('./config/passport');
 
 const app = express();
 
@@ -23,6 +26,17 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Session configuration
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Health check endpoint
 app.get('/health', (req, res) => {

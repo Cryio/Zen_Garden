@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { validationResult } = require("express-validator");
 require("dotenv").config(); // Load .env variables
+const passport = require("passport");
 
 const router = express.Router();
 
@@ -194,5 +195,41 @@ router.delete("/delete-account", verifyToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to delete account' });
   }
 });
+
+// Google OAuth routes
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  async (req, res) => {
+    try {
+      console.log('User in callback:', {
+        id: req.user._id,
+        email: req.user.email,
+        hasPassword: !!req.user.password,
+        password: req.user.password,
+        isGoogleUser: req.user.isGoogleUser,
+        wasLinking: req.user.wasLinking
+      });
+
+      const token = jwt.sign(
+        { userId: req.user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      // Check if this was a linking of an existing account
+      const wasExistingAccount = req.user.wasLinking;
+      console.log('Final wasExistingAccount:', wasExistingAccount);
+      
+      res.redirect(
+        `${process.env.FRONTEND_URL}/auth/callback?token=${token}&wasExistingAccount=${wasExistingAccount}`
+      );
+    } catch (error) {
+      console.error('Google callback error:', error);
+      res.redirect(`${process.env.FRONTEND_URL}/auth/callback?error=authentication_failed`);
+    }
+  }
+);
 
 module.exports = { router, verifyToken };
