@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import PasswordInput from "../components/PasswordInput";
 import CaptchaComponent from "../components/CaptchaComponent";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { Calendar } from "@/components/ui/calendar";
+import { toast } from 'sonner';
 
 // Helper functions and constants
 const months = [
@@ -64,6 +65,7 @@ const actionLinkClass = "text-wax-flower-500 hover:text-wax-flower-400 hover:und
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -308,6 +310,31 @@ export default function Signup() {
       dobDate.setFullYear(parseInt(year));
       setFormData(prev => ({ ...prev, dob: formatLocalDateToISO(dobDate) }));
     }
+  };
+
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const error = searchParams.get('error');
+
+    if (error) {
+      setError('Google authentication failed. Please try again.');
+      return;
+    }
+
+    if (token) {
+      localStorage.setItem('token', token);
+      toast.success('Signup successful');
+      navigate('/dashboard');
+    }
+  }, [searchParams, navigate]);
+
+  // Handle Google signup
+  const handleGoogleSignup = () => {
+    // Clear any existing errors
+    setError('');
+    // Redirect to Google OAuth endpoint
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
   };
 
   return (
@@ -567,6 +594,7 @@ export default function Signup() {
               type="button"
               variant="outline"
               className={googleButtonClass}
+              onClick={handleGoogleSignup}
             >
               <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                 <path

@@ -9,6 +9,7 @@ import DashboardRoutes from './routes/dashboard';
 import Settings from './pages/dashboard/settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import AuthCallback from './pages/AuthCallback';
 
 export default function AppRoutes() {
   return (

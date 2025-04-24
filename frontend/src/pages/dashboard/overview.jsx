@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/context/AuthContext";
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 // Dummy data for habits

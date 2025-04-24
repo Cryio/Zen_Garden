@@ -6,12 +6,12 @@ const crypto = require('crypto');
 const UserSchema = new mongoose.Schema({
   firstName: { 
     type: String, 
-    required: [true, "First name is required"],
+    required: function() { return !this.isGoogleUser; }, //if google user, the first name is not required. Same for last name, gender, dob, etc
     trim: true
   },
   lastName: { 
     type: String, 
-    required: [true, "Last name is required"],
+    required: function() { return !this.isGoogleUser; },
     trim: true
   },
   email: { 
@@ -24,21 +24,30 @@ const UserSchema = new mongoose.Schema({
   },
   gender: { 
     type: String, 
-    required: [true, "Gender is required"],
+    required: function() { return !this.isGoogleUser; },
     enum: ["male", "female", "other"]
   },
   dob: { 
     type: Date, 
-    required: [true, "Date of birth is required"]
+    required: function() { return !this.isGoogleUser; }
   },
   password: { 
     type: String, 
-    required: [true, "Password is required"],
+    required: function() { return !this.isGoogleUser; },
     minlength: [8, "Password must be at least 8 characters long"],
     select: false // Don't include password in query results
   },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
+  isGoogleUser: {
+    type: Boolean,
+    default: false
+  },
   bio: {
     type: String,
     default: '',
