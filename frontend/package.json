@@ -40,6 +40,7 @@
     "glsl-noise": "^0.0.0",
     "glslify": "^7.1.1",
     "lucide-react": "^0.294.0",
+    "nodemailer": "^6.10.1",
     "postprocessing": "^6.37.2",
     "react": "^18.2.0",
     "react-day-picker": "^8.9.1",

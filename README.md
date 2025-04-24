@@ -4,7 +4,7 @@ Zen_Garden is a web application designed to make habit tracking engaging and int
 
 ## Features
 
-- **User Authentication**: Secure login, signup, and password recovery.
+- **User Authentication**: Secure login, signup, and password recovery along with OAuth2.0 signup/login. 
 - **Habit Tracking**: Create and monitor customizable habit goals.
 - **3D Garden Visualization**: An interactive garden that evolves with habit completion.
 - **Analytics Dashboard**: View progress and insights on habit performance.

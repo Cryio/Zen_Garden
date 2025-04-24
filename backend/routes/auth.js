@@ -2,10 +2,35 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { validationResult } = require("express-validator");
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 require("dotenv").config(); // Load .env variables
 const passport = require("passport");
 
 const router = express.Router();
+
+// Create nodemailer transporter with better error handling
+let transporter;
+try {
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+
+  // Verify transporter configuration
+  transporter.verify(function(error, success) {
+    if (error) {
+      console.error("Email transporter verification failed:", error);
+    } else {
+      console.log("Email transporter is ready to send messages");
+    }
+  });
+} catch (error) {
+  console.error("Failed to create email transporter:", error);
+}
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
@@ -23,6 +48,121 @@ const verifyToken = (req, res, next) => {
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
+
+// Forgot Password
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Generate reset token
+    const resetToken = user.generatePasswordResetToken();
+    await user.save();
+
+    // Create reset URL
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    // Check if email configuration is set up
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error("Email configuration missing. Please set EMAIL_USER and EMAIL_PASS in .env");
+      return res.status(500).json({ error: "Email service not configured" });
+    }
+
+    // Send email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Password Reset Request',
+      html: `
+        <h1>Password Reset Request</h1>
+        <p>You requested a password reset for your Zen Garden account.</p>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetUrl}">${resetUrl}</a>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+      `
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      res.json({ message: "Password reset email sent" });
+    } catch (emailError) {
+      console.error("Email sending error:", emailError);
+      // If email fails, still return success but log the error
+      res.json({ 
+        message: "Password reset email sent", 
+        warning: "Email delivery may be delayed" 
+      });
+    }
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    // Return more specific error message
+    res.status(500).json({ 
+      error: "Failed to process password reset request",
+      details: error.message 
+    });
+  }
+});
+
+// Reset Password
+router.post("/reset-password/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: "Reset token is required" });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: "New password is required" });
+    }
+
+    // Hash the token
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    // Find user with valid token
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid or expired reset token" });
+    }
+
+    // Update password
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    
+    try {
+      await user.save();
+      res.json({ message: "Password reset successful" });
+    } catch (saveError) {
+      console.error("Error saving new password:", saveError);
+      res.status(500).json({ error: "Failed to save new password" });
+    }
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ 
+      error: "Failed to reset password",
+      details: error.message 
+    });
+  }
+});
 
 // Get current user data
 router.get("/me", verifyToken, async (req, res) => {

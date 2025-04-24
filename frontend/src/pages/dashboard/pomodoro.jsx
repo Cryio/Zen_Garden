@@ -10,12 +10,12 @@ export default function PomodoroPage() {
     // Refresh session history when a session is completed
     if (sessionHistoryRef.current) {
       sessionHistoryRef.current.fetchSessions();
-    }
+      }
   };
 
   return (
     <div className="p-6 space-y-6">
-      <div>
+        <div>
         <h1 className="text-3xl font-bold text-wax-flower-200">Pomodoro Timer</h1>
         <p className="text-wax-flower-400">Focus and relax with timed sessions</p>
       </div>

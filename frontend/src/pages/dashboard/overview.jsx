@@ -106,14 +106,14 @@ export default function Overview() {
         if (h._id === id) {
           const isCompleted = newStatus === 'completed';
           return { ...h, completed: isCompleted, status: newStatus };
-        }
+      }
         return h;
-      }).sort((a, b) => {
+    }).sort((a, b) => {
         const statusA = a.status || (a.completed ? 'completed' : null);
         const statusB = b.status || (b.completed ? 'completed' : null);
         if (statusA === 'completed' && statusB !== 'completed') return 1;
         if (statusA !== 'completed' && statusB === 'completed') return -1;
-        return 0;
+      return 0;
       });
       
       setFetchedTodaysHabits(updatedHabits);
@@ -178,13 +178,13 @@ export default function Overview() {
                   </div>
                 ) : fetchedTodaysHabits.length > 0 ? (
                   fetchedTodaysHabits.map((habit) => (
-                    <motion.div
+                  <motion.div
                       key={habit._id}
-                      layout
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 20 }}
-                      transition={{ duration: 0.3 }}
+                    layout
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
                       className="flex items-center justify-between border-b border-wax-flower-700/30 py-3 group cursor-pointer hover:bg-wax-flower-900/50 transition-colors duration-150"
                       onClick={(e) => {
                         if (e.target.closest('button')) return;
@@ -209,41 +209,41 @@ export default function Overview() {
                           {habit.name}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <button
+                    <div className="flex items-center gap-4">
+                      <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleHabitStatus(habit._id, 'skipped');
                           }}
-                          className={cn(
-                            "p-1 rounded transition-colors",
-                            habit.status === 'skipped' ? "bg-red-500/20" : "hover:bg-red-500/10"
-                          )}
+                        className={cn(
+                          "p-1 rounded transition-colors",
+                          habit.status === 'skipped' ? "bg-red-500/20" : "hover:bg-red-500/10"
+                        )}
                           title="Mark as skipped"
-                        >
-                          <X className={cn(
-                            "h-5 w-5",
-                            habit.status === 'skipped' ? "text-red-500" : "text-wax-flower-400"
-                          )} />
-                        </button>
-                        <button
+                      >
+                        <X className={cn(
+                          "h-5 w-5",
+                          habit.status === 'skipped' ? "text-red-500" : "text-wax-flower-400"
+                        )} />
+                      </button>
+                      <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleHabitStatus(habit._id, 'completed');
                           }}
-                          className={cn(
-                            "p-1 rounded transition-colors",
+                        className={cn(
+                          "p-1 rounded transition-colors",
                             habit.completed ? "bg-[#FD6A3A]/20" : "hover:bg-[#FD6A3A]/10"
-                          )}
+                        )}
                           title="Mark as completed"
-                        >
-                          <Check className={cn(
-                            "h-5 w-5",
+                      >
+                        <Check className={cn(
+                          "h-5 w-5",
                             habit.completed ? "text-[#FD6A3A]" : "text-wax-flower-400"
-                          )} />
-                        </button>
-                      </div>
-                    </motion.div>
+                        )} />
+                      </button>
+                    </div>
+                  </motion.div>
                   ))
                 ) : (
                   <div className="flex justify-center items-center h-full text-wax-flower-400">
@@ -302,7 +302,7 @@ export default function Overview() {
                       clipPath: 'polygon(50% 0, 51% 0, 51% 50%, 50% 50%)',
                       borderRadius: '50%'
                     }}
-                    animate={{
+                    animate={{ 
                       rotate: [0, 360],
                       transition: { duration: 4, repeat: Infinity, ease: "linear" }
                     }}
@@ -441,14 +441,14 @@ export default function Overview() {
                  <Loader2 className="h-8 w-8 animate-spin text-wax-flower-500" />
                </div>
             ) : fetchedGoalsWithStats.length > 0 ? (
-              <table className="w-full">
-                <thead className="text-left text-wax-flower-300">
-                  <tr>
+            <table className="w-full">
+              <thead className="text-left text-wax-flower-300">
+                <tr>
                     <th className="py-2 pl-2 w-2/3">Goal</th>
                     <th className="py-2 pr-2 w-1/3 text-right">Completion</th>
-                  </tr>
-                </thead>
-                <tbody>
+                </tr>
+              </thead>
+              <tbody>
                   {fetchedGoalsWithStats.map((goal) => (
                     <tr 
                       key={goal._id} 
@@ -467,12 +467,12 @@ export default function Overview() {
                         <div className="flex items-center justify-end gap-2">
                           <Progress value={goal.completionRate || 0} className="h-2 w-96" />
                           <span className="text-wax-flower-300 text-sm w-10 text-right">{Math.round(goal.completionRate || 0)}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
              ) : (
                <div className="flex justify-center items-center h-[200px] text-wax-flower-400">
                   No goals found. Add some goals and habits!
@@ -498,7 +498,7 @@ export default function Overview() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Plus className="h-12 w-12 text-[#FD6A3A]" />
+            <Plus className="h-12 w-12 text-[#FD6A3A]" />
             </motion.div>
             
             <button
