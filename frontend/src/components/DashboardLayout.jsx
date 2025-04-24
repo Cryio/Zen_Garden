@@ -69,9 +69,6 @@ const DashboardLayout = () => {
 
           {/* Navigation Links */}
           <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
-            <div className="text-xs uppercase font-semibold text-wax-flower-500 dark:text-wax-flower-400 tracking-wider mb-2 px-3">
-              Main Navigation
-            </div>
             {navigationLinks.map((link) => (
               <Link
                 key={link.path}
