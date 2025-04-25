@@ -5,8 +5,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with specific esbuild version
-RUN npm install esbuild@0.21.5
+# Install dependencies
 RUN npm install
 
 # Copy the rest of the application
@@ -15,8 +14,11 @@ COPY . .
 # Build the application
 RUN npm run build
 
+# Install serve to run the production build
+RUN npm install -g serve
+
 # Expose the port
-EXPOSE 5173
+EXPOSE 3000
 
 # Start the application
-CMD ["npm", "run", "dev", "--", "--host"] 
+CMD ["serve", "-s", "dist", "-l", "3000"] 
