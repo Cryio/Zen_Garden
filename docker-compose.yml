@@ -1,10 +1,12 @@
+version: '3.8'
+
 services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     command: tunnel --no-autoupdate run --protocol http2
-    env_file:
-      - .env
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     networks:
       - my-network
     depends_on:
@@ -18,8 +20,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    env_file:
-      - .env
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+      - VITE_ENCRYPTION_KEY=${VITE_ENCRYPTION_KEY}
+      - VITE_CLIENT_VERSION=${VITE_CLIENT_VERSION}
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+      - FRONTEND_URL=${FRONTEND_URL}
     networks:
       - my-network
     hostname: zengarden
@@ -35,8 +41,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    env_file:
-      - .env
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=${PORT}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - BACKEND_URL=${BACKEND_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     networks:
       - my-network
     depends_on:
