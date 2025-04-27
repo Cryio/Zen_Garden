@@ -5,7 +5,60 @@ const Habit = require('../models/Habit');
 const { verifyToken } = require('./auth');
 
 // Helper function to generate random streak
-const getRandomStreak = (max = 10) => Math.floor(Math.random() * (max + 1));
+const getRandomStreak = (max = 14) => Math.floor(Math.random() * (max + 1));
+
+// Helper function to generate random progress
+const getRandomProgress = () => Math.floor(Math.random() * (100 + 1));
+
+// Helper function to generate random completion history for past days
+const generateCompletionHistory = (days = 30) => {
+  const history = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Generate completion history with increasing probability of completion
+  // to simulate habit formation
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    date.setHours(0, 0, 0, 0);
+    
+    // Base completion probability increases over time
+    const baseProbability = 0.3 + (i / days) * 0.5;
+    // Add some randomness
+    const completionProbability = baseProbability + (Math.random() * 0.2);
+    const completed = Math.random() < completionProbability;
+    
+    history.push({
+      date: date.toISOString().split('T')[0], // Store date in YYYY-MM-DD format
+      completed: completed
+    });
+  }
+  
+  return history;
+};
+
+// Helper function to calculate streak from completion history
+const calculateStreak = (history) => {
+  let currentStreak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+  
+  for (const entry of history) {
+    if (entry.date === todayStr && entry.completed) {
+      currentStreak++;
+    } else if (entry.date < todayStr) {
+      if (entry.completed) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+  }
+  
+  return currentStreak;
+};
 
 // Sample data organized by categories
 const sampleData = {
@@ -34,63 +87,7 @@ const sampleData = {
     habits: [
       { name: 'Technical Reading', description: 'Read technical docs or educational content for 30 mins.', category: 'learning' },
       { name: 'Coding Practice', description: 'Solve one programming challenge or work on a project.', category: 'learning' },
-      { name: 'Language Study', description: 'Practice target language using apps or flashcards.', category: 'learning' },
-      { name: 'Skill Sharing', description: 'Teach someone or write a blog post about learned skills.', category: 'learning' }
-    ]
-  },
-  productivity: {
-    goalName: 'Optimize Daily Workflow',
-    goalDescription: 'Create efficient systems for maximum productivity.',
-    habits: [
-      { name: 'Morning Planning', description: 'Plan day using SMART goals (Specific, Measurable...).', category: 'productivity' },
-      { name: 'Focus Sessions', description: 'Complete 2-3 Pomodoro sessions (25min work, 5min break).', category: 'productivity' },
-      { name: 'Evening Review', description: 'Review achievements, prepare for tomorrow, organize workspace.', category: 'productivity' }
-    ]
-  },
-  self_care: {
-    goalName: 'Nurture Self-Care Practices',
-    goalDescription: 'Prioritize personal well-being and self-care routines.',
-    habits: [
-      { name: 'Creative Expression', description: 'Spend 20 mins on creative activity (drawing, writing...).', category: 'self-care' },
-      { name: 'Nature Connection', description: 'Tend to plants, take a nature walk, or meditate outdoors.', category: 'self-care' },
-      { name: 'Self-Reflection', description: 'Practice self-reflection via journaling or contemplation.', category: 'self-care' }
-    ]
-  },
-  // --- Adding 4 more goals to reach 9 total ---
-  finance: {
-    goalName: 'Improve Financial Health',
-    goalDescription: 'Track spending, save money, and invest wisely.',
-    habits: [
-      { name: 'Track Expenses', description: 'Record all daily expenses.', category: 'finance' },
-      { name: 'Budget Review', description: 'Review budget weekly and adjust.', category: 'finance' },
-      { name: 'Save 10%', description: 'Transfer 10% of income to savings.', category: 'finance' }
-    ]
-  },
-  social: {
-    goalName: 'Strengthen Social Connections',
-    goalDescription: 'Nurture relationships with family and friends.',
-    habits: [
-      { name: 'Call a Friend', description: 'Call or video chat with a friend.', category: 'social' },
-      { name: 'Family Time', description: 'Spend quality time with family members.', category: 'social' },
-      { name: 'Community Event', description: 'Attend a local community event or gathering.', category: 'social' }
-    ]
-  },
-  organization: {
-    goalName: 'Declutter and Organize',
-    goalDescription: 'Maintain a clean and organized living space.',
-    habits: [
-      { name: '15-Min Tidy', description: 'Spend 15 minutes tidying one area.', category: 'organization' },
-      { name: 'Digital Declutter', description: 'Organize digital files or emails for 10 mins.', category: 'organization' },
-      { name: 'Weekly Clean', description: 'Perform a quick weekly cleaning routine.', category: 'organization' }
-    ]
-  },
-  hobby: {
-    goalName: 'Develop a Hobby',
-    goalDescription: 'Dedicate time to pursuing a personal interest or hobby.',
-    habits: [
-      { name: 'Practice Instrument', description: 'Practice a musical instrument for 20 mins.', category: 'hobby' },
-      { name: 'Gardening', description: 'Spend time gardening or caring for plants.', category: 'hobby' },
-      { name: 'Crafting', description: 'Work on a crafting project (knitting, painting...).', category: 'hobby' }
+      { name: 'Language Study', description: 'Practice target language using apps or flashcards.', category: 'learning' }
     ]
   }
 };
@@ -100,7 +97,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    // Clear existing goals and habits for this user to avoid duplicates
+    // Clear existing goals and habits for this user
     await Goal.deleteMany({ userId });
     await Habit.deleteMany({ userId });
 
@@ -109,7 +106,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
 
     const today = new Date();
     const endDate = new Date();
-    endDate.setDate(today.getDate() + 30); // Default end date 30 days from today
+    endDate.setDate(today.getDate() + 30);
 
     // Create goals and habits for each category
     for (const [categoryKey, data] of Object.entries(sampleData)) {
@@ -119,7 +116,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
         description: data.goalDescription,
         userId,
         frequency: 'daily',
-        habits: [] // Initialize habits array
+        habits: []
       });
 
       const savedGoal = await goal.save();
@@ -130,32 +127,36 @@ router.post('/sample-data', verifyToken, async (req, res) => {
 
       // Create habits for this goal
       for (const habitData of data.habits) {
+        const completionHistory = generateCompletionHistory();
+        const streak = calculateStreak(completionHistory);
+        
         const habit = new Habit({
           name: habitData.name,
           description: habitData.description,
-          category: habitData.category, // Use category from habitData
+          category: habitData.category,
           userId,
           goalId: savedGoal._id,
           frequency: 'daily',
-          startDate: today, // Add start date
-          endDate: endDate, // Add end date
-          streak: getRandomStreak(), // Add random streak
-          completionHistory: Array(7).fill(false), // Ensure completion history is initialized
-          lastCompleted: null // Initialize lastCompleted
+          startDate: today,
+          endDate: endDate,
+          streak: streak,
+          progress: getRandomProgress(),
+          completionHistory: completionHistory,
+          lastCompleted: completionHistory[0].completed ? today : null
         });
 
         const savedHabit = await habit.save();
         createdHabits.push({
           id: savedHabit._id,
           name: savedHabit.name,
-          category: savedHabit.category
+          category: savedHabit.category,
+          streak: savedHabit.streak,
+          progress: savedHabit.progress
         });
 
-        // Add habit ID to goal's habits array
         savedGoal.habits.push(savedHabit._id);
       }
 
-      // Save updated goal with habit references
       await savedGoal.save();
     }
 
@@ -165,7 +166,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
       habits: createdHabits
     });
   } catch (error) {
-    console.error('Error creating sample data:', error); // Log the full error
+    console.error('Error creating sample data:', error);
     res.status(500).json({ error: 'Failed to create sample data', details: error.message });
   }
 });

@@ -11,7 +11,8 @@ import {
   XCircle,
   ChevronRight,
   Sparkles,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from 'react';
@@ -38,25 +39,81 @@ const todaysHabits = [
   { id: 12, name: "Plan Tomorrow", status: null, category: "productivity" },
 ];
 
-// Update weekly data structure
-const weeklyData = [
-  { day: "M", completed: 8, total: 12, color: "#FD6A3A" },
-  { day: "T", completed: 10, total: 12, color: "#FD6A3A" },
-  { day: "W", completed: 7, total: 12, color: "#FD6A3A" },
-  { day: "T", completed: 11, total: 12, color: "#FD6A3A" },
-  { day: "F", completed: 9, total: 12, color: "#FD6A3A" },
-  { day: "S", completed: 12, total: 12, color: "#FD6A3A" },
-  { day: "S", completed: 6, total: 12, color: "#FD6A3A" }
-];
+// Update weekly data processing
+const processWeeklyData = (habits) => {
+  const weeklyData = Array(7).fill().map(() => ({
+    completed: 0,
+    total: habits.length,
+    habits: []
+  }));
 
-// Update monthly data structure for better visualization
-const monthlyData = Array(35).fill(null).map((_, i) => ({
-  date: new Date(Date.now() - (34 - i) * 24 * 60 * 60 * 1000),
-  completed: Math.floor(Math.random() * 12),
-  total: 12,
-  isFuture: i > 28,
-  color: i > 28 ? "#817A87" : "#FD6A3A"
-}));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  habits.forEach(habit => {
+    if (habit.completionHistory && Array.isArray(habit.completionHistory)) {
+      // Process last 7 days of history
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const historyEntry = habit.completionHistory.find(entry => entry.date === dateStr);
+        if (historyEntry && historyEntry.completed) {
+          weeklyData[i].completed++;
+          weeklyData[i].habits.push({
+            _id: habit._id,
+            name: habit.name,
+            completed: true
+          });
+        }
+      }
+    }
+  });
+
+  return weeklyData;
+};
+
+// Update monthly data processing
+const processMonthlyData = (habits) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const daysInMonth = endOfMonth.getDate();
+  const firstDayOfMonthWeekday = (startOfMonth.getDay() + 6) % 7;
+
+  const monthlyData = [];
+
+  // Add leading empty cells
+  for (let i = 0; i < firstDayOfMonthWeekday; i++) {
+    monthlyData.push({ key: `empty-start-${i}`, isEmpty: true });
+  }
+
+  // Process each day of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(today.getFullYear(), today.getMonth(), day);
+    const dateStr = date.toISOString().split('T')[0];
+    
+    const completedHabits = habits.filter(habit => {
+      if (!habit.completionHistory) return false;
+      return habit.completionHistory.some(entry => entry.date === dateStr && entry.completed);
+    });
+
+    monthlyData.push({
+      key: dateStr,
+      date: date,
+      completed: completedHabits.length,
+      total: habits.length,
+      isFuture: date > today,
+      isToday: date.toDateString() === today.toDateString(),
+      habits: completedHabits
+    });
+  }
+
+  return monthlyData;
+};
 
 const allHabits = [
   { id: 1, name: "Eat", progress: 74, streak: 8, category: "health" },
@@ -65,6 +122,15 @@ const allHabits = [
   { id: 4, name: "Maths", progress: 89, streak: 13, category: "learning" },
   { id: 5, name: "Gym", progress: 44, streak: 8, category: "health" },
   // Add more habits here
+];
+
+// Motivational quotes (hardcoded, simple English)
+const motivationalQuotes = [
+  "Small steps every day lead to big results.",
+  "Stay consistent, success will follow.",
+  "You don't have to be perfect, just keep going.",
+  "Progress, not perfection.",
+  "Every day is a fresh start."
 ];
 
 export default function Overview() {
@@ -84,6 +150,7 @@ export default function Overview() {
   const [loadingGoals, setLoadingGoals] = useState(true);
   const [loadingStreaks, setLoadingStreaks] = useState(true);
   const [error, setError] = useState(null);
+  const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * motivationalQuotes.length));
   
   const completedHabitsToday = fetchedTodaysHabits.filter(h => h.completed).length;
   const totalHabitsToday = fetchedTodaysHabits.length;
@@ -155,6 +222,15 @@ export default function Overview() {
         duration: 5000,
       });
     }
+  };
+
+  // Function to refresh the quote (not repeating the current one)
+  const refreshQuote = () => {
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * motivationalQuotes.length);
+    } while (newIndex === quoteIndex && motivationalQuotes.length > 1);
+    setQuoteIndex(newIndex);
   };
 
   const features = [
@@ -348,7 +424,7 @@ export default function Overview() {
           
           <div className="relative h-[180px] px-2 pb-8">
             <div className="absolute inset-0 flex items-end justify-between pt-4">
-              {weeklyData.map((day, i) => (
+              {fetchedWeeklyData.map((day, i) => (
                 <div key={i} className="group relative flex flex-col items-center" style={{ width: '10%' }}>
                   <motion.div
                     className="w-full rounded-t-md hover:opacity-80 transition-all cursor-pointer"
@@ -387,7 +463,7 @@ export default function Overview() {
           </div>
           
           <div className="grid grid-cols-7 gap-[2px] h-[180px] p-2">
-            {monthlyData.map((day, i) => {
+            {fetchedMonthlyData.map((day, i) => {
               let bgColor = '#D9D9D9';
               if (day.isFuture) {
                 bgColor = '#817A87';
@@ -613,6 +689,26 @@ export default function Overview() {
       const goalsRes = await api.get(`/api/habits/${user._id}/habits`);
       const goalsData = goalsRes.data || [];
 
+      // Process goals and get all habits
+      const allActualHabits = goalsData.reduce((acc, goal) => {
+        const habits = goal.habits || [];
+        return [...acc, ...habits.map(habit => ({
+          ...habit,
+          goalName: goal.name,
+          goalId: goal._id
+        }))];
+      }, []);
+
+      // Process weekly data
+      const weeklyDisplayData = processWeeklyData(allActualHabits);
+      setFetchedWeeklyData(weeklyDisplayData);
+      setLoadingWeek(false);
+
+      // Process monthly data
+      const monthlyDisplayData = processMonthlyData(allActualHabits);
+      setFetchedMonthlyData(monthlyDisplayData);
+      setLoadingMonth(false);
+
       // --- Process Goals for Goal Card --- 
       const goalsWithStats = goalsData.map(goal => {
         const habits = goal.habits || [];
@@ -629,50 +725,9 @@ export default function Overview() {
       setFetchedGoalsWithStats(goalsWithStats);
       setLoadingGoals(false);
 
-      // --- Flatten Habits for other sections --- 
-      let allActualHabits = goalsData.reduce((acc, goal) => {
-        if (goal.habits && Array.isArray(goal.habits)) {
-          const habitsWithGoalInfo = goal.habits.map(habit => ({
-             ...habit, 
-             goalName: goal.name,
-             goalId: goal._id
-           }));
-          return acc.concat(habitsWithGoalInfo);
-        }
-        return acc;
-      }, []);
-      
-      // Ensure each habit has necessary fields (like completionHistory)
-      allActualHabits = allActualHabits.map(habit => {
-        if (!habit) return null; // Handle potential null/undefined habits from population issues
-        if (!habit.completionHistory) {
-          console.warn(`Habit "${habit.name}" (ID: ${habit._id}) is missing completionHistory, initializing.`);
-          habit.completionHistory = Array(7).fill(false);
-        }
-        // Ensure streak exists
-        if (habit.streak === undefined || habit.streak === null) {
-           habit.streak = 0;
-        }
-        // Ensure lastCompleted exists
-        if (habit.lastCompleted === undefined) {
-          habit.lastCompleted = null;
-        }
-         // Ensure completed exists
-        if (habit.completed === undefined) {
-          habit.completed = false;
-        }
-        return habit;
-      }).filter(Boolean); // Remove any null habits
-      
-      // Sorting might move elsewhere if habitFilter is removed entirely
-      // For now, assume default sort (newest)
-      allActualHabits.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      setFetchedAllHabits(allActualHabits); 
-      setLoadingAll(false);
-
       // --- Process Today's Habits from flat list --- 
-      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const today = new Date(); 
+      today.setHours(0, 0, 0, 0);
       const todaysHabitsForDisplay = allActualHabits.map(habit => ({
         _id: habit._id,
         name: habit.name,
@@ -688,79 +743,6 @@ export default function Overview() {
       });
       setFetchedTodaysHabits(todaysHabitsForDisplay);
       setLoadingToday(false);
-
-      // --- Process Weekly Data from flat list --- 
-      const weeklyCompletionData = Array(7).fill(0);
-      const totalHabitsCount = allActualHabits.length;
-
-      allActualHabits.forEach(habit => {
-        if (habit.completionHistory && Array.isArray(habit.completionHistory)) {
-          for (let i = 0; i < 7; i++) {
-            if (habit.completionHistory[i]) {
-              weeklyCompletionData[i]++;
-            }
-          }
-        }
-      });
-
-      const weeklyDisplayData = [];
-      for (let i = 6; i >= 0; i--) {
-         const date = new Date();
-         date.setDate(date.getDate() - i);
-         weeklyDisplayData.push({
-           day: date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
-           date: date.toISOString(),
-           completed: weeklyCompletionData[i] || 0,
-           total: totalHabitsCount,
-           color: '#FD6A3A'
-         });
-      }
-      setFetchedWeeklyData(weeklyDisplayData);
-      setLoadingWeek(false);
-
-      // --- Process Monthly Data from flat list --- 
-      const monthlyCompletionMap = new Map();
-      allActualHabits.forEach(habit => {
-          // This needs backend support or a more complex history tracking
-          // For now, let's just use the weekly history for recent days for demo
-          if (habit.completionHistory && Array.isArray(habit.completionHistory)) {
-              for (let i = 0; i < 7; i++) {
-                  if(habit.completionHistory[i]) {
-                      const date = new Date();
-                      date.setDate(date.getDate() - i);
-                      const dateString = date.toISOString().split('T')[0];
-                      monthlyCompletionMap.set(dateString, (monthlyCompletionMap.get(dateString) || 0) + 1);
-                  }
-              }
-          }
-      });
-      
-      const monthlyDisplayData = [];
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      const daysInMonth = endOfMonth.getDate();
-      const firstDayOfMonthWeekday = (startOfMonth.getDay() + 6) % 7;
-
-      // Add leading empty cells
-      for (let i = 0; i < firstDayOfMonthWeekday; i++) {
-        monthlyDisplayData.push({ key: `empty-start-${i}`, isEmpty: true });
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(today.getFullYear(), today.getMonth(), day);
-        const dateString = date.toISOString().split('T')[0];
-        const completedCount = monthlyCompletionMap.get(dateString) || 0;
-        monthlyDisplayData.push({
-          key: dateString,
-          date: date,
-          completed: completedCount,
-          total: totalHabitsCount,
-          isFuture: date > today,
-          isToday: date.toDateString() === today.toDateString(),
-        });
-      }
-      setFetchedMonthlyData(monthlyDisplayData);
-      setLoadingMonth(false);
 
       // --- Calculate Streaks from flat list --- 
       let maxStreak = 0;
@@ -789,11 +771,7 @@ export default function Overview() {
     } catch (err) {
       console.error("Failed to fetch overview data:", err);
       setError("Failed to load dashboard data. Please try again later.");
-      toast.error("Failed to load dashboard data", {
-        style: { background: '#363636', color: '#fff' },
-        duration: 5000,
-      });
-      // Reset all loading states on error
+      toast.error("Failed to load dashboard data");
       setLoadingToday(false);
       setLoadingWeek(false);
       setLoadingMonth(false);
@@ -810,7 +788,22 @@ export default function Overview() {
           <h1 className="text-2xl font-bold text-wax-flower-200">Dashboard</h1>
           <p className="text-base text-wax-flower-300">Welcome [User Name], here is your</p>
         </div>
-
+        {/* Motivational Quote Tile */}
+        <div className="bg-wax-flower-900/80 border border-wax-flower-700/40 rounded-xl shadow-md px-6 py-4 flex flex-col items-end min-w-[260px] max-w-xs ml-4">
+          <div className="flex items-center w-full justify-between mb-2">
+            <span className="text-sm font-semibold text-wax-flower-300">Stay Motivated</span>
+            <button
+              onClick={refreshQuote}
+              className="ml-2 p-1 rounded-full hover:bg-wax-flower-700/40 transition-colors"
+              title="Show another quote"
+            >
+              <RefreshCw className="h-5 w-5 text-[#FD6A3A]" />
+            </button>
+          </div>
+          <div className="text-wax-flower-200 text-base text-right italic min-h-[40px]">
+            "{motivationalQuotes[quoteIndex]}"
+          </div>
+        </div>
       </div>
 
       <style jsx="true" global="true">{`
