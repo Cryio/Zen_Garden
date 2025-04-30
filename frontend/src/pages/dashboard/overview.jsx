@@ -7,7 +7,12 @@ import {
   Plus,
   Activity,
   X,
-  Loader2
+  Filter,
+  XCircle,
+  ChevronRight,
+  Sparkles,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from 'react';
@@ -23,6 +28,7 @@ export default function Overview() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [todaysHabits, setTodaysHabits] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
@@ -258,6 +264,7 @@ export default function Overview() {
     }
   };
 
+
   useEffect(() => {
     fetchData();
   }, [user]);
@@ -439,7 +446,7 @@ export default function Overview() {
           
           <div className="relative h-[200px] px-2 pb-8">
             <div className="absolute inset-0 flex items-end justify-between pt-4">
-              {weeklyData.map((day, i) => (
+              {fetchedWeeklyData.map((day, i) => (
                 <div key={i} className="group relative flex flex-col items-center" style={{ width: '10%' }}>
                   <motion.div
                     className="w-full rounded-t-md hover:opacity-80 transition-all cursor-pointer"
@@ -674,7 +681,6 @@ export default function Overview() {
       className: "col-span-6",
     },
   ];
-
   return (
     <div className="space-y-8 animate-slide-in">
       <div className="flex items-center justify-between">
