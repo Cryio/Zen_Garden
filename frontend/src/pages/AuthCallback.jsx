@@ -1,34 +1,55 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const toastShown = useRef(false);
 
   useEffect(() => {
     const token = searchParams.get('token');
     const error = searchParams.get('error');
-    const wasExistingAccount = searchParams.get('wasExistingAccount') === 'true';
 
-    if (error) {
-      toast.error('Authentication failed. Please try again.');
-      navigate('/login');
-      return;
-    }
+    const handleAuth = async () => {
+      try {
+        if (error) {
+          throw new Error(error);
+        }
 
-    if (token) {
-      localStorage.setItem('token', token);
-      if (wasExistingAccount && !toastShown.current) {
-        toast.success('Your Google account has been linked to your existing account');
-        toastShown.current = true;
+        if (!token) {
+          throw new Error('No authentication token received');
+        }
+
+        // Store the token securely
+        localStorage.setItem('token', token);
+
+        // Set the token in the API instance
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Verify token and fetch user data
+        const response = await api.get('/api/auth/me');
+        
+        if (!response.data) {
+          throw new Error('Failed to fetch user data');
+        }
+
+        // Show success message
+        toast.success('Successfully authenticated with Google');
+
+        // Redirect to dashboard
+        navigate('/dashboard');
+      } catch (err) {
+        console.error('Authentication error:', err);
+        // Clear token if authentication failed
+        localStorage.removeItem('token');
+        delete api.defaults.headers.common['Authorization'];
+        toast.error(err.message || 'Authentication failed. Please try again.');
+        navigate('/login');
       }
-      navigate('/dashboard');
-    } else {
-      toast.error('No token received');
-      navigate('/login');
-    }
+    };
+
+    handleAuth();
   }, [searchParams, navigate]);
 
   return (
