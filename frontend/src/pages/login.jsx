@@ -94,10 +94,11 @@ export default function Login() {
 
   // Handle Google login
   const handleGoogleLogin = () => {
-    // Clear any existing errors
-    setError('');
-    // Redirect to Google OAuth endpoint with callback URL
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google?redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback')}`;
+    // Get the backend URL from environment variables
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    
+    // Redirect to Google OAuth endpoint
+    window.location.href = `${backendUrl}/api/auth/google`;
   };
 
   const handleSubmit = async (e) => {

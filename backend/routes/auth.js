@@ -32,9 +32,55 @@ try {
   console.error("Failed to create email transporter:", error);
 }
 
+// Google OAuth Routes
+router.get('/google',
+  (req, res, next) => {
+    // Store the original URL in the session
+    req.session.returnTo = req.query.returnTo || '/dashboard';
+    next();
+  },
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account'
+  })
+);
+
+router.get('/google/callback',
+  passport.authenticate('google', { 
+    failureRedirect: '/login',
+    session: false 
+  }),
+  async (req, res) => {
+    try {
+      // Generate JWT token
+      const authToken = jwt.sign(
+        { userId: req.user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      // Get the frontend URL from environment variables with fallback
+      const frontendUrl = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000';
+      
+      // Get the return URL from session or default to dashboard
+      const returnTo = req.session.returnTo || '/dashboard';
+      
+      // Construct the redirect URL
+      const redirectUrl = `${frontendUrl}/auth/callback?token=${authToken}`;
+      
+      console.log('Redirecting to auth callback:', redirectUrl);
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('Error in Google callback:', error);
+      const frontendUrl = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/login?error=auth_failed`);
+    }
+  }
+);
+
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const token = req.headers.authorization?.split(' ')[1] || req.query.token;
   
   if (!token) {
     return res.status(401).json({ error: 'No token provided' });
@@ -335,41 +381,5 @@ router.delete("/delete-account", verifyToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to delete account' });
   }
 });
-
-// Google OAuth routes
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-router.get('/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  async (req, res) => {
-    try {
-      console.log('User in callback:', {
-        id: req.user._id,
-        email: req.user.email,
-        hasPassword: !!req.user.password,
-        password: req.user.password,
-        isGoogleUser: req.user.isGoogleUser,
-        wasLinking: req.user.wasLinking
-      });
-
-      const token = jwt.sign(
-        { userId: req.user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-
-      // Check if this was a linking of an existing account
-      const wasExistingAccount = req.user.wasLinking;
-      console.log('Final wasExistingAccount:', wasExistingAccount);
-      
-      res.redirect(
-        `${process.env.FRONTEND_URL}/auth/callback?token=${token}&wasExistingAccount=${wasExistingAccount}`
-      );
-    } catch (error) {
-      console.error('Google callback error:', error);
-      res.redirect(`${process.env.FRONTEND_URL}/auth/callback?error=authentication_failed`);
-    }
-  }
-);
 
 module.exports = { router, verifyToken };
