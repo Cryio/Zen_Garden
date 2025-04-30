@@ -446,7 +446,7 @@ export default function Overview() {
           
           <div className="relative h-[200px] px-2 pb-8">
             <div className="absolute inset-0 flex items-end justify-between pt-4">
-              {fetchedWeeklyData.map((day, i) => (
+              {weeklyData.map((day, i) => (
                 <div key={i} className="group relative flex flex-col items-center" style={{ width: '10%' }}>
                   <motion.div
                     className="w-full rounded-t-md hover:opacity-80 transition-all cursor-pointer"
