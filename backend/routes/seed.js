@@ -4,7 +4,6 @@ const Goal = require('../models/Goal');
 const Habit = require('../models/Habit');
 const { verifyToken } = require('./auth');
 
-// Helper function to generate random streak
 // const getRandomStreak = (max = 10) => Math.floor(Math.random() * (max + 1)); // Replaced by history-based calculation
 
 // Helper function to generate random completion history for the last ~30 days
@@ -229,7 +228,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    // Clear existing goals and habits for this user to avoid duplicates
+    // Clear existing goals and habits for this user
     await Goal.deleteMany({ userId });
     await Habit.deleteMany({ userId });
 
@@ -238,7 +237,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
 
     const today = new Date();
     const endDate = new Date();
-    endDate.setDate(today.getDate() + 30); // Default end date 30 days from today
+    endDate.setDate(today.getDate() + 30);
 
     // Create goals and habits for each category
     for (const [categoryKey, data] of Object.entries(sampleData)) {
@@ -248,7 +247,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
         description: data.goalDescription,
         userId,
         frequency: 'daily',
-        habits: [] // Initialize habits array
+        habits: []
       });
 
       const savedGoal = await goal.save();
@@ -286,7 +285,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
         const habit = new Habit({
           name: habitData.name,
           description: habitData.description,
-          category: habitData.category, // Use category from habitData
+          category: habitData.category,
           userId,
           goalId: savedGoal._id,
           frequency: 'daily',
@@ -301,14 +300,14 @@ router.post('/sample-data', verifyToken, async (req, res) => {
         createdHabits.push({
           id: savedHabit._id,
           name: savedHabit.name,
-          category: savedHabit.category
+          category: savedHabit.category,
+          streak: savedHabit.streak,
+          progress: savedHabit.progress
         });
 
-        // Add habit ID to goal's habits array
         savedGoal.habits.push(savedHabit._id);
       }
 
-      // Save updated goal with habit references
       await savedGoal.save();
     }
 
@@ -318,7 +317,7 @@ router.post('/sample-data', verifyToken, async (req, res) => {
       habits: createdHabits
     });
   } catch (error) {
-    console.error('Error creating sample data:', error); // Log the full error
+    console.error('Error creating sample data:', error);
     res.status(500).json({ error: 'Failed to create sample data', details: error.message });
   }
 });
