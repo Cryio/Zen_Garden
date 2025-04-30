@@ -28,6 +28,8 @@ export default function Overview() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [animateQuote, setAnimateQuote] = useState(false);
 
   const [todaysHabits, setTodaysHabits] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
@@ -37,6 +39,22 @@ export default function Overview() {
   
   const completedHabitsToday = todaysHabits.filter(h => h.completed).length;
   const totalHabitsToday = todaysHabits.length;
+
+  // Motivational quotes array
+  const motivationalQuotes = [
+    "Small steps every day lead to big changes.",
+    "Progress, not perfection.",
+    "Show up. That's half the battle.",
+    "You're closer than you think."
+  ];
+
+  const cycleQuote = () => {
+    setAnimateQuote(true);
+    setTimeout(() => {
+      setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % motivationalQuotes.length);
+      setAnimateQuote(false);
+    }, 300);
+  };
 
   const navigateToGoal = (goalId) => {
     navigate(`/dashboard/habits`);
@@ -592,7 +610,7 @@ export default function Overview() {
                       </td>
                       <td className="py-3 pr-2">
                         <div className="flex items-center justify-end gap-2">
-                          <Progress value={goal.completionRate || 0} className="h-2 w-96" />
+                          <Progress value={goal.completionRate || 0} className="h-2 w-96 bg-wax-flower-800 [&>div]:bg-gradient-to-r [&>div]:from-[#FD6A3A] [&>div]:to-[#FF8C6B]" />
                           <span className="text-wax-flower-300 text-sm w-10 text-right">{Math.round(goal.completionRate || 0)}%</span>
                       </div>
                     </td>
@@ -688,6 +706,34 @@ export default function Overview() {
           <h1 className="text-2xl font-bold text-wax-flower-200">Dashboard</h1>
           <p className="text-base text-wax-flower-300">Welcome {user?.name || 'User'}, here is your overview</p>
         </div>
+        
+        {/* Motivational Quote Tile */}
+        <motion.div 
+          className="bg-wax-flower-900/70 rounded-xl border border-wax-flower-700/30 p-4 hover:border-wax-flower-600/50 w-[400px] h-[80px] relative overflow-hidden group"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="h-full flex items-center justify-center overflow-hidden">
+            <motion.p 
+              key={currentQuoteIndex}
+              className="text-base font-bold text-wax-flower-200 text-center px-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {motivationalQuotes[currentQuoteIndex]}
+            </motion.p>
+          </div>
+          <button 
+            className="absolute right-2 top-2 p-1.5 rounded-full bg-wax-flower-800/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-wax-flower-700/50"
+            onClick={cycleQuote}
+            title="Next quote"
+          >
+            <RefreshCw className="h-4 w-4 text-wax-flower-300" />
+          </button>
+        </motion.div>
       </div>
 
       <style jsx="true" global="true">{`
