@@ -3,7 +3,6 @@ import { SettingsProvider } from "./context/SettingsContext"
 import { AuthProvider } from "./context/AuthContext"
 import AppRoutes from "./routes"
 import { Toaster } from "sonner"
-import AuthCheck from "./components/AuthCheck"
 import { ToastProvider } from '@/components/ui/use-toast'
 
 function App() {
@@ -11,12 +10,10 @@ function App() {
     <AuthProvider>
       <SettingsProvider>
         <ToastProvider>
-        <BrowserRouter>
-          <AuthCheck>
+          <BrowserRouter>
             <Toaster position="top-right" richColors />
             <AppRoutes />
-          </AuthCheck>
-        </BrowserRouter>
+          </BrowserRouter>
         </ToastProvider>
       </SettingsProvider>
     </AuthProvider>

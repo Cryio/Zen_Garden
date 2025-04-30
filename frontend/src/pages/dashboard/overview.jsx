@@ -23,215 +23,251 @@ import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-// Dummy data for habits
-const todaysHabits = [
-  { id: 1, name: "Morning Meditation", status: null, category: "mindfulness" },
-  { id: 2, name: "Breakfast", status: null, category: "health" },
-  { id: 3, name: "Read 30 mins", status: null, category: "learning" },
-  { id: 4, name: "Exercise", status: null, category: "health" },
-  { id: 5, name: "Study Mathematics", status: null, category: "learning" },
-  { id: 6, name: "Practice Programming", status: null, category: "learning" },
-  { id: 7, name: "Evening Walk", status: null, category: "health" },
-  { id: 8, name: "Journal Writing", status: null, category: "mindfulness" },
-  { id: 9, name: "Water Plants", status: null, category: "self-care" },
-  { id: 10, name: "Language Practice", status: null, category: "learning" },
-  { id: 11, name: "Stretching", status: null, category: "health" },
-  { id: 12, name: "Plan Tomorrow", status: null, category: "productivity" },
-];
-
-// Update weekly data processing
-const processWeeklyData = (habits) => {
-  const weeklyData = Array(7).fill().map(() => ({
-    completed: 0,
-    total: habits.length,
-    habits: []
-  }));
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  habits.forEach(habit => {
-    if (habit.completionHistory && Array.isArray(habit.completionHistory)) {
-      // Process last 7 days of history
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        const historyEntry = habit.completionHistory.find(entry => entry.date === dateStr);
-        if (historyEntry && historyEntry.completed) {
-          weeklyData[i].completed++;
-          weeklyData[i].habits.push({
-            _id: habit._id,
-            name: habit.name,
-            completed: true
-          });
-        }
-      }
-    }
-  });
-
-  return weeklyData;
-};
-
-// Update monthly data processing
-const processMonthlyData = (habits) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const daysInMonth = endOfMonth.getDate();
-  const firstDayOfMonthWeekday = (startOfMonth.getDay() + 6) % 7;
-
-  const monthlyData = [];
-
-  // Add leading empty cells
-  for (let i = 0; i < firstDayOfMonthWeekday; i++) {
-    monthlyData.push({ key: `empty-start-${i}`, isEmpty: true });
-  }
-
-  // Process each day of the month
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(today.getFullYear(), today.getMonth(), day);
-    const dateStr = date.toISOString().split('T')[0];
-    
-    const completedHabits = habits.filter(habit => {
-      if (!habit.completionHistory) return false;
-      return habit.completionHistory.some(entry => entry.date === dateStr && entry.completed);
-    });
-
-    monthlyData.push({
-      key: dateStr,
-      date: date,
-      completed: completedHabits.length,
-      total: habits.length,
-      isFuture: date > today,
-      isToday: date.toDateString() === today.toDateString(),
-      habits: completedHabits
-    });
-  }
-
-  return monthlyData;
-};
-
-const allHabits = [
-  { id: 1, name: "Eat", progress: 74, streak: 8, category: "health" },
-  { id: 2, name: "Sleep", progress: 51, streak: 7, category: "health" },
-  { id: 3, name: "Geography", progress: 30, streak: 1, category: "learning" },
-  { id: 4, name: "Maths", progress: 89, streak: 13, category: "learning" },
-  { id: 5, name: "Gym", progress: 44, streak: 8, category: "health" },
-  // Add more habits here
-];
-
-// Motivational quotes (hardcoded, simple English)
-const motivationalQuotes = [
-  "Small steps every day lead to big results.",
-  "Stay consistent, success will follow.",
-  "You don't have to be perfect, just keep going.",
-  "Progress, not perfection.",
-  "Every day is a fresh start."
-];
-
 export default function Overview() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedHabit, setSelectedHabit] = useState(null);
-  const [loadingAll, setLoadingAll] = useState(true);
-  const [fetchedTodaysHabits, setFetchedTodaysHabits] = useState([]);
-  const [fetchedWeeklyData, setFetchedWeeklyData] = useState([]);
-  const [fetchedMonthlyData, setFetchedMonthlyData] = useState([]);
-  const [fetchedAllHabits, setFetchedAllHabits] = useState([]);
-  const [fetchedGoalsWithStats, setFetchedGoalsWithStats] = useState([]);
-  const [focusStreaks, setFocusStreaks] = useState({ max: 'N/A', avg: 'N/A', last: 'N/A', streak: 0 });
-  const [loadingToday, setLoadingToday] = useState(true);
-  const [loadingWeek, setLoadingWeek] = useState(true);
-  const [loadingMonth, setLoadingMonth] = useState(true);
-  const [loadingGoals, setLoadingGoals] = useState(true);
-  const [loadingStreaks, setLoadingStreaks] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * motivationalQuotes.length));
+
+  const [todaysHabits, setTodaysHabits] = useState([]);
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [goals, setGoals] = useState([]);
+  const [streaks, setStreaks] = useState({ max: 0, avg: 0, last: 0, current: 0 });
   
-  const completedHabitsToday = fetchedTodaysHabits.filter(h => h.completed).length;
-  const totalHabitsToday = fetchedTodaysHabits.length;
+  const completedHabitsToday = todaysHabits.filter(h => h.completed).length;
+  const totalHabitsToday = todaysHabits.length;
 
   const navigateToGoal = (goalId) => {
     navigate(`/dashboard/habits`);
   };
 
   const handleHabitStatus = async (id, newStatus) => {
-    const originalHabits = [...fetchedTodaysHabits];
+    const originalHabits = [...todaysHabits];
     
     try {
-      const habit = fetchedTodaysHabits.find(h => h._id === id);
+      const habit = todaysHabits.find(h => h._id === id);
       if (!habit) {
-        console.error(`Habit with ID ${id} not found in fetchedTodaysHabits:`, fetchedTodaysHabits);
-        throw new Error('Habit not found in local state');
+        throw new Error('Habit not found');
       }
 
-      const updatedHabits = fetchedTodaysHabits.map(h => {
+      const updatedHabits = todaysHabits.map(h => {
         if (h._id === id) {
           const isCompleted = newStatus === 'completed';
           return { ...h, completed: isCompleted, status: newStatus };
-        }
+      }
         return h;
-      }).sort((a, b) => {
-        const statusA = a.status || (a.completed ? 'completed' : null);
-        const statusB = b.status || (b.completed ? 'completed' : null);
-        if (statusA === 'completed' && statusB !== 'completed') return 1;
-        if (statusA !== 'completed' && statusB === 'completed') return -1;
-        return 0;
+    }).sort((a, b) => {
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+      return 0;
       });
       
-      setFetchedTodaysHabits(updatedHabits);
+      setTodaysHabits(updatedHabits);
 
-      console.log('Updating habit status:', {
-        habitId: id,
-        userId: user._id,
+      await api.put(`/api/habits/${user._id}/habits/${id}`, { 
         completed: newStatus === 'completed',
         goalId: habit.goalId
       });
 
-      const response = await api.put(`/api/habits/${user._id}/habits/${id}`, { 
-        completed: newStatus === 'completed',
-        goalId: habit.goalId
-      });
-
-      console.log('Habit status update response:', response);
-      
-      toast.success(`Habit marked as ${newStatus}!`, {
-        style: {
-          background: '#363636',
-          color: '#fff',
-        },
-        duration: 3000,
-      });
-      
+      toast.success(`Habit marked as ${newStatus}!`);
       await fetchData();
     } catch (err) {
       console.error("Failed to update habit status:", err);
-      console.error("Error details:", err.response?.data || err.message);
-      
-      setFetchedTodaysHabits(originalHabits);
-      
-      toast.error(err.message || "Failed to update habit status", {
-        style: {
-          background: '#363636',
-          color: '#fff',
-        },
-        duration: 5000,
-      });
+      setTodaysHabits(originalHabits);
+      toast.error(err.message || "Failed to update habit status");
     }
   };
 
-  // Function to refresh the quote (not repeating the current one)
-  const refreshQuote = () => {
-    let newIndex;
-    do {
-      newIndex = Math.floor(Math.random() * motivationalQuotes.length);
-    } while (newIndex === quoteIndex && motivationalQuotes.length > 1);
-    setQuoteIndex(newIndex);
+  // Helper to prepare monthly data outside main component logic
+  const prepareMonthlyData = (habits) => {
+    const monthlyCompletionMap = new Map();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    habits.forEach(habit => {
+      if (habit.completionHistory && Array.isArray(habit.completionHistory) && habit.completionHistory.length > 0) {
+        habit.completionHistory.forEach(completionDateStr => {
+          if (completionDateStr) {
+            const completionDate = new Date(completionDateStr);
+            completionDate.setHours(0, 0, 0, 0);
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            if (completionDate.getMonth() === currentMonth && completionDate.getFullYear() === currentYear) {
+              const dateString = completionDate.toISOString().split('T')[0];
+              monthlyCompletionMap.set(dateString, (monthlyCompletionMap.get(dateString) || 0) + 1);
+            }
+          }
+        });
+      }
+    });
+
+    const monthlyDisplayData = [];
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const daysInMonth = endOfMonth.getDate();
+    const firstDayOfMonthWeekday = startOfMonth.getDay(); // 0=Sunday
+
+    // Add empty cells for leading days
+    for (let i = 0; i < firstDayOfMonthWeekday; i++) {
+      monthlyDisplayData.push({ key: `empty-start-${i}`, type: 'empty' });
+    }
+
+    // Add actual day cells
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      date.setHours(0,0,0,0);
+      const dateString = date.toISOString().split('T')[0];
+      const completedCount = monthlyCompletionMap.get(dateString) || 0;
+      monthlyDisplayData.push({
+        key: dateString,
+        type: 'day',
+        date: date,
+        dayOfMonth: day,
+        completed: completedCount,
+        total: habits.length,
+        isFuture: date > today,
+        isToday: date.getTime() === today.getTime(),
+      });
+    }
+    return monthlyDisplayData;
   };
+
+  const fetchData = async () => {
+    if (!user?._id) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const goalsRes = await api.get(`/api/habits/${user._id}/habits`);
+      const goalsData = goalsRes.data || [];
+
+      // Process goals
+      const goalsWithStats = goalsData.map(goal => {
+        const habits = goal.habits || [];
+        const totalHabits = habits.length;
+        const completedHabits = habits.filter(h => h && h.completed).length;
+        const completionRate = totalHabits > 0 ? (completedHabits / totalHabits) * 100 : 0;
+        return {
+          ...goal,
+          totalHabits,
+          completedHabits,
+          completionRate
+        };
+      });
+      setGoals(goalsWithStats);
+
+      // Process habits
+      const allHabits = goalsData.reduce((acc, goal) => {
+        if (goal.habits && Array.isArray(goal.habits)) {
+          return acc.concat(goal.habits.map(habit => ({
+            ...habit,
+            goalName: goal.name,
+            goalId: goal._id
+          })));
+        }
+        return acc;
+      }, []);
+
+      // Process today's habits
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todaysHabitsForDisplay = allHabits.map(habit => ({
+        _id: habit._id,
+        name: habit.name,
+        completed: habit.completed || false,
+        status: habit.completed ? 'completed' : 'pending',
+        category: habit.category || 'other',
+        goalName: habit.goalName,
+        goalId: habit.goalId
+      })).sort((a, b) => {
+        if (a.completed && !b.completed) return 1;
+        if (!a.completed && b.completed) return -1;
+        return 0;
+      });
+      setTodaysHabits(todaysHabitsForDisplay);
+
+      // Process weekly data
+      // Get dates for the last 7 days (including today)
+      const last7Days = [];
+      const dateMap = new Map(); // Map YYYY-MM-DD -> count
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(today.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        last7Days.push(date);
+        dateMap.set(date.toISOString().split('T')[0], 0);
+      }
+
+      // Count completions for each of the last 7 days
+      allHabits.forEach(habit => {
+        if (habit.completionHistory && Array.isArray(habit.completionHistory)) {
+          habit.completionHistory.forEach(completionDateStr => {
+            if (completionDateStr) {
+              const completionDate = new Date(completionDateStr);
+              completionDate.setHours(0, 0, 0, 0);
+              const dateString = completionDate.toISOString().split('T')[0];
+              if (dateMap.has(dateString)) {
+                dateMap.set(dateString, dateMap.get(dateString) + 1);
+              }
+            }
+          });
+        }
+      });
+
+      const weeklyDisplayData = [];
+      // Build display data using the counts from the map
+      last7Days.forEach(date => {
+        const dateString = date.toISOString().split('T')[0];
+        weeklyDisplayData.push({
+          day: date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+          date: date.toISOString(),
+          completed: dateMap.get(dateString) || 0,
+          total: allHabits.length,
+          color: '#FD6A3A'
+        });
+      });
+      setWeeklyData(weeklyDisplayData);
+
+      // Process monthly data using helper
+      setMonthlyData(prepareMonthlyData(allHabits));
+
+      // Calculate streaks
+      let maxStreak = 0;
+      let totalStreaksValue = 0;
+      let activeHabitCount = 0;
+
+      allHabits.forEach(habit => {
+        maxStreak = Math.max(maxStreak, habit.streak || 0);
+        if ((habit.streak || 0) > 0) {
+          totalStreaksValue += habit.streak;
+          activeHabitCount++;
+        }
+      });
+
+      const avgStreak = activeHabitCount > 0 ? Math.round(totalStreaksValue / activeHabitCount) : 0;
+      const currentStreak = allHabits.reduce((max, habit) => Math.max(max, habit.streak || 0), 0);
+
+      setStreaks({
+        max: maxStreak,
+        avg: avgStreak,
+        last: currentStreak,
+        current: currentStreak
+      });
+
+    } catch (err) {
+      console.error("Failed to fetch overview data:", err);
+      setError("Failed to load dashboard data. Please try again later.");
+      toast.error("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchData();
+  }, [user]);
 
   const features = [
     {
@@ -248,19 +284,19 @@ export default function Overview() {
           <div className="flex gap-6 h-[300px]">
             <div className="flex-grow max-h-full overflow-y-auto pr-4 custom-scrollbar">
               <AnimatePresence>
-                {loadingToday ? (
+                {loading ? (
                   <div className="flex justify-center items-center h-full">
                     <Loader2 className="h-8 w-8 animate-spin text-wax-flower-500" />
                   </div>
-                ) : fetchedTodaysHabits.length > 0 ? (
-                  fetchedTodaysHabits.map((habit) => (
-                    <motion.div
+                ) : todaysHabits.length > 0 ? (
+                  todaysHabits.map((habit) => (
+                  <motion.div
                       key={habit._id}
-                      layout
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 20 }}
-                      transition={{ duration: 0.3 }}
+                    layout
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
                       className="flex items-center justify-between border-b border-wax-flower-700/30 py-3 group cursor-pointer hover:bg-wax-flower-900/50 transition-colors duration-150"
                       onClick={(e) => {
                         if (e.target.closest('button')) return;
@@ -275,51 +311,47 @@ export default function Overview() {
                           habit.category === 'mindfulness' ? 'bg-purple-500' :
                           habit.category === 'productivity' ? 'bg-yellow-500' :
                           habit.category === 'self-care' ? 'bg-pink-500' :
-                          habit.category === 'finance' ? 'bg-teal-500' :
-                          habit.category === 'social' ? 'bg-indigo-500' :
-                          habit.category === 'organization' ? 'bg-gray-500' :
-                          habit.category === 'hobby' ? 'bg-orange-500' :
                           'bg-gray-400'
                         )} />
                         <div className="text-base font-medium text-wax-flower-200 group-hover:text-[#FD6A3A] transition-colors">
                           {habit.name}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <button
+                    <div className="flex items-center gap-4">
+                      <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleHabitStatus(habit._id, 'skipped');
                           }}
-                          className={cn(
-                            "p-1 rounded transition-colors",
-                            habit.status === 'skipped' ? "bg-red-500/20" : "hover:bg-red-500/10"
-                          )}
+                        className={cn(
+                          "p-1 rounded transition-colors",
+                          habit.status === 'skipped' ? "bg-red-500/20" : "hover:bg-red-500/10"
+                        )}
                           title="Mark as skipped"
-                        >
-                          <X className={cn(
-                            "h-5 w-5",
-                            habit.status === 'skipped' ? "text-red-500" : "text-wax-flower-400"
-                          )} />
-                        </button>
-                        <button
+                      >
+                        <X className={cn(
+                          "h-5 w-5",
+                          habit.status === 'skipped' ? "text-red-500" : "text-wax-flower-400"
+                        )} />
+                      </button>
+                      <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleHabitStatus(habit._id, 'completed');
                           }}
-                          className={cn(
-                            "p-1 rounded transition-colors",
+                        className={cn(
+                          "p-1 rounded transition-colors",
                             habit.completed ? "bg-[#FD6A3A]/20" : "hover:bg-[#FD6A3A]/10"
-                          )}
+                        )}
                           title="Mark as completed"
-                        >
-                          <Check className={cn(
-                            "h-5 w-5",
+                      >
+                        <Check className={cn(
+                          "h-5 w-5",
                             habit.completed ? "text-[#FD6A3A]" : "text-wax-flower-400"
-                          )} />
-                        </button>
-                      </div>
-                    </motion.div>
+                        )} />
+                      </button>
+                    </div>
+                  </motion.div>
                   ))
                 ) : (
                   <div className="flex justify-center items-center h-full text-wax-flower-400">
@@ -378,21 +410,11 @@ export default function Overview() {
                       clipPath: 'polygon(50% 0, 51% 0, 51% 50%, 50% 50%)',
                       borderRadius: '50%'
                     }}
-                    animate={{
+                    animate={{ 
                       rotate: [0, 360],
                       transition: { duration: 4, repeat: Infinity, ease: "linear" }
                     }}
                   />
-                  {completedHabitsToday === 0 && (
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: 'linear-gradient(180deg, #FD6A3A 50%, transparent 50%)',
-                        clipPath: 'polygon(50% 0, 51% 0, 51% 50%, 50% 50%)',
-                        borderRadius: '50%'
-                      }}
-                    />
-                  )}
                 </motion.div>
                 <motion.div
                   className="absolute inset-0 flex items-center justify-center"
@@ -422,14 +444,14 @@ export default function Overview() {
             </div>
           </div>
           
-          <div className="relative h-[180px] px-2 pb-8">
+          <div className="relative h-[200px] px-2 pb-8">
             <div className="absolute inset-0 flex items-end justify-between pt-4">
               {fetchedWeeklyData.map((day, i) => (
                 <div key={i} className="group relative flex flex-col items-center" style={{ width: '10%' }}>
                   <motion.div
                     className="w-full rounded-t-md hover:opacity-80 transition-all cursor-pointer"
                     style={{ 
-                      height: `${Math.max((day.completed / day.total) * 140, 6)}px`,
+                      height: `${day.total > 0 ? Math.max((day.completed / day.total) * 140, 6) : 6}px`,
                       minHeight: '6px',
                       background: `linear-gradient(to top, #FD6A3A, #FF8C6B)`
                     }}
@@ -453,7 +475,11 @@ export default function Overview() {
       className: "col-span-4",
     },
     {
-      header: (
+      header: (() => {
+        const weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(label => ({ key: `header-${label}`, type: 'header', label }));
+        const calendarItems = [...weekdayLabels, ...monthlyData];
+
+        return (
         <div className="space-y-4 h-full">
           <div className="flex items-center justify-between border-b border-wax-flower-700/30 pb-4">
             <div className="flex items-center gap-2">
@@ -462,43 +488,68 @@ export default function Overview() {
             </div>
           </div>
           
-          <div className="grid grid-cols-7 gap-[2px] h-[180px] p-2">
-            {fetchedMonthlyData.map((day, i) => {
-              let bgColor = '#D9D9D9';
-              if (day.isFuture) {
-                bgColor = '#817A87';
-              } else if (day.completed > 0) {
-                const percentage = (day.completed / day.total) * 100;
-                if (percentage >= 75) bgColor = '#297A27';
-                else if (percentage >= 50) bgColor = '#46A744';
-                else if (percentage >= 25) bgColor = '#8EC66B';
-                else bgColor = '#D5E68A';
+            <div className="grid grid-cols-7 gap-x-1 gap-y-2 p-1">
+              {calendarItems.map((item) => {
+                if (item.type === 'header') {
+                  return (
+                    <div key={item.key} className="text-center text-xs font-bold text-wax-flower-400">{item.label}</div>
+                  );
+                }
+
+                if (item.type === 'empty') {
+                  return <div key={item.key} className="aspect-square" />;
+                }
+
+                if (item.type === 'day') {
+                  let bgColor = '#4A4A4A'; // Base color for no completion
+                  let textColor = '#A1A1AA'; // Default text color
+                  if (item.isFuture) {
+                    bgColor = '#3A3A3A'; // Darker grey for future
+                    textColor = '#6A6A6A';
+                  } else if (item.completed > 0 && item.total > 0) {
+                    const percentage = (item.completed / item.total) * 100;
+                    if (percentage >= 75) bgColor = '#FD6A3A'; // Full color
+                    else if (percentage >= 50) bgColor = '#fd825b'; // Lighter
+                    else if (percentage >= 25) bgColor = '#fd9f7d'; // Even Lighter
+                    else bgColor = '#fdbb9f'; // Lightest orange
+                    textColor = '#FFFFFF'; // White text on colored background
+                  } else if (item.completed === 0 && !item.isFuture) {
+                    textColor = '#B1B1BA';
               }
               
               return (
                 <motion.div
-                  key={i}
-                  className="group relative"
+                      key={item.key}
+                      className={cn(
+                        "group relative flex items-center justify-center",
+                        item.isToday ? "border-2 border-wax-flower-300" : ""
+                      )}
                   style={{ 
                     aspectRatio: '1/1',
                     backgroundColor: bgColor,
-                    borderRadius: '35%',
+                        borderRadius: '50%',
                     transition: 'background-color 0.3s ease',
-                    width: '20px',
-                    height: '20px',
+                        width: '26px',
+                        height: '26px',
                     margin: 'auto'
                   }}
                   whileHover={{ scale: 1.2 }}
                 >
+                      <span className="text-xs font-medium" style={{ color: textColor }}>
+                        {item.dayOfMonth}
+                      </span>
                   <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-wax-flower-800 text-wax-flower-200 px-2 py-1 rounded text-xs whitespace-nowrap z-10">
-                    {day.date.toLocaleDateString()}: {day.completed} of {day.total} habits
+                        {item.date.toLocaleDateString()}: {item.completed} of {item.total} habits
                   </div>
                 </motion.div>
               );
+                }
+                return null; // Should not happen
             })}
           </div>
         </div>
-      ),
+        );
+      })(),
       className: "col-span-8",
     },
     {
@@ -512,20 +563,20 @@ export default function Overview() {
           </div>
           
           <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
-            {loadingGoals ? (
+            {loading ? (
                <div className="flex justify-center items-center h-[200px]">
                  <Loader2 className="h-8 w-8 animate-spin text-wax-flower-500" />
                </div>
-            ) : fetchedGoalsWithStats.length > 0 ? (
-              <table className="w-full">
-                <thead className="text-left text-wax-flower-300">
-                  <tr>
+            ) : goals.length > 0 ? (
+            <table className="w-full">
+              <thead className="text-left text-wax-flower-300">
+                <tr>
                     <th className="py-2 pl-2 w-2/3">Goal</th>
                     <th className="py-2 pr-2 w-1/3 text-right">Completion</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fetchedGoalsWithStats.map((goal) => (
+                </tr>
+              </thead>
+              <tbody>
+                  {goals.map((goal) => (
                     <tr 
                       key={goal._id} 
                       className="border-b border-wax-flower-700/30 group cursor-pointer hover:bg-wax-flower-900/50 transition-colors duration-150"
@@ -543,12 +594,12 @@ export default function Overview() {
                         <div className="flex items-center justify-end gap-2">
                           <Progress value={goal.completionRate || 0} className="h-2 w-96" />
                           <span className="text-wax-flower-300 text-sm w-10 text-right">{Math.round(goal.completionRate || 0)}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
              ) : (
                <div className="flex justify-center items-center h-[200px] text-wax-flower-400">
                   No goals found. Add some goals and habits!
@@ -564,58 +615,28 @@ export default function Overview() {
         <div className="space-y-4 h-full">
           <div className="flex items-center justify-between border-b border-wax-flower-700/30 pb-4">
             <div className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-[#FD6A3A]" />
-              <h2 className="text-xl font-bold text-wax-flower-200">Add Habit</h2>
+              <Clock className="h-5 w-5 text-[#FD6A3A]" />
+              <h2 className="text-xl font-bold text-wax-flower-200">Focus Streaks</h2>
             </div>
           </div>
-          <div className="flex flex-col items-center justify-center h-[220px] space-y-4">
-            <motion.div
-              className="w-24 h-24 rounded-full bg-[#FD6A3A]/10 flex items-center justify-center cursor-pointer hover:bg-[#FD6A3A]/20 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <Plus className="h-12 w-12 text-[#FD6A3A]" />
-            </motion.div>
-            
-            <button
-              onClick={async () => {
-                try {
-                  setLoadingAll(true);
-                  console.log('User ID:', user?._id);
-                  console.log('API Request to:', '/api/seed/sample-data');
-                  console.log('Token:', localStorage.getItem('token'));
-                  
-                  const seedResponse = await api.post('/api/seed/sample-data');
-                  console.log('Sample data response:', seedResponse);
-                  
-                  toast.success('Sample habits and goals added!', {
-                    style: {
-                      background: '#363636',
-                      color: '#fff',
-                    },
-                    duration: 3000,
-                  });
-                  
-                  // Refresh data
-                  fetchData();
-                } catch (err) {
-                  console.error("Failed to add sample data:", err);
-                  console.error("Error details:", err.response?.data || err.message);
-                  toast.error("Failed to add sample data", {
-                    style: {
-                      background: '#363636',
-                      color: '#fff',
-                    },
-                    duration: 5000,
-                  });
-                } finally {
-                  setLoadingAll(false);
-                }
-              }}
-              className="text-wax-flower-300 hover:text-wax-flower-200 underline text-sm"
-            >
-              Add sample data
-            </button>
+          
+          <div className="flex flex-col justify-center h-[220px] space-y-6 px-4">
+            <div className="flex items-center justify-between">
+              <div className="text-lg text-wax-flower-300">Max:</div>
+              <div className="text-xl font-semibold text-wax-flower-200">{streaks.max} days</div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-lg text-wax-flower-300">Avg:</div>
+              <div className="text-xl font-semibold text-wax-flower-200">{streaks.avg} days</div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-lg text-wax-flower-300">Last:</div>
+              <div className="text-xl font-semibold text-wax-flower-200">{streaks.last} days</div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-lg text-wax-flower-300">Current:</div>
+              <div className="text-xl font-semibold text-wax-flower-200">{streaks.current} days</div>
+            </div>
           </div>
         </div>
       ),
@@ -626,183 +647,46 @@ export default function Overview() {
         <div className="space-y-4 h-full">
           <div className="flex items-center justify-between border-b border-wax-flower-700/30 pb-4">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-[#FD6A3A]" />
-              <h2 className="text-xl font-bold text-wax-flower-200">Focus Streaks</h2>
+              <Plus className="h-5 w-5 text-[#FD6A3A]" />
+              <h2 className="text-xl font-bold text-wax-flower-200">Add Sample Data</h2>
             </div>
           </div>
-          
-          <div className="flex flex-col justify-center h-[220px] space-y-6 px-4">
-            <div className="flex items-center justify-between">
-              <div className="text-lg text-wax-flower-300">Max:</div>
-              <div className="text-xl font-semibold text-wax-flower-200">9 hr 32 min</div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-lg text-wax-flower-300">Avg:</div>
-              <div className="text-xl font-semibold text-wax-flower-200">80% completion</div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-lg text-wax-flower-300">Last:</div>
-              <div className="text-xl font-semibold text-wax-flower-200">2 hr</div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-lg text-wax-flower-300">Streak:</div>
-              <div className="text-xl font-semibold text-wax-flower-200">90</div>
-            </div>
+          <div className="flex flex-col items-center justify-center h-[220px] space-y-4">
+            <motion.div
+              className="w-24 h-24 rounded-full bg-[#FD6A3A]/10 flex items-center justify-center cursor-pointer hover:bg-[#FD6A3A]/20 transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  await api.post('/api/seed/sample-data');
+                  toast.success('Sample habits and goals added!');
+                  await fetchData(); // Refresh data
+                } catch (err) {
+                  console.error("Failed to add sample data:", err);
+                  toast.error(err.response?.data?.details || err.message || "Failed to add sample data");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              <Plus className="h-12 w-12 text-[#FD6A3A]" />
+            </motion.div>
+            <p className="text-sm text-wax-flower-400 text-center px-2">
+               Click the button to populate your dashboard with sample goals and habits.
+            </p>
           </div>
         </div>
       ),
       className: "col-span-6",
     },
   ];
-
-  useEffect(() => {
-    if (!user?._id) {
-      setFetchedTodaysHabits([]);
-      setFetchedWeeklyData([]);
-      setFetchedMonthlyData([]);
-      setFetchedAllHabits([]);
-      setFetchedGoalsWithStats([]);
-      setFocusStreaks({ max: 'N/A', avg: 'N/A', last: 'N/A', streak: 0 });
-      setLoadingToday(true);
-      setLoadingWeek(true);
-      setLoadingMonth(true);
-      setLoadingAll(true);
-      setLoadingGoals(true);
-      setLoadingStreaks(true);
-      setError(null);
-      return;
-    }
-
-    fetchData();
-  }, [user]);
-
-  const fetchData = async () => {
-    setError(null);
-    setLoadingToday(true);
-    setLoadingWeek(true);
-    setLoadingMonth(true);
-    setLoadingAll(true);
-    setLoadingGoals(true);
-    setLoadingStreaks(true);
-    try {
-      // Fetch goals with populated habits
-      const goalsRes = await api.get(`/api/habits/${user._id}/habits`);
-      const goalsData = goalsRes.data || [];
-
-      // Process goals and get all habits
-      const allActualHabits = goalsData.reduce((acc, goal) => {
-        const habits = goal.habits || [];
-        return [...acc, ...habits.map(habit => ({
-          ...habit,
-          goalName: goal.name,
-          goalId: goal._id
-        }))];
-      }, []);
-
-      // Process weekly data
-      const weeklyDisplayData = processWeeklyData(allActualHabits);
-      setFetchedWeeklyData(weeklyDisplayData);
-      setLoadingWeek(false);
-
-      // Process monthly data
-      const monthlyDisplayData = processMonthlyData(allActualHabits);
-      setFetchedMonthlyData(monthlyDisplayData);
-      setLoadingMonth(false);
-
-      // --- Process Goals for Goal Card --- 
-      const goalsWithStats = goalsData.map(goal => {
-        const habits = goal.habits || [];
-        const totalHabitsInGoal = habits.length;
-        const completedHabitsInGoal = habits.filter(h => h && h.completed).length;
-        const completionRate = totalHabitsInGoal > 0 ? (completedHabitsInGoal / totalHabitsInGoal) * 100 : 0;
-        return {
-          ...goal,
-          totalHabits: totalHabitsInGoal,
-          completedHabits: completedHabitsInGoal,
-          completionRate: completionRate
-        };
-      });
-      setFetchedGoalsWithStats(goalsWithStats);
-      setLoadingGoals(false);
-
-      // --- Process Today's Habits from flat list --- 
-      const today = new Date(); 
-      today.setHours(0, 0, 0, 0);
-      const todaysHabitsForDisplay = allActualHabits.map(habit => ({
-        _id: habit._id,
-        name: habit.name,
-        completed: habit.completed || false,
-        status: habit.completed ? 'completed' : 'pending',
-        category: habit.category || 'other',
-        goalName: habit.goalName,
-        goalId: habit.goalId
-      })).sort((a, b) => {
-        if (a.completed && !b.completed) return 1;
-        if (!a.completed && b.completed) return -1;
-        return 0;
-      });
-      setFetchedTodaysHabits(todaysHabitsForDisplay);
-      setLoadingToday(false);
-
-      // --- Calculate Streaks from flat list --- 
-      let maxStreak = 0;
-      let totalStreaksValue = 0;
-      let activeHabitCount = 0;
-
-      allActualHabits.forEach(habit => {
-        maxStreak = Math.max(maxStreak, habit.streak || 0);
-        if ((habit.streak || 0) > 0) {
-          totalStreaksValue += habit.streak;
-          activeHabitCount++;
-        }
-      });
-
-      const avgStreak = activeHabitCount > 0 ? Math.round(totalStreaksValue / activeHabitCount) : 0;
-      const currentLongestStreak = allActualHabits.reduce((max, habit) => Math.max(max, habit.streak || 0), 0);
-
-      setFocusStreaks({
-        max: maxStreak,
-        avg: avgStreak,
-        last: currentLongestStreak,
-        streak: currentLongestStreak
-      });
-      setLoadingStreaks(false);
-
-    } catch (err) {
-      console.error("Failed to fetch overview data:", err);
-      setError("Failed to load dashboard data. Please try again later.");
-      toast.error("Failed to load dashboard data");
-      setLoadingToday(false);
-      setLoadingWeek(false);
-      setLoadingMonth(false);
-      setLoadingAll(false);
-      setLoadingGoals(false);
-      setLoadingStreaks(false);
-    }
-  };
-
   return (
     <div className="space-y-8 animate-slide-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-wax-flower-200">Dashboard</h1>
-          <p className="text-base text-wax-flower-300">Welcome [User Name], here is your</p>
-        </div>
-        {/* Motivational Quote Tile */}
-        <div className="bg-wax-flower-900/80 border border-wax-flower-700/40 rounded-xl shadow-md px-6 py-4 flex flex-col items-end min-w-[260px] max-w-xs ml-4">
-          <div className="flex items-center w-full justify-between mb-2">
-            <span className="text-sm font-semibold text-wax-flower-300">Stay Motivated</span>
-            <button
-              onClick={refreshQuote}
-              className="ml-2 p-1 rounded-full hover:bg-wax-flower-700/40 transition-colors"
-              title="Show another quote"
-            >
-              <RefreshCw className="h-5 w-5 text-[#FD6A3A]" />
-            </button>
-          </div>
-          <div className="text-wax-flower-200 text-base text-right italic min-h-[40px]">
-            "{motivationalQuotes[quoteIndex]}"
-          </div>
+          <p className="text-base text-wax-flower-300">Welcome {user?.name || 'User'}, here is your overview</p>
         </div>
       </div>
 
@@ -819,22 +703,6 @@ export default function Overview() {
           border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #fd825b;
-        }
-        
-        /* Main page scrollbar */
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-          background: rgba(42, 42, 42, 0.3);
-          border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #FD6A3A;
-          border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
           background: #fd825b;
         }
       `}</style>

@@ -11,6 +11,7 @@ import HeaderIcons from "../components/HeaderIcons";
 import PasswordInput from "../components/PasswordInput";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 
 // Frequently used class name variables
 const inputClass =
@@ -27,6 +28,7 @@ const actionLinkClass = "text-wax-flower-500 hover:text-wax-flower-400 hover:und
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [searchParams] = useSearchParams();
 
   // Login only requires email and password
@@ -90,29 +92,12 @@ export default function Login() {
     }
   };
 
-  // Handle Google OAuth callback
-  useEffect(() => {
-    const token = searchParams.get('token');
-    const error = searchParams.get('error');
-
-    if (error) {
-      setError('Google authentication failed. Please try again.');
-      return;
-    }
-
-    if (token) {
-      localStorage.setItem('token', token);
-      toast.success('Login successful');
-      navigate('/dashboard');
-    }
-  }, [searchParams, navigate]);
-
   // Handle Google login
   const handleGoogleLogin = () => {
     // Clear any existing errors
     setError('');
-    // Redirect to Google OAuth endpoint
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+    // Redirect to Google OAuth endpoint with callback URL
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google?redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback')}`;
   };
 
   const handleSubmit = async (e) => {
@@ -128,22 +113,20 @@ export default function Login() {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
-        formData
-      );
-
-      // Store the token in localStorage
-      localStorage.setItem('token', response.data.token);
+      const result = await login(formData.email, formData.password);
       
-      // Show success message
-      toast.success('Login successful');
-      
-      // Redirect to dashboard page
-      navigate('/dashboard');
+      if (result.success) {
+        // Show success message
+        toast.success('Login successful');
+        
+        // Redirect to dashboard page
+        navigate('/dashboard');
+      } else {
+        setError(result.error || 'Login failed');
+      }
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.response?.data?.error || 'Login failed');
+      setError(error.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }
@@ -152,25 +135,25 @@ export default function Login() {
   return (
     <div className="min-h-screen w-full grid grid-cols-6 gap-4 items-center px-4 relative overflow-hidden">
       <AnimatedBackground />
-      <style jsx>{`
-        a {
+      <style>{`
+        .login-link {
           font-weight: 500;
           color: var(--wax-flower-500);
           text-decoration: inherit;
           transition: color 0.2s ease;
         }
-        a:hover {
+        .login-link:hover {
           color: var(--wax-flower-600);
         }
-        button:focus,
-        button:focus-visible {
+        .login-button:focus,
+        .login-button:focus-visible {
           outline: none;
         }
-        select:focus {
+        .login-select:focus {
           outline: none;
           box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
         }
-        input:focus {
+        .login-input:focus {
           outline: none;
           box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
         }
@@ -267,13 +250,13 @@ export default function Login() {
           <div className="space-y-3 mt-6">
             <p className="text-wax-flower-400 text-sm">
               Create an account?{" "}
-              <a href="/signup" className={actionLinkClass}>
+              <a href="/signup" className={`${actionLinkClass} login-link`}>
                 Sign Up
               </a>
             </p>
             <p className="text-wax-flower-400 text-sm">
               Forgot your password?{" "}
-              <a href="/forgot-password" className={actionLinkClass}>
+              <a href="/forgot-password" className={`${actionLinkClass} login-link`}>
                 Reset it
               </a>
             </p>

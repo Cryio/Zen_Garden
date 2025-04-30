@@ -1,22 +1,23 @@
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine AS builder
 
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm install --production
+# Production stage
+FROM node:18-alpine AS runner
 
-# Copy the rest of the application
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy application code
 COPY . .
 
-# Expose the port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-# Start the application
 CMD ["npm", "start"] 

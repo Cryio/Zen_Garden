@@ -208,25 +208,6 @@ export default function Habits() {
     });
   }, []);
 
-  const calculateStreak = useCallback((habit) => {
-    if (!habit.completionHistory) return 0;
-    let currentStreak = 0;
-    const today = new Date().toISOString().split('T')[0];
-    
-    // If habit is completed today, include it in the streak
-    if (habit.completed && habit.lastCompleted?.split('T')[0] === today) {
-      currentStreak = 1;
-    }
-
-    // Check previous days
-    for (let i = 1; i < habit.completionHistory.length; i++) {
-      if (!habit.completionHistory[i]) break;
-      currentStreak++;
-    }
-
-    return currentStreak;
-  }, []);
-
   const toggleHabitCompletion = useCallback(async (goalId, habitId, completed) => {
     if (!user?._id) return;
     
@@ -235,28 +216,15 @@ export default function Habits() {
       const response = await habitApi.updateHabitCompletion(user._id, goalId, habitId, !completed);
       
       if (response?.data) {
+        const updatedHabitData = response.data; // Data from backend includes correct streak
+
         setGoals(prevGoals => {
           const newGoals = prevGoals.map(goal => {
             if (goal._id === goalId) {
               const updatedHabits = goal.habits.map(habit => {
                 if (habit._id === habitId) {
-                  // Update completion history
-                  const newHistory = [...(habit.completionHistory || Array(7).fill(false))];
-                  newHistory.unshift(!completed); // Add today's completion status
-                  newHistory.pop(); // Remove oldest day
-
-                  return {
-                    ...habit,
-                    completed: !completed,
-                    lastCompleted: !completed ? today : null,
-                    completionHistory: newHistory,
-                    streak: !completed ? calculateStreak({
-                      ...habit,
-                      completed: !completed,
-                      lastCompleted: today,
-                      completionHistory: newHistory
-                    }) : 0
-                  };
+                  // Replace the old habit data entirely with the updated data from the API
+                  return updatedHabitData;
                 }
                 return habit;
               });
@@ -278,7 +246,7 @@ export default function Habits() {
       toast.error('Failed to update habit status');
       console.error('Error updating habit:', error);
     }
-  }, [user?._id, calculateStreak, updateGoalProgress]);
+  }, [user?._id, updateGoalProgress]);
 
   // Update progress whenever habits change
   useEffect(() => {
@@ -366,18 +334,20 @@ export default function Habits() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Checkbox
+            id={`habit-${habit._id}`}
             checked={habit.completed}
-            onCheckedChange={(checked) => handleHabitStatusUpdate(goal._id, habit._id, checked)}
+            onCheckedChange={() => toggleHabitCompletion(goal._id, habit._id, habit.completed)}
             className="border-wax-flower-500"
           />
-          <div>
-            <span className={`text-wax-flower-200 font-medium ${habit.completed ? 'line-through opacity-50' : ''}`}>
-              {habit.name}
-            </span>
-            {habit.description && (
-              <p className="text-xs text-wax-flower-400 mt-1">{habit.description}</p>
+          <label htmlFor={`habit-${habit._id}`} className="text-base font-medium text-wax-flower-200 cursor-pointer grow flex items-center gap-2">
+            {habit.name}
+            {habit.streak > 0 && (
+              <span className="flex items-center text-xs bg-yellow-600/20 text-yellow-300 px-1.5 py-0.5 rounded-full font-semibold">
+                <Trophy className="h-3 w-3 mr-1" />
+                {habit.streak}
+              </span>
             )}
-          </div>
+          </label>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

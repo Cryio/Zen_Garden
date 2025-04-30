@@ -242,23 +242,7 @@ function GardenScene({ params, goals }) {
   useFrame((state, delta) => {
     const timeSinceLastInteraction = Date.now() - lastInteractionTime.current;
     
-    if (!isDragging) {
-      if (timeSinceLastInteraction > RESUME_DELAY) {
-        // Smoothly transition to base rotation speed
-        const targetSpeed = BASE_ROTATION_SPEED * lastDragDirection.current;
-        rotationSpeed.current += (targetSpeed - rotationSpeed.current) * SMOOTH_FACTOR;
-      } else {
-        // Gradually slow down after user interaction
-        rotationSpeed.current *= 0.95;
-      }
-      
-      // Apply rotation
-      cameraAngle.current += rotationSpeed.current * delta;
-      
-      // Update camera position
-      camera.position.x = Math.cos(cameraAngle.current) * radius;
-      camera.position.z = Math.sin(cameraAngle.current) * radius;
-    }
+    // NOTE: Auto-rotation logic removed. Camera only moves on drag.
     
     camera.position.y = 8; // Keep constant height
     camera.lookAt(0, 0, 0); // Always look at center
@@ -516,6 +500,10 @@ export default function Garden3D() {
         const response = await habitApi.getGoals(user._id);
         if (response?.data) {
           setGoals(Array.isArray(response.data) ? response.data : []);
+          // Log fetched data
+          const fetchedGoals = Array.isArray(response.data) ? response.data : [];
+          const totalHabits = fetchedGoals.reduce((count, goal) => count + (goal.habits?.length || 0), 0);
+          console.log(`[Garden3D] Fetched ${fetchedGoals.length} goals with a total of ${totalHabits} habits.`);
         }
       } catch (error) {
         toast.error('Failed to fetch goals for garden');

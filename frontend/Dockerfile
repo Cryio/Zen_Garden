@@ -1,22 +1,21 @@
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine AS builder
 
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies with specific esbuild version
-RUN npm install esbuild@0.21.5
-RUN npm install
-
-# Copy the rest of the application
+RUN npm ci
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Expose the port
-EXPOSE 5173
+# Production stage
+FROM node:18-alpine AS runner
 
-# Start the application
-CMD ["npm", "run", "dev", "--", "--host"] 
+WORKDIR /app
+RUN npm install -g serve
+
+# Copy only the built files from builder stage
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+
+CMD ["serve", "-s", "dist", "-l", "3000"] 

@@ -93,38 +93,45 @@ router.put("/:userId/habits/:habitId", verifyToken, async (req, res) => {
     }
 
     const isCompleted = req.body.completed; // Get boolean completion status
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to the start of the day
 
     // Update completion history
-    const newHistory = [...(habit.completionHistory || Array(7).fill(false))]; // Ensure history exists
-    newHistory.unshift(isCompleted);
-    if (newHistory.length > 7) { // Keep history length at 7
-      newHistory.pop();
+    let completionHistory = habit.completionHistory || [];
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Filter out any entries for today already existing
+    completionHistory = completionHistory.filter(d => d.toISOString().split('T')[0] !== todayStr);
+
+    if (isCompleted) {
+      // Add today if marking as completed
+      completionHistory.push(today);
+      completionHistory.sort((a, b) => a - b); // Keep history sorted
     }
 
-    // Calculate streak: Increment if completed, reset if not
-    let streak = habit.streak || 0; // Start with current streak
-    if (isCompleted) {
-        // Check if already marked complete today to prevent double increment (optional)
-        const today = new Date().setHours(0, 0, 0, 0);
-        const lastCompletedDate = habit.lastCompleted ? new Date(habit.lastCompleted).setHours(0, 0, 0, 0) : null;
-        if (lastCompletedDate !== today) {
-             streak = streak + 1;
+    // --- Recalculate Streak --- 
+    let currentStreak = 0;
+    if (completionHistory.length > 0) {
+        // Check consecutive days ending today or yesterday
+        const sortedHistory = completionHistory.map(d => new Date(d).setHours(0,0,0,0)).sort((a, b) => b - a);
+        let lastCompletionTime = sortedHistory[0];
+
+        // Only count streak if last completion was today or yesterday
+        const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+        if (lastCompletionTime === today.getTime() || lastCompletionTime === yesterday.getTime()) {
+            currentStreak = 1;
+            for (let i = 1; i < sortedHistory.length; i++) {
+                const currentDay = new Date(lastCompletionTime);
+                const previousDay = new Date(currentDay); previousDay.setDate(currentDay.getDate() - 1);
+                
+                if (sortedHistory[i] === previousDay.getTime()) {
+                    currentStreak++;
+                    lastCompletionTime = sortedHistory[i];
+                } else {
+                    break; // Non-consecutive day found
+                }
+            }
         }
-    } else {
-      // If marking as incomplete, check if it *was* the last completed today
-      const today = new Date().setHours(0, 0, 0, 0);
-      const lastCompletedDate = habit.lastCompleted ? new Date(habit.lastCompleted).setHours(0, 0, 0, 0) : null;
-      if (lastCompletedDate === today) {
-          // It was completed today, now being marked incomplete, reset streak
-          // More accurately, we might need to recalculate based on history before today
-          // Simple approach: Decrement streak if > 0 when unchecking today's completion
-          streak = Math.max(0, streak - 1);
-      } else {
-         // If it wasn't completed today anyway, unchecking doesn't affect streak
-         // Or should reset? Let's reset for simplicity if unmarked and not completed today.
-         // Resetting might be too aggressive. Let's keep current streak if unchecking a non-completed day.
-         // streak = 0; // Reset if not completed (safer default)
-      }
     }
 
     const updatedHabit = await Habit.findByIdAndUpdate(
@@ -132,8 +139,8 @@ router.put("/:userId/habits/:habitId", verifyToken, async (req, res) => {
       { 
         completed: isCompleted,
         lastCompleted: isCompleted ? new Date() : habit.lastCompleted, // Update date only if completed
-        completionHistory: newHistory,
-        streak: streak
+        completionHistory: completionHistory,
+        streak: currentStreak
       },
       { new: true } // Return the updated document
     );

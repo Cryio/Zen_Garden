@@ -71,13 +71,17 @@ export default function ForgotPassword() {
     }
 
     try {
-      // TODO: Replace with your actual API endpoint
-      const response = await axios.post("http://localhost:5000/api/auth/forgot-password", {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, {
         email: email
       });
-      setSuccess(true);
+      
+      if (response.data.message) {
+        setSuccess(true);
+      } else {
+        throw new Error("No response message received");
+      }
     } catch (err) {
-      console.error("Password reset error:", err.response?.data);
+      console.error("Password reset error:", err);
       setError(err.response?.data?.error || "Failed to send reset instructions. Please try again.");
     } finally {
       setIsLoading(false);
@@ -87,25 +91,6 @@ export default function ForgotPassword() {
   return (
     <div className="min-h-screen grid grid-cols-6 gap-4 items-center px-4 relative">
       <AnimatedBackground />
-      <style jsx>{`
-        a {
-          font-weight: 500;
-          color: var(--wax-flower-500);
-          text-decoration: inherit;
-          transition: color 0.2s ease;
-        }
-        a:hover {
-          color: var(--wax-flower-600);
-        }
-        button:focus,
-        button:focus-visible {
-          outline: none;
-        }
-        input:focus {
-          outline: none;
-          box-shadow: 0 0 0 2px rgb(var(--wax-flower-500));
-        }
-      `}</style>
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}

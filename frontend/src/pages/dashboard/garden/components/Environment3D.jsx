@@ -47,38 +47,8 @@ function FlowerPool({ position, scale = 1, rotation }) {
   );
 }
 
-function Frog({ position, scale = 1, rotation }) {
-  const { scene } = useGLTF('/models/cartoon_frog.glb');
-  const groupRef = React.useRef();
-  
-  const clonedScene = useMemo(() => {
-    return scene.clone();
-  }, [scene]);
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
-    // Create a figure-8 pattern movement
-    const x = Math.sin(t * 0.5) * 3;
-    const z = Math.sin(t * 0.25) * 2;
-    groupRef.current.position.x = x;
-    groupRef.current.position.z = z;
-    // Rotate frog to face movement direction
-    groupRef.current.rotation.y = Math.atan2(
-      Math.cos(t * 0.5) * 3,
-      Math.cos(t * 0.25) * 2
-    ) + Math.PI / 2;
-  });
-
-  return (
-    <group ref={groupRef} scale={scale}>
-      <primitive object={clonedScene} />
-    </group>
-  );
-}
-
 // Pre-load the models
 useGLTF.preload('/models/low_poly_tree.glb');
-useGLTF.preload('/models/cartoon_frog.glb');
 useGLTF.preload('/models/rocks_stylized.glb');
 
 export function Environment3D() {
@@ -219,12 +189,6 @@ export function Environment3D() {
           }
           return null;
         })}
-
-        {/* Animated frog */}
-        <Frog
-          scale={1.5}
-          rotation={0}
-        />
 
         {/* Grass with collision avoidance */}
         <Grass params={grassParams} />
