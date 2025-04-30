@@ -7,6 +7,7 @@ import Analytics from '../pages/dashboard/analytics';
 import Settings from '../pages/dashboard/settings';
 import Help from '../pages/dashboard/help';
 import Pomodoro from '../pages/dashboard/pomodoro';
+import TodoList from '../pages/dashboard/todolist';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function DashboardRoutes() {
@@ -19,6 +20,7 @@ export default function DashboardRoutes() {
           <Route path="habits" element={<Habits />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="pomodoro" element={<Pomodoro />} />
+          <Route path="todolist" element={<TodoList />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
