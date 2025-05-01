@@ -1,6 +1,6 @@
 # Zen Garden
 
-Zen Garden is a modern, feature-rich habit tracking application that helps users build and maintain positive habits through an engaging and interactive interface. The application combines powerful habit tracking features with a beautiful UI and advanced features like focus mode and detailed analytics.
+Zen Garden is a modern, feature-rich habit tracking application that helps users build and maintain positive habits through an engaging and interactive interface. The application combines powerful habit tracking features with a beautiful UI and advanced features like focus mode and detailed analytics. 
 
 ## Features
 
