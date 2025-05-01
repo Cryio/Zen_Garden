@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Todo = require('../models/ToDo');
+const User = require("../models/User");
 
 // GET all tasks for a user
 router.get('/:userId', async (req, res) => {
