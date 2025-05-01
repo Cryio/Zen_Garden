@@ -32,6 +32,22 @@ Zen Garden is a modern, feature-rich habit tracking application that helps users
   - Goal completion rates
   - Daily, weekly, and monthly views
 
+- **Finance Tracker**
+  - Expense, savings, and investment management
+  - Transaction history with detailed descriptions
+  - Expense breakdown with category spending limits
+  - Monthly trend visualization with animations
+  - Savings goals with progress tracking
+  - Investment portfolio management
+
+- **To-Do List**
+  - Task creation with priority levels
+  - Category-based organization
+  - Sorting and filtering capabilities
+  - Task completion tracking
+  - Task editing
+  - Visual indicators for priority and category
+
 ### Additional Features
 - **User Authentication**
   - Secure login/signup system
