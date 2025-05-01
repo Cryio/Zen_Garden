@@ -6,21 +6,26 @@ const { verifyToken } = require('./auth');
 
 // const getRandomStreak = (max = 10) => Math.floor(Math.random() * (max + 1)); // Replaced by history-based calculation
 
-// Helper function to generate random completion history for the last ~30 days
-const generateRandomHistory = (daysBack = 30, completionRate = 0.6) => {
+// Helper function to generate random completion history for the last ~60 days
+const generateRandomHistory = (daysBack = 60, completionRate = 0.6) => {
   const history = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const currentDayOfMonth = today.getDate();
+  // Calculate start date (2 months ago)
+  const startDate = new Date(today);
+  startDate.setMonth(today.getMonth() - 2);
+  startDate.setDate(1); // Start from the first day of the month
 
-  for (let day = 1; day <= currentDayOfMonth; day++) {
+  // Generate dates for the last 2 months
+  const currentDate = new Date(startDate);
+  while (currentDate <= today) {
     if (Math.random() < completionRate) { // Simulate completion rate
-      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      const date = new Date(currentDate);
       date.setHours(0, 0, 0, 0); // Ensure time is normalized
       history.push(date);
     }
+    currentDate.setDate(currentDate.getDate() + 1);
   }
   return history.sort((a, b) => a - b); // Return sorted dates
 };
@@ -259,13 +264,13 @@ router.post('/sample-data', verifyToken, async (req, res) => {
       // Create habits for this goal
       for (const habitData of data.habits) {
         // Randomize history parameters for each habit
-        const randomDaysBack = Math.floor(Math.random() * (40 - 25 + 1)) + 25; // Between 25 and 40 days
+        const randomDaysBack = Math.floor(Math.random() * (60 - 45 + 1)) + 45; // Between 45 and 60 days
 
         // Introduce more varied completion rates for diverse streaks
         let randomCompletionRate;
 
         // Force high completion rate if history length is long enough for stage 5
-        if (randomDaysBack >= 30) {
+        if (randomDaysBack >= 50) {
           randomCompletionRate = Math.random() * (0.98 - 0.75) + 0.75; // 0.75 to 0.98 (High chance)
         } else { // Otherwise, use the varied modes
           const rateMode = Math.random();

@@ -15,17 +15,19 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/context/AuthContext";
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { DateContext } from '@/components/DashboardLayout';
 
 export default function Overview() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { selectedDate, setSelectedDate } = useContext(DateContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
@@ -100,7 +102,8 @@ export default function Overview() {
   // Helper to prepare monthly data outside main component logic
   const prepareMonthlyData = (habits) => {
     const monthlyCompletionMap = new Map();
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const targetDate = selectedDate;
+    targetDate.setHours(0, 0, 0, 0);
 
     habits.forEach(habit => {
       if (habit.completionHistory && Array.isArray(habit.completionHistory) && habit.completionHistory.length > 0) {
@@ -108,9 +111,9 @@ export default function Overview() {
           if (completionDateStr) {
             const completionDate = new Date(completionDateStr);
             completionDate.setHours(0, 0, 0, 0);
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            if (completionDate.getMonth() === currentMonth && completionDate.getFullYear() === currentYear) {
+            const targetMonth = targetDate.getMonth();
+            const targetYear = targetDate.getFullYear();
+            if (completionDate.getMonth() === targetMonth && completionDate.getFullYear() === targetYear) {
               const dateString = completionDate.toISOString().split('T')[0];
               monthlyCompletionMap.set(dateString, (monthlyCompletionMap.get(dateString) || 0) + 1);
             }
@@ -120,8 +123,8 @@ export default function Overview() {
     });
 
     const monthlyDisplayData = [];
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+    const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
     const daysInMonth = endOfMonth.getDate();
     const firstDayOfMonthWeekday = startOfMonth.getDay(); // 0=Sunday
 
@@ -132,7 +135,7 @@ export default function Overview() {
 
     // Add actual day cells
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      const date = new Date(targetDate.getFullYear(), targetDate.getMonth(), day);
       date.setHours(0,0,0,0);
       const dateString = date.toISOString().split('T')[0];
       const completedCount = monthlyCompletionMap.get(dateString) || 0;
@@ -143,8 +146,8 @@ export default function Overview() {
         dayOfMonth: day,
         completed: completedCount,
         total: habits.length,
-        isFuture: date > today,
-        isToday: date.getTime() === today.getTime(),
+        isFuture: date > new Date(),
+        isToday: date.getTime() === targetDate.getTime(),
       });
     }
     return monthlyDisplayData;
@@ -187,14 +190,22 @@ export default function Overview() {
         return acc;
       }, []);
 
-      // Process today's habits
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // Process selected date's habits
+      const targetDate = new Date(selectedDate);
+      targetDate.setHours(0, 0, 0, 0);
       const todaysHabitsForDisplay = allHabits.map(habit => ({
         _id: habit._id,
         name: habit.name,
-        completed: habit.completed || false,
-        status: habit.completed ? 'completed' : 'pending',
+        completed: habit.completionHistory?.some(history => {
+          const historyDate = new Date(history.date);
+          historyDate.setHours(0, 0, 0, 0);
+          return historyDate.getTime() === targetDate.getTime() && history.completed;
+        }) || false,
+        status: habit.completionHistory?.some(history => {
+          const historyDate = new Date(history.date);
+          historyDate.setHours(0, 0, 0, 0);
+          return historyDate.getTime() === targetDate.getTime() && history.completed;
+        }) ? 'completed' : 'pending',
         category: habit.category || 'other',
         goalName: habit.goalName,
         goalId: habit.goalId
@@ -206,12 +217,11 @@ export default function Overview() {
       setTodaysHabits(todaysHabitsForDisplay);
 
       // Process weekly data
-      // Get dates for the last 7 days (including today)
       const last7Days = [];
-      const dateMap = new Map(); // Map YYYY-MM-DD -> count
+      const dateMap = new Map();
       for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(today.getDate() - i);
+        const date = new Date(targetDate);
+        date.setDate(targetDate.getDate() - i);
         date.setHours(0, 0, 0, 0);
         last7Days.push(date);
         dateMap.set(date.toISOString().split('T')[0], 0);
@@ -234,7 +244,6 @@ export default function Overview() {
       });
 
       const weeklyDisplayData = [];
-      // Build display data using the counts from the map
       last7Days.forEach(date => {
         const dateString = date.toISOString().split('T')[0];
         weeklyDisplayData.push({
@@ -282,10 +291,13 @@ export default function Overview() {
     }
   };
 
-
   useEffect(() => {
     fetchData();
-  }, [user]);
+  }, [user, selectedDate]);
+
+  const handleDateChange = (newDate) => {
+    setSelectedDate(newDate);
+  };
 
   const features = [
     {
@@ -700,71 +712,75 @@ export default function Overview() {
     },
   ];
   return (
-    <div className="space-y-8 animate-slide-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-wax-flower-200">Dashboard</h1>
-          <p className="text-base text-wax-flower-300">Welcome {user?.name || 'User'}, here is your overview</p>
-        </div>
-        
-        {/* Motivational Quote Tile */}
-        <motion.div 
-          className="bg-wax-flower-900/70 rounded-xl border border-wax-flower-700/30 p-4 hover:border-wax-flower-600/50 w-[400px] h-[80px] relative overflow-hidden group"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="h-full flex items-center justify-center overflow-hidden">
-            <motion.p 
-              key={currentQuoteIndex}
-              className="text-base font-bold text-wax-flower-200 text-center px-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {motivationalQuotes[currentQuoteIndex]}
-            </motion.p>
-          </div>
-          <button 
-            className="absolute right-2 top-2 p-1.5 rounded-full bg-wax-flower-800/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-wax-flower-700/50"
-            onClick={cycleQuote}
-            title="Next quote"
-          >
-            <RefreshCw className="h-4 w-4 text-wax-flower-300" />
-          </button>
-        </motion.div>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-wax-flower-200">Dashboard</h1>
       </div>
-
-      <style jsx="true" global="true">{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(42, 42, 42, 0.3);
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #FD6A3A;
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #fd825b;
-        }
-      `}</style>
-
-      <div className="grid grid-cols-12 gap-4">
-        {features.map((feature, i) => (
-          <motion.div
-            key={i}
-            className={cn(feature.className, "bg-wax-flower-900/70 rounded-xl border border-wax-flower-700/30 p-4 hover:border-wax-flower-600/50")}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.1 }}
+      <div className="space-y-8 animate-slide-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-base text-wax-flower-300">Welcome {user?.firstName || 'User'}, here is your overview</p>
+          </div>
+          
+          {/* Motivational Quote Tile */}
+          <motion.div 
+            className="bg-wax-flower-900/70 rounded-xl border border-wax-flower-700/30 p-4 hover:border-wax-flower-600/50 w-[400px] h-[80px] relative overflow-hidden group"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
           >
-            {feature.header}
+            <div className="h-full flex items-center justify-center overflow-hidden">
+              <motion.p 
+                key={currentQuoteIndex}
+                className="text-base font-bold text-wax-flower-200 text-center px-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {motivationalQuotes[currentQuoteIndex]}
+              </motion.p>
+            </div>
+            <button 
+              className="absolute right-2 top-2 p-1.5 rounded-full bg-wax-flower-800/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-wax-flower-700/50"
+              onClick={cycleQuote}
+              title="Next quote"
+            >
+              <RefreshCw className="h-4 w-4 text-wax-flower-300" />
+            </button>
           </motion.div>
-        ))}
+        </div>
+
+        <style jsx="true" global="true">{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(42, 42, 42, 0.3);
+            border-radius: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #FD6A3A;
+            border-radius: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #fd825b;
+          }
+        `}</style>
+
+        <div className="grid grid-cols-12 gap-4">
+          {features.map((feature, i) => (
+            <motion.div
+              key={i}
+              className={cn(feature.className, "bg-wax-flower-900/70 rounded-xl border border-wax-flower-700/30 p-4 hover:border-wax-flower-600/50")}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.1 }}
+            >
+              {feature.header}
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
