@@ -16,7 +16,8 @@ import {
   ListTodo, 
   HelpCircle,
   Timer,
-  CheckSquare
+  CheckSquare,
+  Wallet
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import "@/styles/dashboard.css";
@@ -34,6 +35,7 @@ const DashboardLayout = () => {
     { name: "Analytics", icon: <LineChart className="h-4 w-4" />, path: "/dashboard/analytics" },
     { name: "To-Do List", icon: <CheckSquare className="h-4 w-4" />, path: "/dashboard/todolist" },
     { name: "Pomodoro", icon: <Timer className="h-4 w-4" />, path: "/dashboard/pomodoro" },
+    { name: "Finance", icon: <Wallet className="h-4 w-4" />, path: "/dashboard/finances" },
   ];
 
   const bottomLinks = [

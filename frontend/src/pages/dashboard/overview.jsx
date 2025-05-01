@@ -615,50 +615,50 @@ export default function Overview() {
             const completedCount = dayData?.completed || 0;
             const totalCount = dayData?.total || 0;
             
-            let bgColor = '#4A4A4A'; // Base color for no completion
-            let textColor = '#A1A1AA'; // Default text color
+                  let bgColor = '#4A4A4A'; // Base color for no completion
+                  let textColor = '#A1A1AA'; // Default text color
             
             if (date > today) {
-              bgColor = '#3A3A3A'; // Darker grey for future
-              textColor = '#6A6A6A';
+                    bgColor = '#3A3A3A'; // Darker grey for future
+                    textColor = '#6A6A6A';
             } else if (completedCount > 0 && totalCount > 0) {
               const percentage = (completedCount / totalCount) * 100;
-              if (percentage >= 75) bgColor = '#FD6A3A'; // Full color
-              else if (percentage >= 50) bgColor = '#fd825b'; // Lighter
-              else if (percentage >= 25) bgColor = '#fd9f7d'; // Even Lighter
-              else bgColor = '#fdbb9f'; // Lightest orange
-              textColor = '#FFFFFF'; // White text on colored background
+                    if (percentage >= 75) bgColor = '#FD6A3A'; // Full color
+                    else if (percentage >= 50) bgColor = '#fd825b'; // Lighter
+                    else if (percentage >= 25) bgColor = '#fd9f7d'; // Even Lighter
+                    else bgColor = '#fdbb9f'; // Lightest orange
+                    textColor = '#FFFFFF'; // White text on colored background
             } else if (completedCount === 0 && date <= today) {
-              textColor = '#B1B1BA';
-            }
-            
+                    textColor = '#B1B1BA';
+              }
+              
             blocks.push(
-              <motion.div
+                <motion.div
                 key={`${dateString}-${monthOffset}`}
-                className={cn(
-                  "group relative flex items-center justify-center",
+                      className={cn(
+                        "group relative flex items-center justify-center",
                   date.getTime() === today.getTime() ? "border-2 border-wax-flower-300" : ""
-                )}
-                style={{ 
-                  aspectRatio: '1/1',
-                  backgroundColor: bgColor,
-                  borderRadius: '50%',
-                  transition: 'background-color 0.3s ease',
-                  width: '26px',
-                  height: '26px',
-                  margin: 'auto'
-                }}
-                whileHover={{ scale: 1.2 }}
-              >
-                <span className="text-xs font-medium" style={{ color: textColor }}>
+                      )}
+                  style={{ 
+                    aspectRatio: '1/1',
+                    backgroundColor: bgColor,
+                        borderRadius: '50%',
+                    transition: 'background-color 0.3s ease',
+                        width: '26px',
+                        height: '26px',
+                    margin: 'auto'
+                  }}
+                  whileHover={{ scale: 1.2 }}
+                >
+                      <span className="text-xs font-medium" style={{ color: textColor }}>
                   {d}
-                </span>
-                <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-wax-flower-800 text-wax-flower-200 px-2 py-1 rounded text-xs whitespace-nowrap z-10">
+                      </span>
+                  <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-wax-flower-800 text-wax-flower-200 px-2 py-1 rounded text-xs whitespace-nowrap z-10">
                   {date.toLocaleDateString()}: {completedCount} of {totalCount} habits
-                </div>
-              </motion.div>
-            );
-          }
+                  </div>
+                </motion.div>
+              );
+                }
           return blocks;
         };
 
@@ -716,7 +716,7 @@ export default function Overview() {
                 </motion.div>
               </AnimatePresence>
             </div>
-          </div>
+        </div>
         );
       })(),
       className: "col-span-8",
@@ -876,7 +876,7 @@ export default function Overview() {
             >
               {motivationalQuotes[currentQuoteIndex]}
             </motion.p>
-          </div>
+        </div>
           <button 
             className="absolute right-2 top-2 p-1.5 rounded-full bg-wax-flower-800/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-wax-flower-700/50"
             onClick={cycleQuote}
