@@ -9,6 +9,9 @@ const { router: authRoutes } = require('./routes/auth');
 const chatbotRoutes = require("./routes/chatbot");
 const focusModeRoutes = require('./routes/focusMode');
 const seedRoutes = require('./routes/seed');
+const todoRoutes = require('./routes/todo');
+app.use('/api/todos', todoRoutes);
+
 require('dotenv').config();
 
 require('./config/passport');
