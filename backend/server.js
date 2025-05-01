@@ -10,6 +10,7 @@ const chatbotRoutes = require("./routes/chatbot");
 const focusModeRoutes = require('./routes/focusMode');
 const seedRoutes = require('./routes/seed');
 const todoRoutes = require('./routes/todo');
+const analyticsRoutes = require('./routes/analytics');
 
 require('dotenv').config();
 
@@ -51,6 +52,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Todolist
 app.use('/api/todos', todoRoutes);
+
+//Analytics
+app.use('/api/analytics', analyticsRoutes);
 
 // Session configuration
 app.use(session({
