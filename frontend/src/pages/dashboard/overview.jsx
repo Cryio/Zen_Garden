@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Sparkles,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  ChevronLeft
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from 'react';
@@ -495,77 +496,227 @@ export default function Overview() {
     {
       header: (() => {
         const weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(label => ({ key: `header-${label}`, type: 'header', label }));
-        const calendarItems = [...weekdayLabels, ...monthlyData];
+        const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
+        const [isTransitioning, setIsTransitioning] = useState(false);
+        const [direction, setDirection] = useState(null);
+        const [monthlyData, setMonthlyData] = useState([]);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const fetchMonthData = async (monthOffset) => {
+          const targetDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+          const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+          const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
+          
+          try {
+            // Get monthly completion data from the new endpoint
+            const response = await api.get(`/api/habits/${user._id}/monthly-completions`, {
+              params: {
+                month: targetDate.getMonth() + 1, // Convert to 1-based month
+                year: targetDate.getFullYear()
+              }
+            });
+            
+            // Ensure we have data for all days in the month
+            const monthData = new Map();
+            for (let d = 1; d <= endOfMonth.getDate(); d++) {
+              const date = new Date(targetDate.getFullYear(), targetDate.getMonth(), d);
+              date.setHours(0, 0, 0, 0);
+              const dateString = date.toISOString().split('T')[0];
+              monthData.set(dateString, { completed: 0, total: 0 });
+            }
+
+            // Merge API data with our month map
+            (response.data || []).forEach(item => {
+              if (monthData.has(item.date)) {
+                monthData.set(item.date, {
+                  completed: item.completed,
+                  total: item.total
+                });
+              }
+            });
+
+            // Convert to array and sort by date
+            const processedData = Array.from(monthData.entries())
+              .map(([date, data]) => ({
+                date,
+                completed: data.completed,
+                total: data.total
+              }))
+              .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            setMonthlyData(processedData);
+          } catch (err) {
+            console.error("Failed to fetch month data:", err);
+            toast.error("Failed to load month data");
+            setMonthlyData([]);
+          }
+        };
+
+        useEffect(() => {
+          fetchMonthData(currentMonthOffset);
+        }, [currentMonthOffset]);
+
+        const handleMonthChange = (newDirection) => {
+          if (isTransitioning) return;
+          
+          setDirection(newDirection);
+          setIsTransitioning(true);
+          
+          setTimeout(() => {
+            if (newDirection === 'prev') {
+              setCurrentMonthOffset(prev => prev - 1);
+            } else if (newDirection === 'next' && currentMonthOffset < 0) {
+              setCurrentMonthOffset(prev => prev + 1);
+            }
+            
+            setTimeout(() => {
+              setIsTransitioning(false);
+              setDirection(null);
+            }, 300);
+          }, 300);
+        };
+
+        const getMonthLabel = (offset) => {
+          const date = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+          return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+        };
+
+        const renderMonth = (monthOffset) => {
+          const base = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+          const daysInMonth = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+          const firstDayOfWeek = base.getDay(); // Sunday start (0-6)
+          const blocks = [];
+          
+          // Empty blocks for days before the month starts
+          for (let i = 0; i < firstDayOfWeek; i++) {
+            blocks.push(
+              <div 
+                key={`empty-${i}-${monthOffset}`} 
+                className="aspect-square w-[26px] h-[26px]" 
+              />
+            );
+          }
+          
+          // Blocks for each day in the month
+          for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(base.getFullYear(), base.getMonth(), d);
+            date.setHours(0, 0, 0, 0);
+            const dateString = date.toISOString().split('T')[0];
+            
+            // Find the data for this day
+            const dayData = monthlyData.find(item => {
+              const itemDate = new Date(item.date);
+              return itemDate.getDate() === d && 
+                     itemDate.getMonth() === date.getMonth() && 
+                     itemDate.getFullYear() === date.getFullYear();
+            });
+            
+            const completedCount = dayData?.completed || 0;
+            const totalCount = dayData?.total || 0;
+            
+            let bgColor = '#4A4A4A'; // Base color for no completion
+            let textColor = '#A1A1AA'; // Default text color
+            
+            if (date > today) {
+              bgColor = '#3A3A3A'; // Darker grey for future
+              textColor = '#6A6A6A';
+            } else if (completedCount > 0 && totalCount > 0) {
+              const percentage = (completedCount / totalCount) * 100;
+              if (percentage >= 75) bgColor = '#FD6A3A'; // Full color
+              else if (percentage >= 50) bgColor = '#fd825b'; // Lighter
+              else if (percentage >= 25) bgColor = '#fd9f7d'; // Even Lighter
+              else bgColor = '#fdbb9f'; // Lightest orange
+              textColor = '#FFFFFF'; // White text on colored background
+            } else if (completedCount === 0 && date <= today) {
+              textColor = '#B1B1BA';
+            }
+            
+            blocks.push(
+              <motion.div
+                key={`${dateString}-${monthOffset}`}
+                className={cn(
+                  "group relative flex items-center justify-center",
+                  date.getTime() === today.getTime() ? "border-2 border-wax-flower-300" : ""
+                )}
+                style={{ 
+                  aspectRatio: '1/1',
+                  backgroundColor: bgColor,
+                  borderRadius: '50%',
+                  transition: 'background-color 0.3s ease',
+                  width: '26px',
+                  height: '26px',
+                  margin: 'auto'
+                }}
+                whileHover={{ scale: 1.2 }}
+              >
+                <span className="text-xs font-medium" style={{ color: textColor }}>
+                  {d}
+                </span>
+                <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-wax-flower-800 text-wax-flower-200 px-2 py-1 rounded text-xs whitespace-nowrap z-10">
+                  {date.toLocaleDateString()}: {completedCount} of {totalCount} habits
+                </div>
+              </motion.div>
+            );
+          }
+          return blocks;
+        };
+
+        useEffect(() => {
+          if (user?._id) {
+            fetchMonthData(currentMonthOffset);
+          }
+        }, [currentMonthOffset, user?._id]);
 
         return (
-        <div className="space-y-4 h-full">
-          <div className="flex items-center justify-between border-b border-wax-flower-700/30 pb-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-[#FD6A3A]" />
-              <h2 className="text-xl font-bold text-wax-flower-200">Monthly Overview</h2>
+          <div className="space-y-4 h-full">
+            <div className="flex items-center justify-between border-b border-wax-flower-700/30 pb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-[#FD6A3A]" />
+                <h2 className="text-xl font-bold text-wax-flower-200">Monthly Overview</h2>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-wax-flower-300">{getMonthLabel(currentMonthOffset)}</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleMonthChange('prev')}
+                    className="p-2 rounded-full hover:bg-wax-flower-800/50 transition-colors"
+                    disabled={isTransitioning}
+                  >
+                    <ChevronLeft className="h-5 w-5 text-wax-flower-200" />
+                  </button>
+                  <button
+                    onClick={() => handleMonthChange('next')}
+                    className="p-2 rounded-full hover:bg-wax-flower-800/50 transition-colors"
+                    disabled={isTransitioning || currentMonthOffset >= 0}
+                  >
+                    <ChevronRight className="h-5 w-5 text-wax-flower-200" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <div className="grid grid-cols-7 gap-x-1 gap-y-2 p-1">
+                {weekdayLabels.map((item) => (
+                  <div key={item.key} className="text-center text-xs font-bold text-wax-flower-400">{item.label}</div>
+                ))}
+              </div>
+              
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentMonthOffset}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="grid grid-cols-7 gap-x-1 gap-y-2 p-1"
+                >
+                  {renderMonth(currentMonthOffset)}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
-          
-            <div className="grid grid-cols-7 gap-x-1 gap-y-2 p-1">
-              {calendarItems.map((item) => {
-                if (item.type === 'header') {
-                  return (
-                    <div key={item.key} className="text-center text-xs font-bold text-wax-flower-400">{item.label}</div>
-                  );
-                }
-
-                if (item.type === 'empty') {
-                  return <div key={item.key} className="aspect-square" />;
-                }
-
-                if (item.type === 'day') {
-                  let bgColor = '#4A4A4A'; // Base color for no completion
-                  let textColor = '#A1A1AA'; // Default text color
-                  if (item.isFuture) {
-                    bgColor = '#3A3A3A'; // Darker grey for future
-                    textColor = '#6A6A6A';
-                  } else if (item.completed > 0 && item.total > 0) {
-                    const percentage = (item.completed / item.total) * 100;
-                    if (percentage >= 75) bgColor = '#FD6A3A'; // Full color
-                    else if (percentage >= 50) bgColor = '#fd825b'; // Lighter
-                    else if (percentage >= 25) bgColor = '#fd9f7d'; // Even Lighter
-                    else bgColor = '#fdbb9f'; // Lightest orange
-                    textColor = '#FFFFFF'; // White text on colored background
-                  } else if (item.completed === 0 && !item.isFuture) {
-                    textColor = '#B1B1BA';
-              }
-              
-              return (
-                <motion.div
-                      key={item.key}
-                      className={cn(
-                        "group relative flex items-center justify-center",
-                        item.isToday ? "border-2 border-wax-flower-300" : ""
-                      )}
-                  style={{ 
-                    aspectRatio: '1/1',
-                    backgroundColor: bgColor,
-                        borderRadius: '50%',
-                    transition: 'background-color 0.3s ease',
-                        width: '26px',
-                        height: '26px',
-                    margin: 'auto'
-                  }}
-                  whileHover={{ scale: 1.2 }}
-                >
-                      <span className="text-xs font-medium" style={{ color: textColor }}>
-                        {item.dayOfMonth}
-                      </span>
-                  <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-wax-flower-800 text-wax-flower-200 px-2 py-1 rounded text-xs whitespace-nowrap z-10">
-                        {item.date.toLocaleDateString()}: {item.completed} of {item.total} habits
-                  </div>
-                </motion.div>
-              );
-                }
-                return null; // Should not happen
-            })}
-          </div>
-        </div>
         );
       })(),
       className: "col-span-8",
@@ -704,8 +855,8 @@ export default function Overview() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-wax-flower-200">Dashboard</h1>
-          <p className="text-base text-wax-flower-300">Welcome {user?.name || 'User'}, here is your overview</p>
-        </div>
+          <p className="text-base text-wax-flower-300">Welcome {user?.firstName || 'User'}, here is your overview</p>
+          </div>
         
         {/* Motivational Quote Tile */}
         <motion.div 

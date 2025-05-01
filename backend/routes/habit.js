@@ -246,4 +246,74 @@ router.delete("/:userId/habits/:goalId/:habitId", verifyToken, async (req, res) 
   }
 });
 
+// Get monthly completion data
+router.get("/:userId/monthly-completions", verifyToken, async (req, res) => {
+  try {
+    // Verify that the requested userId matches the authenticated user
+    if (req.user.userId !== req.params.userId) {
+      return res.status(403).json({ message: 'Unauthorized access' });
+    }
+
+    const { month, year } = req.query;
+    if (!month || !year) {
+      return res.status(400).json({ message: 'Month and year are required' });
+    }
+
+    // Create dates for the entire month
+    const startDate = new Date(year, month - 1, 1); // month is 0-based in JS
+    const endDate = new Date(year, month, 0); // last day of the month
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Get all habits for the user
+    const habits = await Habit.find({ userId: req.params.userId });
+    const totalHabits = habits.length;
+
+    // Initialize a map for all days in the month
+    const monthlyData = new Map();
+    for (let d = 1; d <= endDate.getDate(); d++) {
+      const date = new Date(year, month - 1, d);
+      date.setHours(0, 0, 0, 0);
+      const dateString = date.toISOString().split('T')[0];
+      monthlyData.set(dateString, { completed: 0, total: totalHabits });
+    }
+
+    // Process each habit's completion history
+    habits.forEach(habit => {
+      if (habit.completionHistory && Array.isArray(habit.completionHistory)) {
+        habit.completionHistory.forEach(completionDate => {
+          if (completionDate) {
+            const date = new Date(completionDate);
+            date.setHours(0, 0, 0, 0);
+            const dateString = date.toISOString().split('T')[0];
+            
+            // Check if the date falls within the target month
+            if (date >= startDate && date <= endDate && monthlyData.has(dateString)) {
+              const current = monthlyData.get(dateString);
+              monthlyData.set(dateString, {
+                ...current,
+                completed: current.completed + 1
+              });
+            }
+          }
+        });
+      }
+    });
+
+    // Convert map to array format and ensure all days are included
+    const result = Array.from(monthlyData.entries())
+      .map(([date, data]) => ({
+        date,
+        completed: data.completed,
+        total: data.total
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching monthly completions:', error);
+    res.status(500).json({ message: 'Failed to fetch monthly completions' });
+  }
+});
+
 module.exports = router;

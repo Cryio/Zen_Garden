@@ -241,8 +241,31 @@ const WeeklyOverview = ({ habits }) => {
 const MonthlyOverview = ({ habits }) => {
   const [hovered, setHovered] = useState(null);
   const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
+  const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [direction, setDirection] = useState(null);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  const handleMonthChange = (newDirection) => {
+    if (isTransitioning) return;
+    
+    setDirection(newDirection);
+    setIsTransitioning(true);
+    
+    setTimeout(() => {
+      if (newDirection === 'prev') {
+        setCurrentMonthOffset(prev => prev - 1);
+      } else if (newDirection === 'next' && currentMonthOffset < 0) {
+        setCurrentMonthOffset(prev => prev + 1);
+      }
+      
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setDirection(null);
+      }, 300);
+    }, 300);
+  };
 
   const renderMonth = (monthOffset, label) => {
     const base = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
@@ -295,17 +318,54 @@ const MonthlyOverview = ({ habits }) => {
     return blocks;
   };
 
+  const getMonthLabel = (offset) => {
+    const date = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+    return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+  };
+
   return (
     <div className="bg-wax-flower-900/70 rounded-xl border border-wax-flower-700/30 p-6 h-[300px] relative group hover:bg-wax-flower-900/80 transition-colors overflow-hidden">
-      <h2 className="text-xl font-bold text-wax-flower-200 mb-4">Monthly Overview</h2>
-      <div className="flex justify-around">
-        <div className="grid grid-cols-7 gap-x-1 gap-y-1 auto-rows-min">
-          {renderMonth(-1, "Previous Month")}
-        </div>
-        <div className="grid grid-cols-7 gap-x-1 gap-y-1 auto-rows-min">
-          {renderMonth(0, "Current Month")}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-wax-flower-200">Monthly Overview</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleMonthChange('prev')}
+            className="p-2 rounded-full hover:bg-wax-flower-800/50 transition-colors"
+            disabled={isTransitioning}
+          >
+            <ChevronLeft className="h-5 w-5 text-wax-flower-200" />
+          </button>
+          <button
+            onClick={() => handleMonthChange('next')}
+            className="p-2 rounded-full hover:bg-wax-flower-800/50 transition-colors"
+            disabled={isTransitioning || currentMonthOffset >= 0}
+          >
+            <ChevronRight className="h-5 w-5 text-wax-flower-200" />
+          </button>
         </div>
       </div>
+      
+      <div className="relative">
+        <div className={`grid grid-cols-7 gap-x-1 gap-y-1 auto-rows-min transition-transform duration-300 ${
+          isTransitioning ? (direction === 'prev' ? 'translate-x-full' : '-translate-x-full') : ''
+        }`}>
+          {renderMonth(currentMonthOffset, getMonthLabel(currentMonthOffset))}
+        </div>
+        
+        {isTransitioning && (
+          <div className={`absolute top-0 left-0 right-0 transition-transform duration-300 ${
+            direction === 'prev' ? 'translate-x-full' : '-translate-x-full'
+          }`}>
+            <div className="grid grid-cols-7 gap-x-1 gap-y-1 auto-rows-min">
+              {renderMonth(
+                direction === 'prev' ? currentMonthOffset - 1 : currentMonthOffset + 1,
+                getMonthLabel(direction === 'prev' ? currentMonthOffset - 1 : currentMonthOffset + 1)
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      
       {hovered && <HoverPopup date={hovered.date} completed={hovered.completed} notCompleted={hovered.notCompleted} position={hoverPos} />}
     </div>
   );
