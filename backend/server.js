@@ -10,7 +10,6 @@ const chatbotRoutes = require("./routes/chatbot");
 const focusModeRoutes = require('./routes/focusMode');
 const seedRoutes = require('./routes/seed');
 const todoRoutes = require('./routes/todo');
-app.use('/api/todos', todoRoutes);
 
 require('dotenv').config();
 
@@ -49,6 +48,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Todolist
+app.use('/api/todos', todoRoutes);
 
 // Session configuration
 app.use(session({
