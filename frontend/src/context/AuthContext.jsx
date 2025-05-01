@@ -17,13 +17,30 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const setAuthToken = (token) => {
+    if (token) {
+      localStorage.setItem('token', token);
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      localStorage.removeItem('token');
+      delete api.defaults.headers.common['Authorization'];
+    }
+  };
+
   const fetchUserData = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       const response = await api.get('/api/auth/me');
       setUser(response.data);
     } catch (error) {
       console.error('Error fetching user data:', error);
-      localStorage.removeItem('token');
+      setAuthToken(null);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -33,7 +50,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await api.post('/api/auth/login', { email, password });
       const { token, user } = response.data;
-      localStorage.setItem('token', token);
+      setAuthToken(token);
       setUser(user);
       return { success: true };
     } catch (error) {
@@ -46,7 +63,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await api.post('/api/auth/signup', userData);
       const { token, user } = response.data;
-      localStorage.setItem('token', token);
+      setAuthToken(token);
       setUser(user);
       return { success: true };
     } catch (error) {
@@ -56,7 +73,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    setAuthToken(null);
     setUser(null);
   };
 
@@ -66,7 +83,10 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
-    isAuthenticated: !!user
+    setUser,
+    setAuthToken,
+    isAuthenticated: !!user,
+    fetchUserData
   };
 
   return (

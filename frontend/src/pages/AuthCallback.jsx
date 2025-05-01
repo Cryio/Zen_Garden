@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { setAuthToken, fetchUserData } = useAuth();
 
   useEffect(() => {
     const token = searchParams.get('token');
     const error = searchParams.get('error');
+    const returnTo = searchParams.get('returnTo') || '/dashboard';
 
     const handleAuth = async () => {
       try {
@@ -21,36 +23,28 @@ export default function AuthCallback() {
           throw new Error('No authentication token received');
         }
 
-        // Store the token securely
-        localStorage.setItem('token', token);
+        // Set the auth token which will update localStorage and API headers
+        setAuthToken(token);
 
-        // Set the token in the API instance
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-        // Verify token and fetch user data
-        const response = await api.get('/api/auth/me');
-        
-        if (!response.data) {
-          throw new Error('Failed to fetch user data');
-        }
+        // Fetch and set the user data
+        await fetchUserData();
 
         // Show success message
         toast.success('Successfully authenticated with Google');
 
-        // Redirect to dashboard
-        navigate('/dashboard');
+        // Redirect to the returnTo URL or dashboard
+        navigate(returnTo);
       } catch (err) {
         console.error('Authentication error:', err);
         // Clear token if authentication failed
-        localStorage.removeItem('token');
-        delete api.defaults.headers.common['Authorization'];
+        setAuthToken(null);
         toast.error(err.message || 'Authentication failed. Please try again.');
         navigate('/login');
       }
     };
 
     handleAuth();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, setAuthToken, fetchUserData]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

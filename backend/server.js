@@ -55,18 +55,28 @@ app.use('/api/todos', todoRoutes);
 // Session configuration
 app.use(session({
   secret: process.env.JWT_SECRET,
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'lax'
-  }
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  },
+  name: 'sessionId',
+  proxy: process.env.NODE_ENV === 'production'
 }));
 
 // Initialize Passport
 app.use(passport.initialize());
+
+// Use passport.session() middleware AFTER express-session middleware
 app.use(passport.session());
+
+// Enable trust proxy if in production
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {

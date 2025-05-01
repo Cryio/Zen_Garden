@@ -37,7 +37,13 @@ router.get('/google',
   (req, res, next) => {
     // Store the original URL in the session
     req.session.returnTo = req.query.returnTo || '/dashboard';
-    next();
+    // Save the session before continuing
+    req.session.save((err) => {
+      if (err) {
+        console.error('Error saving session:', err);
+      }
+      next();
+    });
   },
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
@@ -48,7 +54,7 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', { 
     failureRedirect: '/login',
-    session: false 
+    session: true // Enable session support
   }),
   async (req, res) => {
     try {
@@ -62,14 +68,25 @@ router.get('/google/callback',
       // Get the frontend URL from environment variables with fallback
       const frontendUrl = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000';
       
-      // Get the return URL from session or default to dashboard
-      const returnTo = req.session.returnTo || '/dashboard';
+      // Get returnTo URL from session or user object
+      const returnTo = req.user.returnTo || req.session.returnTo || '/dashboard';
       
       // Construct the redirect URL
-      const redirectUrl = `${frontendUrl}/auth/callback?token=${authToken}`;
+      const redirectUrl = `${frontendUrl}/auth/callback?token=${authToken}&returnTo=${encodeURIComponent(returnTo)}`;
       
-      console.log('Redirecting to auth callback:', redirectUrl);
-      res.redirect(redirectUrl);
+      // Clear the returnTo URL from both session and user object
+      req.session.returnTo = null;
+      if (req.user) {
+        req.user.returnTo = null;
+      }
+      
+      // Save the session before redirecting
+      req.session.save((err) => {
+        if (err) {
+          console.error('Error saving session:', err);
+        }
+        res.redirect(redirectUrl);
+      });
     } catch (error) {
       console.error('Error in Google callback:', error);
       const frontendUrl = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000';
