@@ -1,34 +1,98 @@
 # Zen Garden
 
-Zen Garden is a web application designed to make habit tracking engaging and interactive. It features a gamified experience where users can visualize their progress through a virtual 3D garden that grows as they complete their habits. The application likely incorporates AI to provide personalized insights and recommendations, enhancing the user experience. With a user-friendly dashboard, Zen_Garden aims to help users build and maintain positive habits in a fun and motivating way.
+Zen Garden is a modern, feature-rich habit tracking application that helps users build and maintain positive habits through an engaging and interactive interface. The application combines powerful habit tracking features with a beautiful UI and advanced features like focus mode and detailed analytics.
 
-## Features 
+## Features
 
-- **User Authentication**: Secure login, signup, and password recovery along with OAuth2.0 signup/login. 
-- **Habit Tracking**: Create and monitor customizable habit goals.
-- **3D Garden Visualization**: An interactive garden that evolves with habit completion.
-- **Analytics Dashboard**: View progress and insights on habit performance.
-- **Settings**: Personalize the application experience.
-- **Help Section**: Access guidance and support.
+### Core Features
+- **Habit Tracking**
+  - Create and manage multiple habits
+  - Group habits under goals
+  - Daily, weekly, and monthly tracking
+  - Streak tracking and progress visualization
+  - Completion history and statistics
 
-## Technologies Used
+- **Monthly Overview**
+  - Interactive calendar view
+  - Color-coded completion status
+  - Month-to-month navigation
+  - Detailed daily completion statistics
+
+- **Focus Mode (Pomodoro Timer)**
+  - Customizable timer durations
+  - Session tracking and statistics
+  - Break management
+  - Interruption tracking
+  - Background music controls
+
+- **Analytics Dashboard**
+  - Comprehensive progress tracking
+  - Visual statistics and trends
+  - Streak analytics
+  - Goal completion rates
+  - Daily, weekly, and monthly views
+
+### Additional Features
+- **User Authentication**
+  - Secure login/signup system
+  - JWT-based authentication
+  - Password recovery
+  - Session management
+
+- **Goal Management**
+  - Create and track multiple goals
+  - Progress visualization
+  - Habit grouping under goals
+  - Goal completion statistics
+
+- **3D Garden Visualization**
+  - Interactive garden that evolves with habit completion
+  - Visual progress indicators
+  - Achievement tracking
+  - Progress celebrations
+
+## Technology Stack
 
 ### Backend
-- **Node.js**: JavaScript runtime for server-side logic.
-- **Express.js**: Web framework for building APIs.
-- **MongoDB with Mongoose**: Database for storing user and habit data.
-- **JWT**: JSON Web Tokens for secure authentication.
+- **Core**:
+  - Node.js
+  - Express.js
+  - MongoDB with Mongoose
+  - JWT for authentication
+
+- **Features**:
+  - RESTful API architecture
+  - Secure password hashing
+  - Session management
+  - Data validation
 
 ### Frontend
-- **React**: JavaScript library for building user interfaces.
-- **Vite**: Fast build tool and development server.
-- **Tailwind CSS**: Utility-first CSS framework for styling.
-- **Radix UI**: Accessible UI components for enhanced usability.
-- **React Three Fiber**: Library for 3D graphics in React.
+- **Core**:
+  - React 18
+  - Vite (for fast development and building)
+  - React Router (for navigation)
+  - Framer Motion (for animations)
+
+- **UI/Styling**:
+  - Tailwind CSS
+  - Radix UI components
+  - Lucide React icons
+  - Custom UI components
+  - React Three Fiber (for 3D graphics)
+
+- **State Management & API**:
+  - Context API for global state
+  - Axios for API requests
+  - JWT for authentication
 
 ## Installation
 
-Follow these steps to set up Zen_Garden locally:
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB
+- npm or yarn
+
+### Setup Instructions
 
 1. **Clone the Repository**:
    ```bash
@@ -36,54 +100,107 @@ Follow these steps to set up Zen_Garden locally:
    cd Zen_Garden
    ```
 
-2. **Set Up the Backend**:
-   - Install dependencies in the root directory:
-     ```bash
-     npm install
-     ```
-   - Create a `.env` file in the root directory with:
-     ```
-     DATABASE_URL=mongodb://localhost:27017/zen_garden
-     JWT_SECRET=your_secret_key
-     ```
-   - Ensure MongoDB is running locally or update `DATABASE_URL` for a cloud instance.
+2. **Install Dependencies**
+   
+   Frontend:
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-3. **Set Up the Frontend**:
-   - Navigate to the `frontend` directory:
-     ```bash
-     cd frontend
-     ```
-   - Install dependencies:
-     ```bash
-     npm install
-     ```
+   Backend:
+   ```bash
+   cd backend
+   npm install
+   ```
 
-4. **Run the Application**:
-   - Start the backend server (from the root directory):
-     ```bash
-     node backend/server.js
-     ```
-   - In another terminal, start the frontend development server:
-     ```bash
-     cd frontend
-     npm run dev
-     ```
+3. **Environment Setup**
+   
+   Create .env files in both frontend and backend directories:
+
+   Frontend (.env):
+   ```
+   VITE_API_URL=http://localhost:5000
+   ```
+
+   Backend (.env):
+   ```
+   MONGODB_URI=mongodb://localhost:27017/zen_garden
+   JWT_SECRET=your_jwt_secret
+   PORT=5000
+   ```
+
+4. **Run the Application**
+
+   Backend (from root directory):
+   ```bash
+   node backend/server.js
+   ```
+
+   Frontend (in a new terminal):
+   ```bash
+   cd frontend
+   npm run dev
+   ```
 
 5. **Access the Application**:
-   - Open a browser and navigate to `http://localhost:3000` to use Zen_Garden.
+   - Open a browser and navigate to `http://localhost:3000`
 
-## Usage
+## Project Structure
 
-- **Sign Up or Log In**: Create a new account or access an existing one.
-- **Explore the Dashboard**: View your habits, garden, analytics, and settings.
-- **Track Habits**: Add new habits and mark them as completed daily.
-- **Interact with the Garden**: Watch your virtual garden grow as you maintain habits.
-- **Review Analytics**: Monitor your progress through detailed insights.
+```
+zen-garden/
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── lib/
+│   │   ├── pages/
+│   │   └── App.jsx
+│   └── package.json
+└── backend/
+    ├── config/
+    ├── models/
+    ├── routes/
+    ├── server.js
+    └── package.json
+```
+
+## API Endpoints
+
+### Authentication
+- POST `/api/auth/register` - Register new user
+- POST `/api/auth/login` - User login
+- POST `/api/auth/logout` - User logout
+
+### Habits
+- GET `/api/habits/:userId/habits` - Get all habits
+- POST `/api/habits/:userId/habits` - Create new habit
+- PUT `/api/habits/:userId/habits/:habitId` - Update habit
+- DELETE `/api/habits/:userId/habits/:habitId` - Delete habit
+
+### Focus Mode
+- POST `/api/focus/:userId/focus` - Start focus session
+- GET `/api/focus/:userId/focus` - Get focus sessions
+- GET `/api/focus/:userId/focus/stats` - Get focus statistics
 
 ## Contributing
 
 Contributions are welcome! To contribute:
-- Fork the repository.
-- Create a new branch for your feature or bug fix.
-- Submit a pull request with a clear description of changes.
-- For major changes, please open an issue first to discuss your ideas.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+For major changes, please open an issue first to discuss your ideas.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Icons by Lucide React
+- UI Components inspired by Radix UI
+- Animations powered by Framer Motion
