@@ -22,7 +22,7 @@ const LandingPage = () => {
         <div className="container mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-wax-flower-200 to-wax-flower-400">
-              Zen Garden
+              Zen Garden - tracker
             </h1>
             <p className="text-xl text-wax-flower-100 mb-8 max-w-2xl mx-auto">
               Cultivate your habits, nurture your growth, and watch your personal garden flourish
