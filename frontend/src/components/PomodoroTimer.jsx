@@ -152,7 +152,7 @@ export default function PomodoroTimer({ selectedHabit, onSessionComplete }) {
         }
 
         // Play completion sound and show notification
-        audioManager.playEffect('complete');
+        audioManager.playComplete();
         toast.success('Focus session completed! Time for a break!');
       } else {
         setCurrentState(TIMER_STATES.POMODORO);

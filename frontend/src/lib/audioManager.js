@@ -63,6 +63,20 @@ class AudioManager {
     this.isPlaying = false;
     this.volume = 0.4;
     this.isMuted = false;
+    this.initialized = false;
+    this.shuffle = false;
+    
+    // Set up background music ended event
+    this.backgroundAudio.addEventListener('ended', () => {
+      if (this.isPlaying) {
+        this.playNextTrack();
+      }
+    });
+  }
+
+  // Initialize the audio manager
+  init() {
+    if (this.initialized) return true;
     
     // Preload sounds
     this.startSound.load();
@@ -73,17 +87,19 @@ class AudioManager {
     this.startSound.volume = 0.7;
     this.pauseSound.volume = 0.6;
     this.completeSound.volume = 0.8;
-
-    // Set up background music ended event
-    this.backgroundAudio.addEventListener('ended', () => {
-      if (this.isPlaying) {
-        this.playNextTrack();
-      }
-    });
+    
+    // Preload the first track
+    const track = backgroundMusic[this.currentMusicIndex];
+    this.backgroundAudio.src = track.src;
+    this.backgroundAudio.load();
+    
+    this.initialized = true;
+    return true;
   }
 
   // Sound effects
   playStart() {
+    if (!this.initialized) this.init();
     if (!this.isMuted) {
       this.startSound.currentTime = 0;
       this.startSound.play().catch(err => console.warn('Could not play start sound:', err));
@@ -91,6 +107,7 @@ class AudioManager {
   }
 
   playPause() {
+    if (!this.initialized) this.init();
     if (!this.isMuted) {
       this.pauseSound.currentTime = 0;
       this.pauseSound.play().catch(err => console.warn('Could not play pause sound:', err));
@@ -98,6 +115,7 @@ class AudioManager {
   }
 
   playComplete() {
+    if (!this.initialized) this.init();
     if (!this.isMuted) {
       this.completeSound.currentTime = 0;
       this.completeSound.play().catch(err => console.warn('Could not play complete sound:', err));
@@ -106,6 +124,7 @@ class AudioManager {
 
   // Background music controls
   startBackgroundMusic() {
+    if (!this.initialized) this.init();
     if (!this.isPlaying) {
       this.loadAndPlayTrack(this.currentMusicIndex);
       this.isPlaying = true;
@@ -134,18 +153,68 @@ class AudioManager {
   }
 
   playNextTrack() {
-    this.currentMusicIndex = (this.currentMusicIndex + 1) % backgroundMusic.length;
+    if (this.shuffle) {
+      // Pick a random track different from the current one
+      let newIndex;
+      do {
+        newIndex = Math.floor(Math.random() * backgroundMusic.length);
+      } while (newIndex === this.currentMusicIndex && backgroundMusic.length > 1);
+      this.currentMusicIndex = newIndex;
+    } else {
+      // Just move to the next track in sequence
+      this.currentMusicIndex = (this.currentMusicIndex + 1) % backgroundMusic.length;
+    }
+    this.loadAndPlayTrack(this.currentMusicIndex);
+  }
+
+  playPreviousTrack() {
+    if (this.shuffle) {
+      // Pick a random track different from the current one
+      let newIndex;
+      do {
+        newIndex = Math.floor(Math.random() * backgroundMusic.length);
+      } while (newIndex === this.currentMusicIndex && backgroundMusic.length > 1);
+      this.currentMusicIndex = newIndex;
+    } else {
+      // Move to the previous track in sequence
+      this.currentMusicIndex = (this.currentMusicIndex - 1 + backgroundMusic.length) % backgroundMusic.length;
+    }
     this.loadAndPlayTrack(this.currentMusicIndex);
   }
 
   loadAndPlayTrack(index) {
-    const track = backgroundMusic[index];
-    this.backgroundAudio.src = track.src;
-    this.backgroundAudio.volume = this.isMuted ? 0 : this.volume;
-    this.backgroundAudio.play().catch(error => {
-      console.error('Audio playback failed:', error);
-      this.playNextTrack();
-    });
+    try {
+      const track = backgroundMusic[index];
+      if (!track) {
+        console.error('Invalid track index:', index);
+        this.currentMusicIndex = 0;
+        this.loadAndPlayTrack(0);
+        return;
+      }
+      
+      this.backgroundAudio.src = track.src;
+      this.backgroundAudio.volume = this.isMuted ? 0 : this.volume;
+      
+      // Create a promise to handle play attempt
+      const playPromise = this.backgroundAudio.play();
+      
+      // Modern browsers return a promise from play()
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error('Audio playback failed:', error);
+          // If we can't play this track, try the next one
+          setTimeout(() => this.playNextTrack(), 1000);
+        });
+      }
+    } catch (error) {
+      console.error('Error in loadAndPlayTrack:', error);
+    }
+  }
+
+  // Toggle shuffle mode
+  toggleShuffle() {
+    this.shuffle = !this.shuffle;
+    return this.shuffle;
   }
 
   // Volume controls
@@ -157,15 +226,26 @@ class AudioManager {
   toggleMute() {
     this.isMuted = !this.isMuted;
     this.backgroundAudio.volume = this.isMuted ? 0 : this.volume;
+    return this.isMuted;
   }
 
   getCurrentTrackInfo() {
-    return backgroundMusic[this.currentMusicIndex];
+    try {
+      return backgroundMusic[this.currentMusicIndex] || null;
+    } catch (e) {
+      console.error('Error getting track info:', e);
+      return null;
+    }
   }
 
   cleanup() {
-    this.backgroundAudio.pause();
-    this.backgroundAudio.src = '';
+    try {
+      this.backgroundAudio.pause();
+      this.backgroundAudio.src = '';
+      this.isPlaying = false;
+    } catch (e) {
+      console.error('Error during cleanup:', e);
+    }
   }
 }
 
