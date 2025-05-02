@@ -9,6 +9,7 @@ import Help from '../pages/dashboard/help';
 import Pomodoro from '../pages/dashboard/pomodoro';
 import TodoList from '../pages/dashboard/todolist';
 import FinanceTracker from '../pages/dashboard/finances';
+import Notes from '../pages/dashboard/notes';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function DashboardRoutes() {
@@ -23,6 +24,7 @@ export default function DashboardRoutes() {
           <Route path="pomodoro" element={<Pomodoro />} />
           <Route path="todolist" element={<TodoList />} />
           <Route path="finances" element={<FinanceTracker />} />
+          <Route path="notes" element={<Notes />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help" element={<Help />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
